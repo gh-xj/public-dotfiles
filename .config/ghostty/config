@@ -97,8 +97,8 @@ keybind = ctrl+digit_9=text:\x1by
 keybind = ctrl+9=text:\x1by
 # Ghostty bridges shortcuts into tmux.
 # Prefix-backed shortcuts must match tmux's prefix byte; meta-backed shortcuts stay on \x1b.
-keybind = ctrl+left=text:\x04p
-keybind = ctrl+right=text:\x04n
+keybind = shift+left=text:\x04p
+keybind = shift+right=text:\x04n
 keybind = ctrl+shift+comma=text:\x04H
 keybind = ctrl+shift+period=text:\x04L
 keybind = super+t=text:\x04c
