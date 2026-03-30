@@ -27,7 +27,14 @@ archives belong in `private-config`, not here.
 
 ## Install
 
-Run:
+Preferred daily entrypoint:
+
+```bash
+machine-control install:public
+```
+
+Repo-local install remains supported when you want to work directly in this
+checkout:
 
 ```bash
 ./install.sh
@@ -35,7 +42,3 @@ Run:
 
 By default the installer creates symlinks into `$HOME`. Use `--copy` to copy
 files instead, or `--dry-run` to preview actions.
-
-Direct repo-local install remains supported. For daily operator workflows,
-`machine-control` is the preferred single entrypoint, but it orchestrates this
-repo rather than owning its contents.

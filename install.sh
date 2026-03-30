@@ -2,11 +2,25 @@
 set -euo pipefail
 
 script_name="$(basename "$0")"
+invocation_path="${BASH_SOURCE[0]}"
 
 resolve_repo_root() {
-  local script_dir
-  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)" || return 1
-  printf '%s\n' "$script_dir"
+  local script_dir git_root
+
+  if [[ -L "$invocation_path" ]]; then
+    return 1
+  fi
+
+  script_dir="$(cd "$(dirname "$invocation_path")" && pwd -P)" || return 1
+  git_root="$(git -C "$script_dir" rev-parse --show-toplevel 2>/dev/null)" || return 1
+
+  if [[ "$git_root" != "$script_dir" ]]; then
+    return 1
+  fi
+
+  git -C "$git_root" ls-files --error-unmatch install.sh README.md >/dev/null 2>&1 || return 1
+
+  printf '%s\n' "$git_root"
 }
 
 die() {
@@ -14,10 +28,7 @@ die() {
   exit 1
 }
 
-repo_root="$(resolve_repo_root)" || die "unable to locate repository root"
-if [[ ! -f "$repo_root/install.sh" || ! -f "$repo_root/README.md" ]]; then
-  die "unable to locate repository root"
-fi
+repo_root="$(resolve_repo_root)" || die "must be run from the repo checkout root"
 
 home_root="${HOME}"
 backup_root="$repo_root/.install-backups/$(date +%Y%m%d-%H%M%S)"
