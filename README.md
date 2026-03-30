@@ -3,6 +3,15 @@
 Public macOS dotfiles and editor or shell configuration with a direct `$HOME`
 layout.
 
+## Ownership
+
+This repo is one live owner for its paths.
+
+- each live path has exactly one owner
+- `public-dotfiles` owns the public reusable baseline
+- `private-config` owns private durable state
+- Mackup is historical only and is not part of the active ownership model
+
 ## Scope
 
 This repo keeps only reusable and publishable configuration:
