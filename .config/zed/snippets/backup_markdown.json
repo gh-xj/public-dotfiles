@@ -1,0 +1,42 @@
+{
+  "header 1": {
+    "prefix": "h1",
+    "body": [
+      "# $1",
+      "$0"
+    ],
+    "description": "Header 1"
+  },
+  "header 2": {
+    "prefix": "h2",
+    "body": [
+      "## $1",
+      "$0"
+    ],
+    "description": "Header 2"
+  },
+  "header 3": {
+    "prefix": "h3",
+    "body": [
+      "### "
+    ],
+    "description": "Header 3"
+  },
+  "header 4": {
+    "prefix": "h4",
+    "body": [
+      "#### $1",
+      "$0"
+    ],
+    "description": "Header 4"
+  },
+  "code block": {
+    "prefix": "cb",
+    "body": [
+      "```$1",
+      "$0",
+      "```"
+    ],
+    "description": "Code block"
+  }
+}

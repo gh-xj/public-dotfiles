@@ -1,0 +1,12 @@
+gui:
+  showIcons: true
+  sidePanelWidth: 0.45 # Sets the side panel to 50% width
+  expandFocusedSidePanel: true # Makes the focused side panel larger automatically
+
+git:
+  branchLogCmd: "git log --graph --color=always --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --stat {{branchName}} --"
+
+os:
+  edit: "nvim"
+  editAtLine: "nvim +{{line}} -- {{filename}}"
+  open: "open {{filename}}"

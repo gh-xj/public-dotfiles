@@ -1,0 +1,4 @@
+reporting: "off"
+quitOnTopLevelReturn: false
+keybindings:
+  quit: ["q"] # as opposed to quit: ["q", "KeyEsc"], <https://github.com/jesseduffield/lazydocker/issues/27>

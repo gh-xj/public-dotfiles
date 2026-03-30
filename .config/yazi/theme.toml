@@ -1,0 +1,12 @@
+[flavor]
+use = "catppuccin-latte"
+light = "catppuccin-latte"
+dark = "dracula"
+
+[mgr]
+border_style  = { fg = "white"}
+marker_selected = { fg = "#282a36", bg = "#ff79c6" }
+
+# rounded corners for indicator bar
+[indicator]
+padding = { open = "█", close = "█" }

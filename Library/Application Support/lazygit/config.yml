@@ -1,0 +1,20 @@
+reporting: "off"
+startuppopupversion: 1
+gui:
+  showIcons: true
+  theme:
+    activebordercolor:
+      - black
+      - bold
+
+git:
+  branchLogCmd: "git log --graph --color=always --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --stat {{branchName}} --"
+  # branchLogCmd: "git log --oneline --graph --color=always --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' {{branchName}} --"
+  # branchLogCmd: "git log --graph --color=always --abbrev-commit --decorate --date=relative --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --oneline {{branchName}} --"
+  # git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --all
+  log:
+    showWholeGitGraph: false
+
+os:
+  openCommand: "code -rg {{filename}}"
+quitOnTopLevelReturn: false
