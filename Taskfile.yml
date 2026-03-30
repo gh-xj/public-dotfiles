@@ -1,0 +1,17 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install public dotfiles into $HOME
+    cmds:
+      - ./install.sh
+
+  install:dry-run:
+    desc: Preview public dotfile install actions
+    cmds:
+      - ./install.sh --dry-run
+
+  help:
+    desc: Show available tasks
+    cmds:
+      - task --list
