@@ -11,6 +11,7 @@ This repo is one live owner for its paths.
 - `public-dotfiles` owns the public reusable baseline
 - `private-config` owns private durable state
 - Mackup is historical only and is not part of the active ownership model
+- ownership for these paths stays in this repo, not in `machine-control`
 
 ## Scope
 
@@ -34,3 +35,7 @@ Run:
 
 By default the installer creates symlinks into `$HOME`. Use `--copy` to copy
 files instead, or `--dry-run` to preview actions.
+
+Direct repo-local install remains supported. For daily operator workflows,
+`machine-control` is the preferred single entrypoint, but it orchestrates this
+repo rather than owning its contents.

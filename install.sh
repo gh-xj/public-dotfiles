@@ -1,20 +1,42 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_name="$(basename "$0")"
+
+resolve_repo_root() {
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)" || return 1
+  printf '%s\n' "$script_dir"
+}
+
+die() {
+  printf '%s: %s\n' "$script_name" "$1" >&2
+  exit 1
+}
+
+repo_root="$(resolve_repo_root)" || die "unable to locate repository root"
+if [[ ! -f "$repo_root/install.sh" || ! -f "$repo_root/README.md" ]]; then
+  die "unable to locate repository root"
+fi
+
 home_root="${HOME}"
 backup_root="$repo_root/.install-backups/$(date +%Y%m%d-%H%M%S)"
 mode="symlink"
 dry_run=0
 
 usage() {
-  cat <<'EOF'
-Usage: ./install.sh [--copy] [--dry-run]
+  cat <<EOF
+Usage: $script_name [--copy] [--dry-run] [--help]
+
+Options:
+  --copy     copy files instead of creating symlinks
+  --dry-run  print actions without changing the filesystem
+  -h, --help show this help text
 EOF
 }
 
-for arg in "$@"; do
-  case "$arg" in
+while (($#)); do
+  case "$1" in
     --copy) mode="copy" ;;
     --dry-run) dry_run=1 ;;
     -h|--help)
@@ -22,11 +44,10 @@ for arg in "$@"; do
       exit 0
       ;;
     *)
-      echo "Unknown argument: $arg" >&2
-      usage >&2
-      exit 1
+      die "unsupported argument: $1"
       ;;
   esac
+  shift
 done
 
 run() {
