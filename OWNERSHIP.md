@@ -20,6 +20,7 @@ Representative live paths:
 
 - `$HOME/.zshrc`
 - `$HOME/.tmux.conf`
+- `$HOME/.config/karabiner`
 - `$HOME/.config/nvim`
 - `$HOME/.config/zed`
 

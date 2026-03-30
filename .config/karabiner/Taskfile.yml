@@ -1,0 +1,14 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  apply_rules:
+    cmds:
+      - python ./move_rules.py
+      # restart karabiner
+      - osascript -e 'quit app "Karabiner-Elements"'
+      - open -a Karabiner-Elements

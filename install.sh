@@ -121,6 +121,7 @@ entries=(
   ".config/ghostty"
   ".config/helix"
   ".config/joshuto"
+  ".config/karabiner"
   ".config/lazydocker"
   ".config/lazygit"
   ".config/nushell"
