@@ -75,8 +75,8 @@ keybind = global:cmd+shift+option+a=toggle_quick_terminal
 # keybind = all:cmd+shift+[=goto_split:left
 # keybind = all:cmd+shift+]=goto_split:right
 
-keybind = all:cmd+ctrl+h=text:\x04{
-keybind = all:cmd+ctrl+l=text:\x04}
+keybind = all:cmd+ctrl+h=text:\x13{
+keybind = all:cmd+ctrl+l=text:\x13}
 keybind = ctrl+digit_1=text:\x1ba
 keybind = ctrl+1=text:\x1ba
 keybind = ctrl+digit_2=text:\x1bb
@@ -97,11 +97,11 @@ keybind = ctrl+digit_9=text:\x1by
 keybind = ctrl+9=text:\x1by
 # Ghostty bridges shortcuts into tmux.
 # Prefix-backed shortcuts must match tmux's prefix byte; meta-backed shortcuts stay on \x1b.
-keybind = shift+left=text:\x04p
-keybind = shift+right=text:\x04n
-keybind = ctrl+shift+comma=text:\x04H
-keybind = ctrl+shift+period=text:\x04L
-keybind = super+t=text:\x04c
+keybind = shift+left=text:\x13p
+keybind = shift+right=text:\x13n
+keybind = ctrl+shift+comma=text:\x13H
+keybind = ctrl+shift+period=text:\x13L
+keybind = super+t=text:\x13c
 keybind = super+w=text:\x1bw
 keybind = super+d=text:\x1bd
 keybind = super+shift+d=new_split:down
@@ -124,10 +124,10 @@ keybind = super+digit_8=text:\x1b8
 keybind = super+8=text:\x1b8
 keybind = super+digit_9=text:\x1b0
 keybind = super+9=text:\x1b0
-keybind = all:super+shift+[=text:\x04h
-keybind = all:super+shift+j=text:\x04j
-keybind = all:super+shift+k=text:\x04k
-keybind = all:super+shift+]=text:\x04l
+keybind = all:super+shift+[=text:\x13h
+keybind = all:super+shift+j=text:\x13j
+keybind = all:super+shift+k=text:\x13k
+keybind = all:super+shift+]=text:\x13l
 
 # command = /bin/bash -c "exec /opt/homebrew/bin/nu"
 # command = /opt/homebrew/bin/zsh -c "exec /opt/homebrew/bin/nu"
