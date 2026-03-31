@@ -51,7 +51,7 @@ setup_aliases() {
     }
 
     claude() {
-        "$HOME/.claude-theme-sync.sh" "$@"
+        command claude "$@"
     }
 }
 
@@ -426,10 +426,10 @@ if [[ -o interactive && -n "${ZED_NOTIFY_TERMINAL:-}" ]]; then
     }
 
     claude() {
-        zed_notify_terminal "$HOME/.claude-theme-sync.sh" "$@"
+        zed_notify_terminal claude "$@"
     }
 
     claude-code() {
-        zed_notify_terminal "$HOME/.claude-theme-sync.sh" "$@"
+        zed_notify_terminal claude "$@"
     }
 fi
