@@ -69,6 +69,27 @@ run() {
   "$@"
 }
 
+ensure_tmux_catppuccin() {
+  local plugin_root="$home_root/.config/tmux/plugins/catppuccin"
+  local plugin_repo="$plugin_root/tmux"
+  local plugin_url="https://github.com/catppuccin/tmux.git"
+
+  run mkdir -p "$plugin_root"
+
+  if [[ -d "$plugin_repo/.git" ]]; then
+    run git -C "$plugin_repo" pull --ff-only
+    printf 'update %s\n' ".config/tmux/plugins/catppuccin/tmux"
+    return 0
+  fi
+
+  if [[ -e "$plugin_repo" ]]; then
+    backup_target "$plugin_repo"
+  fi
+
+  run git clone "$plugin_url" "$plugin_repo"
+  printf 'clone %s\n' ".config/tmux/plugins/catppuccin/tmux"
+}
+
 backup_target() {
   local target="$1"
   local rel="${target#"$home_root"/}"
@@ -155,6 +176,8 @@ entries=(
 for entry in "${entries[@]}"; do
   install_entry "$entry"
 done
+
+ensure_tmux_catppuccin
 
 if [[ "$dry_run" -eq 0 && -d "$backup_root" ]]; then
   printf 'backup %s\n' "$backup_root"
