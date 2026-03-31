@@ -147,7 +147,6 @@ install_entry() {
 entries=(
   ".bash_profile"
   ".bashrc"
-  ".claude-theme-sync.sh"
   ".config/.oh-my-posh.json"
   ".config/amethyst"
   ".config/bat"
