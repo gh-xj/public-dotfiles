@@ -90,6 +90,19 @@ ensure_tmux_catppuccin() {
   printf 'clone %s\n' ".config/tmux/plugins/catppuccin/tmux"
 }
 
+warn_tmux_legacy_state() {
+  local local_tmux="$home_root/.tmux.local.conf"
+  local legacy_sync="$home_root/.tmux-catppuccin-theme-sync.sh"
+
+  if [[ -f "$local_tmux" ]] && grep -q "tmux-catppuccin-theme-sync" "$local_tmux"; then
+    printf 'warn %s\n' "~/.tmux.local.conf still references tmux-catppuccin-theme-sync.sh"
+  fi
+
+  if [[ -e "$legacy_sync" ]]; then
+    printf 'warn %s\n' "~/.tmux-catppuccin-theme-sync.sh is legacy and no longer used by shared tmux config"
+  fi
+}
+
 backup_target() {
   local target="$1"
   local rel="${target#"$home_root"/}"
@@ -160,7 +173,6 @@ entries=(
   ".procs.toml"
   ".profile"
   ".skhdrc"
-  ".tmux-catppuccin-theme-sync.sh"
   ".tmux.conf"
   ".vim"
   ".vimrc"
@@ -178,6 +190,7 @@ for entry in "${entries[@]}"; do
 done
 
 ensure_tmux_catppuccin
+warn_tmux_legacy_state
 
 if [[ "$dry_run" -eq 0 && -d "$backup_root" ]]; then
   printf 'backup %s\n' "$backup_root"
