@@ -181,6 +181,7 @@ entries=(
   ".zsh"
   ".zshrc"
   "Library/Application Support/abnerworks.Typora"
+  "Library/Application Support/com.pais.handy/settings_store.json"
   "Library/Application Support/lazygit"
 )
 

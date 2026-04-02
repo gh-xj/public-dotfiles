@@ -1,8 +1,6 @@
 # OPENSPEC:START
 # OpenSpec shell completions configuration
 fpath=("$HOME/.zsh/completions" $fpath)
-autoload -Uz compinit
-compinit
 # OPENSPEC:END
 
 # Ensure Ghostty shell integration also loads in shells spawned later by
@@ -146,7 +144,7 @@ setup_plugins() {
         atinit"zicompinit; zicdreplay" zdharma-continuum/fast-syntax-highlighting
 
     # Load cached Starship prompt silently
-    if [[ ! -f ~/.cache/starship-init.zsh ]] || [[ ~/.config/starship.toml -nt ~/.cache/starship-init.zsh ]]; then
+    if [[ ! -f ~/.cache/starship-init.zsh ]] || [[ ~/.config/starship.toml -nt ~/.cache/starship-init.zsh ]] || [[ "$(command -v starship)" -nt ~/.cache/starship-init.zsh ]]; then
         mkdir -p ~/.cache
         starship init zsh > ~/.cache/starship-init.zsh 2>/dev/null
     fi
@@ -341,28 +339,6 @@ setup_utils() {
 
 }
 
-# Agent bridge setup for Codex + Claude interoperability
-setup_agent_bridges() {
-    mkdir -p "$HOME/.agents/skills"
-
-    if [[ ! -L "$HOME/.codex" ]]; then
-        mkdir -p "$HOME/.codex"
-    fi
-
-    if [[ -f "$HOME/.claude/CLAUDE.md" ]]; then
-        ln -snf "$HOME/.claude/CLAUDE.md" "$HOME/.codex/AGENTS.md"
-    fi
-
-    if [[ -d "$HOME/.claude/skills" ]]; then
-        ln -snf "$HOME/.claude/skills" "$HOME/.agents/skills/claude-skills"
-    fi
-
-    # Optional superpowers bridge if installed
-    if [[ -d "$HOME/.codex/superpowers/skills" ]]; then
-        ln -snf "$HOME/.codex/superpowers/skills" "$HOME/.agents/skills/superpowers"
-    fi
-}
-
 # Path setup (HOMEBREW_PREFIX already set by .zprofile via brew shellenv)
 setup_paths() {
     # Homebrew completions
@@ -382,7 +358,29 @@ init() {
     # Set up paths (Homebrew already initialized in .zprofile)
     setup_paths
 
-    setup_agent_bridges
+    autoload -Uz compinit
+    local zcompdump_file="${ZDOTDIR:-$HOME}/.zcompdump"
+    local rebuild_compdump=false
+
+    if [[ ! -f "$zcompdump_file" ]]; then
+        rebuild_compdump=true
+    else
+        zmodload zsh/stat 2>/dev/null
+        zmodload zsh/datetime 2>/dev/null
+        local -a zcompdump_stat
+        if zstat -A zcompdump_stat +mtime -- "$zcompdump_file" 2>/dev/null; then
+            local now=$EPOCHSECONDS
+            (( now - zcompdump_stat[1] > 86400 )) && rebuild_compdump=true
+        else
+            rebuild_compdump=true
+        fi
+    fi
+
+    if [[ "$rebuild_compdump" == true ]]; then
+        compinit -d "$zcompdump_file"
+    else
+        compinit -C -d "$zcompdump_file"
+    fi
 
     setup_plugins
 

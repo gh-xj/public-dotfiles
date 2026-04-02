@@ -2,6 +2,9 @@ lastupdatecheck: 0
 recentrepos:
     - /Users/xj/public-dotfiles
     - /Users/xj/github/atelier/tiktok
+    - /Users/xj/.config
+    - /Users/xj/github/atelier/atelier-collector-cli
+    - /Users/xj/Downloads/.config
     - /Users/xj/github/oss/openclaw
 startuppopupversion: 5
 didshowhunkstaginghint: false
