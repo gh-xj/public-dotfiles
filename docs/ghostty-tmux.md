@@ -22,6 +22,12 @@ Current tmux prefix:
 - `Ctrl-s`
 - Prefix byte: `\x13`
 
+Current pane swap behavior:
+
+- `prefix + {` swaps the active pane with the previous pane in the current window
+- `prefix + }` swaps the active pane with the next pane in the current window
+- Shared config binds these explicitly with `-s .` so a marked pane in another window/session is not used as the swap source
+
 Examples:
 
 - `super+t=text:\x13c` means Ghostty sends `prefix c` to tmux.
