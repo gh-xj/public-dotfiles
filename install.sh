@@ -168,6 +168,7 @@ entries=(
   ".config/lazygit"
   ".config/nushell"
   ".config/nvim"
+  ".config/opencode"
   ".config/ranger"
   ".config/skhd"
   ".config/starship.toml"

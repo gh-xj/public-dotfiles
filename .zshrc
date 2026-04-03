@@ -3,6 +3,9 @@
 fpath=("$HOME/.zsh/completions" $fpath)
 # OPENSPEC:END
 
+# Enable OpenCode web search globally when supported by the runtime/provider.
+export OPENCODE_ENABLE_EXA=1
+
 # Ensure Ghostty shell integration also loads in shells spawned later by
 # multiplexers such as Zellij, so command-finish notifications still work.
 if [[ -n "${GHOSTTY_RESOURCES_DIR:-}" && -r "${GHOSTTY_RESOURCES_DIR}/shell-integration/zsh/ghostty-integration" ]]; then
@@ -430,4 +433,9 @@ if [[ -o interactive && -n "${ZED_NOTIFY_TERMINAL:-}" ]]; then
     claude-code() {
         zed_notify_terminal claude "$@"
     }
+fi
+
+# OpenClaw completion
+if [[ -r "$HOME/.openclaw/completions/openclaw.zsh" ]]; then
+    source "$HOME/.openclaw/completions/openclaw.zsh"
 fi
