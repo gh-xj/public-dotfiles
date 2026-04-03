@@ -11,7 +11,7 @@ This repo is one live owner for its paths.
 - `public-dotfiles` owns the public reusable baseline
 - `private-config` owns private durable state
 - Mackup is historical only and is not part of the active ownership model
-- ownership for these paths stays in this repo, not in `machine-control`
+- the active architecture is `public-dotfiles` plus `private-config`
 
 ## Scope
 
@@ -30,7 +30,7 @@ archives belong in `private-config`, not here.
 Preferred daily entrypoint:
 
 ```bash
-machine-control install:public
+task -d ../private-config install:public
 ```
 
 Repo-local install remains supported when you want to work directly in this
