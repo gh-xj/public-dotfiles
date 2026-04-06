@@ -64,7 +64,7 @@ macos-option-as-alt = true
 # theme = catppuccin-frappe
 # theme = Catppuccin Latte
 # theme = Rose Pine Dawn
-theme = light:iTerm2 Solarized Light,dark:Catppuccin Frappe
+theme = light:Atom One Light,dark:One Dark Two
 # theme = ayu
 # theme = Atom
 

@@ -318,7 +318,7 @@ setup_utils() {
         [[ ! -f "$1" ]] && echo "File not found: $1" && return 1
         local count=0
         while IFS='=' read -r key value || [[ -n "$key" ]]; do
-            [[ "$key" =~ ^# ]] || [[ -z "$key" ]] && continue
+            [[ "$key" =~ ^# || -z "$key" ]] && continue
             value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//')
             export "$key=$value"
             ((count++))

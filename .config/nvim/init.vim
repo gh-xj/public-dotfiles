@@ -56,15 +56,13 @@ call plug#begin('~/.config/nvim/plugged')
 
 " Motion and Navigation
 Plug 'easymotion/vim-easymotion'            " Quick navigation (instead of leap)
-Plug 'ThePrimeagen/harpoon'                 " File navigation
 
 " File Explorer
 Plug 'preservim/nerdtree'                   " File system explorer
 Plug 'ryanoasis/vim-devicons'               " Icons for NERDTree
+Plug 'mikavilpas/yazi.nvim'                 " Yazi file manager integration
 
 " Fuzzy Finding
-Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }  " Fuzzy finder
-Plug 'junegunn/fzf.vim'                     " FZF integration for Vim
 Plug 'nvim-lua/plenary.nvim'                " Dependency
 Plug 'nvim-telescope/telescope.nvim'        " Fuzzy finder
 
@@ -98,7 +96,6 @@ Plug 'mrjones2014/smart-splits.nvim'        " Neovim/tmux split navigation
 Plug 'machakann/vim-highlightedyank'        " Highlight yanked text
 
 " Colorschemes
-Plug 'catppuccin/nvim', { 'as': 'catppuccin' }
 Plug 'rakr/vim-one'
 
 call plug#end()
@@ -119,34 +116,6 @@ let g:NERDTreeStatusline = ''
 " Auto close NERDTree when it's the last window
 autocmd BufEnter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 
-" FZF Configuration
-" Enable per-command history
-let g:fzf_history_dir = '~/.local/share/fzf-history'
-" Customize fzf colors to match color scheme
-let g:fzf_colors =
-\ { 'fg':      ['fg', 'Normal'],
-  \ 'bg':      ['bg', 'Normal'],
-  \ 'hl':      ['fg', 'Comment'],
-  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
-  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
-  \ 'hl+':     ['fg', 'Statement'],
-  \ 'info':    ['fg', 'PreProc'],
-  \ 'border':  ['fg', 'Ignore'],
-  \ 'prompt':  ['fg', 'Conditional'],
-  \ 'pointer': ['fg', 'Exception'],
-  \ 'marker':  ['fg', 'Keyword'],
-  \ 'spinner': ['fg', 'Label'],
-  \ 'header':  ['fg', 'Comment'] }
-
-" Set layout for FZF window
-let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.7 } }
-" Enable preview window for Files, GFiles, and Buffers commands
-command! -bang -nargs=? -complete=dir Files
-    \ call fzf#vim#files(<q-args>, fzf#vim#with_preview(), <bang>0)
-command! -bang -nargs=? -complete=dir GFiles
-    \ call fzf#vim#gitfiles(<q-args>, fzf#vim#with_preview(), <bang>0)
-command! -bang -nargs=? Buffers
-    \ call fzf#vim#buffers(<q-args>, fzf#vim#with_preview(), <bang>0)
 
 " Basic plugin initialization
 lua << EOF
@@ -205,9 +174,17 @@ if gitsigns then
   gitsigns.setup()
 end
 
+local yazi = safe_require('yazi')
+if yazi then
+  yazi.setup({
+    open_for_directories = true,
+    floating_window_scaling_factor = 0.9,
+  })
+end
+
 local lualine = safe_require('lualine')
 if lualine then
-  lualine.setup()
+  lualine.setup({ options = { theme = 'auto' } })
 end
 
 local bufferline = safe_require('bufferline')
@@ -459,14 +436,14 @@ nnoremap <silent> <C-q> :wq<CR>
 inoremap <silent> <C-q> <Esc>:wq<CR>
 vnoremap <silent> <C-q> <Esc>:wq<CR>
 
-" ----- FZF Mappings -----
-nnoremap <silent> <C-p> :Files<CR>
-nnoremap <silent> <leader>fp :Files<CR>
-nnoremap <silent> <leader>f :Files<CR>
-nnoremap <silent> <leader>gf :GFiles<CR>
-nnoremap <silent> <leader>b :Buffers<CR>
-nnoremap <silent> <leader>r :Rg<CR>
-nnoremap <silent> <leader>c :Commands<CR>
+" ----- Search Mappings (Telescope) -----
+nnoremap <silent> <C-p>      <cmd>Telescope find_files<cr>
+nnoremap <silent> <leader>f  <cmd>Telescope find_files<cr>
+nnoremap <silent> <leader>fp <cmd>Telescope find_files<cr>
+nnoremap <silent> <leader>gf <cmd>Telescope git_files<cr>
+nnoremap <silent> <leader>b  <cmd>Telescope buffers<cr>
+nnoremap <silent> <leader>r  <cmd>Telescope live_grep<cr>
+nnoremap <silent> <leader>c  <cmd>Telescope commands<cr>
 
 " ----- Split Navigation -----
 nnoremap <silent> <C-h> :lua require('smart-splits').move_cursor_left()<CR>
@@ -475,14 +452,6 @@ nnoremap <silent> <C-k> :lua require('smart-splits').move_cursor_up()<CR>
 nnoremap <silent> <C-j> :lua require('smart-splits').move_cursor_down()<CR>
 
 " ----- Daily Workflow Commands -----
-function! s:YaziHere()
-  let l:target = expand('%:p:h')
-  if empty(l:target)
-    let l:target = getcwd()
-  endif
-  execute 'terminal yazi ' . fnameescape(l:target)
-endfunction
-
 function! s:CloseBufferNoLayout()
   let l:current = bufnr('%')
   let l:list = filter(range(1, bufnr('$')), 'buflisted(v:val)')
@@ -498,16 +467,15 @@ function! s:CloseBufferNoLayout()
 endfunction
 
 command! LazyGit terminal lazygit
-command! YaziHere call <SID>YaziHere()
 command! CloseBufferNoLayout call <SID>CloseBufferNoLayout()
 
 nnoremap <silent> <leader>gg :LazyGit<CR>
-nnoremap <silent> <leader>yy :YaziHere<CR>
+nnoremap <silent> <leader>yy <cmd>Yazi<cr>
+nnoremap <silent> <leader>yp :let @+=expand('%:p')<CR>:echo 'Copied: ' . expand('%:p')<CR>
 nnoremap <silent> <leader>= :Format<CR>
-nnoremap <silent> <leader>m :Marks<CR>
-nnoremap <silent> <leader>h :History<CR>
-nnoremap <silent> <leader>/ :BLines<CR>
-nnoremap <silent> <leader>' :Snippets<CR>
+nnoremap <silent> <leader>m  <cmd>Telescope marks<cr>
+nnoremap <silent> <leader>h  <cmd>Telescope oldfiles<cr>
+nnoremap <silent> <leader>/  <cmd>Telescope current_buffer_fuzzy_find<cr>
 nnoremap <silent> <leader>x :CloseBufferNoLayout<CR>
 
 " ----- Telescope Mappings -----

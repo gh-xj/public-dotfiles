@@ -69,35 +69,6 @@ run() {
   "$@"
 }
 
-ensure_tmux_catppuccin() {
-  local plugin_root="$home_root/.config/tmux/plugins/catppuccin"
-  local plugin_repo="$plugin_root/tmux"
-  local plugin_url="https://github.com/catppuccin/tmux.git"
-  local current_branch upstream_ref
-
-  run mkdir -p "$plugin_root"
-
-  if [[ -d "$plugin_repo/.git" ]]; then
-    current_branch="$(git -C "$plugin_repo" symbolic-ref -q --short HEAD || true)"
-    upstream_ref="$(git -C "$plugin_repo" rev-parse -q --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
-
-    if [[ -z "$current_branch" || -z "$upstream_ref" ]]; then
-      printf 'warn %s\n' ".config/tmux/plugins/catppuccin/tmux update skipped; checkout has no branch/upstream"
-      return 0
-    fi
-
-    run git -C "$plugin_repo" pull --ff-only
-    printf 'update %s\n' ".config/tmux/plugins/catppuccin/tmux"
-    return 0
-  fi
-
-  if [[ -e "$plugin_repo" ]]; then
-    backup_target "$plugin_repo"
-  fi
-
-  run git clone "$plugin_url" "$plugin_repo"
-  printf 'clone %s\n' ".config/tmux/plugins/catppuccin/tmux"
-}
 
 warn_tmux_legacy_state() {
   local local_tmux="$home_root/.tmux.local.conf"
@@ -199,7 +170,6 @@ for entry in "${entries[@]}"; do
   install_entry "$entry"
 done
 
-ensure_tmux_catppuccin
 warn_tmux_legacy_state
 
 if [[ "$dry_run" -eq 0 && -d "$backup_root" ]]; then
