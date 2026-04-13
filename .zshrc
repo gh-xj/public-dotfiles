@@ -133,11 +133,6 @@ setup_plugins() {
         hlissner/zsh-autopair \
         MichaelAquilina/zsh-you-should-use
 
-    # Init zoxide with --cmd j to avoid zi/zinit alias conflict
-    # Creates `j` (jump) and `ji` (interactive) commands
-    export _ZO_FZF_OPTS="$FZF_DEFAULT_OPTS"
-    eval "$(zoxide init zsh --cmd j)"
-
     # Load atuin before syntax highlighting to avoid widget conflicts
     zinit wait'0c' lucid light-mode for \
         atinit"export ATUIN_NOBIND='true'" atload"bindkey '^r' atuin-search" atuinsh/atuin
@@ -440,50 +435,68 @@ if [[ -r "$HOME/.openclaw/completions/openclaw.zsh" ]]; then
     source "$HOME/.openclaw/completions/openclaw.zsh"
 fi
 
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.lu3CVKGg6l/install:$PATH"
+# Initialize zoxide last so it can install its hooks cleanly.
+# Keep interactive mode light; the shared FZF preview is too heavy here.
+export _ZO_DOCTOR=0
+export _ZO_FZF_OPTS='--height 60% --layout reverse --border top --extended --no-sort'
+eval "$(zoxide init zsh --cmd j)"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.TcfPoZsrU7/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.dBuoYfIQqK/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.rLP7hH9TAh/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.m4kNbCC0xi/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.eWWgTPtenJ/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.TJspu2XH6P/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.4Fs4WyLZdS/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.cxwZGtrA30/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.Lq19HvpXyc/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.Nb0zZjWmtA/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.DiVvNb99ps/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.6a8Qc7fdJE/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.IH7LYD0bYD/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.hZzrs73XSw/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.aBbnoPjnWO/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.gc0r1dwNRL/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.inLmElaPF0/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.RzKhoP8ktb/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.tx69fTMpeU/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.AAIEEpMFHV/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.f92USuvlMd/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.dAXSFmLcTw/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.33zsLmXORu/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.S3NcpBieoa/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.4EtL1NwCgC/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.rHDFWiNRlJ/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.31GX9XCXXm/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.8hM9dwNs4e/install:$PATH"
 
 # Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.BFkK5jgsnO/install:$PATH"
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.8SFCUpoI7x/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.wZwSPZO1oP/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.VAP7At5Qlb/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.IJ0RHEkHCl/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.4Y65WhTMqr/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.90H2wBMhFh/install:$PATH"
