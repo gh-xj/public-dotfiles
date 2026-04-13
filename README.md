@@ -10,7 +10,6 @@ This repo is one live owner for its paths.
 - each live path has exactly one owner
 - `public-dotfiles` owns the public reusable baseline
 - `private-config` owns private durable state
-- Mackup is historical only and is not part of the active ownership model
 - the active architecture is `public-dotfiles` plus `private-config`
 
 ## Scope
@@ -21,9 +20,11 @@ This repo keeps only reusable and publishable configuration:
 - editor config
 - CLI tool config
 - window manager and desktop preferences
+- public-safe Claude/Codex policy and baseline settings
 
-Private agent state, credentials, account-specific material, and personal
-archives belong in `private-config`, not here.
+Private agent runtime state, credentials, custom provider endpoints,
+project-trust lists, marketplace state, and personal archives belong in
+`private-config`, not here.
 
 ## Install
 
@@ -42,6 +43,23 @@ checkout:
 
 By default the installer creates symlinks into `$HOME`. Use `--copy` to copy
 files instead, or `--dry-run` to preview actions.
+
+## Agent Baseline
+
+This repo now publishes the reusable Claude/Codex baseline:
+
+- `~/.claude/CLAUDE.md`
+- `~/.claude/settings.json`
+- `~/.claude/hooks/`
+- `~/.claude/statusline-command.sh`
+- `~/.codex/AGENTS.md`
+- `~/.codex/config.toml`
+- `~/.codex/rules/default.rules`
+
+The private repo continues to own agent runtime and account-local material such
+as `settings.local.json`, plugin registry state, skills trees, sessions, auth,
+and per-project trust or provider overrides. A short reference lives in
+`docs/agent-config.md`.
 
 ## Onboarding notes
 

@@ -439,3 +439,51 @@ fi
 if [[ -r "$HOME/.openclaw/completions/openclaw.zsh" ]]; then
     source "$HOME/.openclaw/completions/openclaw.zsh"
 fi
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.lu3CVKGg6l/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.TcfPoZsrU7/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.rLP7hH9TAh/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.eWWgTPtenJ/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.4Fs4WyLZdS/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.Lq19HvpXyc/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.DiVvNb99ps/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.IH7LYD0bYD/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.aBbnoPjnWO/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.inLmElaPF0/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.tx69fTMpeU/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.f92USuvlMd/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.33zsLmXORu/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.4EtL1NwCgC/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.31GX9XCXXm/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.BFkK5jgsnO/install:$PATH"

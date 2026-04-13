@@ -6,3 +6,4 @@
 .install-backups/
 .config/zed/prompts/**/*.mdb/lock.mdb
 /Library/Application Support/lazygit/state.yml
+/.omx

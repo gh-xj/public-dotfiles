@@ -6,6 +6,7 @@ set clipboard=unnamedplus
 set expandtab                   " Use spaces instead of tabs
 set tabstop=2 shiftwidth=2      " Set tab width
 set scrolloff=8                 " Keep cursor away from screen edge
+set number                      " Show absolute line numbers by default
 set termguicolors               " Better color support
 set undofile                    " Persistent undo history
 set timeout
@@ -85,6 +86,7 @@ Plug 'lewis6991/gitsigns.nvim'              " Git status in gutter
 Plug 'windwp/nvim-autopairs'                " Auto-close pairs
 Plug 'numToStr/Comment.nvim'                " Quick commenting
 Plug 'kylechui/nvim-surround'               " Surroundings
+Plug 'chrisgrieser/nvim-various-textobjs'  " Additional text objects, including indent objects
 
 " UI Enhancements
 Plug 'nvim-lualine/lualine.nvim'            " Status line
@@ -142,6 +144,15 @@ end
 local autopairs = safe_require('nvim-autopairs')
 if autopairs then
   autopairs.setup()
+end
+
+local various_textobjs = safe_require('various-textobjs')
+if various_textobjs then
+  various_textobjs.setup({
+    keymaps = {
+      useDefaults = true,
+    },
+  })
 end
 
 local which_key = safe_require('which-key')
@@ -403,6 +414,8 @@ nnoremap <Up> <C-y>
 nnoremap <Down> <C-e>
 vnoremap <Up> <C-y>
 vnoremap <Down> <C-e>
+nnoremap <silent> <Left> :tabprevious<CR>
+nnoremap <silent> <Right> :tabnext<CR>
 
 " ----- Editing -----
 " Removed s mapping since we're using it for EasyMotion
@@ -416,14 +429,16 @@ nnoremap <silent> <C-s> :b#<CR>
 inoremap <silent> <C-s> <Esc>:b#<CR>
 vnoremap <silent> <C-s> <Esc>:b#<CR>
 
-" Zed habit: F1..F7 jump to tab index, F10 jump last tab
-nnoremap <silent> <F1> :silent! b1<CR>
-nnoremap <silent> <F2> :silent! b2<CR>
-nnoremap <silent> <F3> :silent! b3<CR>
-nnoremap <silent> <F4> :silent! b4<CR>
-nnoremap <silent> <F5> :silent! b5<CR>
-nnoremap <silent> <F6> :silent! b6<CR>
-nnoremap <silent> <F7> :silent! b7<CR>
+" Zed habit: F1..F9 jump to tab index, F10 jump last buffer
+nnoremap <silent> <F1> :1tabnext<CR>
+nnoremap <silent> <F2> :2tabnext<CR>
+nnoremap <silent> <F3> :3tabnext<CR>
+nnoremap <silent> <F4> :4tabnext<CR>
+nnoremap <silent> <F5> :5tabnext<CR>
+nnoremap <silent> <F6> :6tabnext<CR>
+nnoremap <silent> <F7> :7tabnext<CR>
+nnoremap <silent> <F8> :8tabnext<CR>
+nnoremap <silent> <F9> :9tabnext<CR>
 nnoremap <silent> <F10> :b#<CR>
 nnoremap <silent> ]b :bnext<CR>
 nnoremap <silent> [b :bprevious<CR>
@@ -473,6 +488,7 @@ nnoremap <silent> <leader>gg :LazyGit<CR>
 nnoremap <silent> <leader>yy <cmd>Yazi<cr>
 nnoremap <silent> <leader>yp :let @+=expand('%:p')<CR>:echo 'Copied: ' . expand('%:p')<CR>
 nnoremap <silent> <leader>= :Format<CR>
+nnoremap <silent> <leader>sv :source ~/.config/nvim/init.vim<CR>
 nnoremap <silent> <leader>m  <cmd>Telescope marks<cr>
 nnoremap <silent> <leader>h  <cmd>Telescope oldfiles<cr>
 nnoremap <silent> <leader>/  <cmd>Telescope current_buffer_fuzzy_find<cr>
@@ -482,6 +498,7 @@ nnoremap <silent> <leader>x :CloseBufferNoLayout<CR>
 nnoremap <silent> <leader>tf <cmd>Telescope find_files<cr>
 nnoremap <silent> <leader>tg <cmd>Telescope live_grep<cr>
 nnoremap <silent> <leader>tb <cmd>Telescope buffers<cr>
+nnoremap <silent> <leader>tk <cmd>Telescope keymaps<cr>
 nnoremap <silent> <leader>th <cmd>Telescope help_tags<cr>
 
 " ----- Window Management -----

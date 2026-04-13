@@ -148,7 +148,7 @@
     "push_to_talk": true,
     "recording_retention_period": "preserve_limit",
     "selected_language": "auto",
-    "selected_microphone": "DJI MIC MINI",
+    "selected_microphone": null,
     "selected_model": "sense-voice-int8",
     "selected_output_device": null,
     "show_tray_icon": false,
