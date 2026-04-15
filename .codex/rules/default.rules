@@ -1,3 +1,0 @@
-prefix_rule(pattern=["gh", "pr", "view"], decision="allow")
-prefix_rule(pattern=["gh", "pr", "comment"], decision="allow")
-prefix_rule(pattern=["task", "verify"], decision="allow")
