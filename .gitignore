@@ -8,3 +8,4 @@
 /Library/Application Support/lazygit/state.yml
 /.omx
 /docs/human-requests
+/.config/nvim/plugged/bufferline.nvim
