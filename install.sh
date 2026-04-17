@@ -152,7 +152,6 @@ entries=(
   ".config/zed"
   ".config/zellij"
   ".codex/AGENTS.md"
-  ".codex/config.toml"
   ".codex/rules"
   ".hushlogin"
   ".ideavimrc"
@@ -173,9 +172,57 @@ entries=(
   "Library/Application Support/lazygit"
 )
 
+# Merge top-level key=value settings from the dotfiles baseline into the live
+# ~/.codex/config.toml without clobbering project-trust entries that Codex
+# writes back dynamically.  Sections ([tui], [features], etc.) are left alone
+# because Codex also owns those.
+merge_codex_config() {
+  local src="$repo_root/.codex/config.toml"
+  local dst="$home_root/.codex/config.toml"
+
+  run mkdir -p "$(dirname "$dst")"
+
+  if [[ ! -f "$dst" ]]; then
+    run cp "$src" "$dst"
+    printf 'copy %s\n' ".codex/config.toml"
+    return 0
+  fi
+
+  local -a to_prepend=()
+  local in_section=0
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^\[.*\] ]]; then
+      in_section=1
+    elif [[ "$in_section" -eq 0 && "$line" =~ ^[a-z_]+[[:space:]]*=.* ]]; then
+      local key="${line%%=*}"
+      key="${key%%+([[:space:]])}"
+      key="${key%% }"
+      if ! grep -q "^${key}[[:space:]]*=" "$dst"; then
+        to_prepend+=("$line")
+      fi
+    fi
+  done < "$src"
+
+  if [[ ${#to_prepend[@]} -gt 0 ]]; then
+    if [[ "$dry_run" -eq 0 ]]; then
+      local tmp
+      tmp="$(mktemp)"
+      printf '%s\n' "${to_prepend[@]}" > "$tmp"
+      printf '\n' >> "$tmp"
+      cat "$dst" >> "$tmp"
+      mv "$tmp" "$dst"
+    fi
+    printf 'merge .codex/config.toml (%d settings injected)\n' "${#to_prepend[@]}"
+  else
+    printf 'skip %s\n' ".codex/config.toml"
+  fi
+}
+
 for entry in "${entries[@]}"; do
   install_entry "$entry"
 done
+
+merge_codex_config
 
 warn_tmux_legacy_state
 

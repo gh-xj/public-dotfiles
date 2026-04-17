@@ -1,7 +1,7 @@
 # Public-safe Codex baseline. Keep custom providers, per-project trust, auth,
 # and runtime state in the private repo or live home directory.
 model_reasoning_effort = "xhigh"
-model_provider = "OpenAI"
+model_provider = "openai"
 model = "gpt-5.4"
 review_model = "gpt-5.4"
 personality = "pragmatic"

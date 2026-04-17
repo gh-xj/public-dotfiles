@@ -500,3 +500,57 @@ export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.4Y65WhTMqr/ins
 
 # Added by Loong installer
 export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.90H2wBMhFh/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.c62n9Dx4TP/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.67DGWqxEAZ/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.ZZmnKuKzfK/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.bBQdRHPir8/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.u7DxD69twT/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.9PhKiGkT67/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.GW4LON5DJv/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.XBidnJPaco/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.YWNXG2PheG/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.Mz8iEmN602/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.zoOsoWv2F4/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.U2j3b4n4bN/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.wH4FLFcyrv/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.zaoZwi53Eu/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.bDGvXiAMQR/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.sHUNmqD33i/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.Yiu6YiPZoL/install:$PATH"
+
+# Added by Loong installer
+export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.lgK5LsEHmD/install:$PATH"
