@@ -6,7 +6,12 @@ setup_environment() {
     export GIT_EDITOR='nvim'
     export XDG_CONFIG_HOME="$HOME/.config"
     export GOPATH="$HOME/go"
+    export BUN_INSTALL="$HOME/.bun"
     export HOMEBREW_AUTO_UPDATE_SECS=604800
+
+    # sccache: shared Rust compiler cache on the 4T volume (see ~/.cargo/config.toml)
+    export SCCACHE_DIR="/Volumes/xj-sandisk-4T/dev/.sccache"
+    export SCCACHE_CACHE_SIZE="20G"
 
     # Initialize Homebrew (sets HOMEBREW_PREFIX, PATH, MANPATH, INFOPATH)
     # Cached to avoid ~30ms subprocess per login shell
@@ -22,8 +27,13 @@ setup_environment() {
         source "$_brew_cache"
     fi
 
-    # Remove duplicates (covers all PATH additions across zsh init files)
-    typeset -U PATH
+    # Dev tool bins (.local/bin is prepended in .zshenv)
+    export PATH="$HOME/go/bin:$HOME/.cargo/bin:$BUN_INSTALL/bin:$PATH"
+
+    # Remove duplicates (covers all PATH additions across zsh init files).
+    # -g required so the tied-unique attribute sticks to the global PATH
+    # instead of being scoped local to this function.
+    typeset -gU PATH
 
     # Set XDG_CONFIG_HOME for launchctl (macOS)
     /bin/launchctl setenv XDG_CONFIG_HOME "$HOME/.config" 2>/dev/null || true

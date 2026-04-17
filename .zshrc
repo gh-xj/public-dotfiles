@@ -1,22 +1,12 @@
-# OPENSPEC:START
-# OpenSpec shell completions configuration
-fpath=("$HOME/.zsh/completions" $fpath)
-# OPENSPEC:END
-
-# Enable OpenCode web search globally when supported by the runtime/provider.
-export OPENCODE_ENABLE_EXA=1
-
 # Ensure Ghostty shell integration also loads in shells spawned later by
-# multiplexers such as Zellij, so command-finish notifications still work.
+# multiplexers (e.g. tmux), so command-finish notifications still work.
 if [[ -n "${GHOSTTY_RESOURCES_DIR:-}" && -r "${GHOSTTY_RESOURCES_DIR}/shell-integration/zsh/ghostty-integration" ]]; then
     source "${GHOSTTY_RESOURCES_DIR}/shell-integration/zsh/ghostty-integration"
 fi
 
 # Aliases and basic shell behavior
+# (EDITOR/VISUAL are set in .zprofile so they propagate to non-interactive shells)
 setup_aliases() {
-    export EDITOR='nvim'
-    export VISUAL='nvim'
-
     # Navigation shortcuts (j/ji provided by zoxide --cmd j)
     alias ..='cd ..'
     alias -- -='cd -'
@@ -28,20 +18,7 @@ setup_aliases() {
     alias lg='lazygit'
     alias s='fastfetch'
     alias k='kubectl'
-    alias c='code'
-    alias co='code .'
     alias b='nvim .'
-
-    # Alias/function completion support
-    unalias zj 2>/dev/null
-    unalias jz 2>/dev/null
-    setopt complete_aliases
-    jz() { zellij attach "$@"; }
-    zj() { zellij "$@"; }
-    compdef -d zj 2>/dev/null
-    compdef -d jz 2>/dev/null
-    compdef _zj_completion zj
-    compdef _zj_session_completion jz
 
     t() {
         if (( $# == 0 )); then
@@ -50,29 +27,6 @@ setup_aliases() {
             tmux "$@"
         fi
     }
-
-    claude() {
-        command claude "$@"
-    }
-}
-
-# Dynamic completion for `jz <session>`
-_zj_session_completion() {
-    local -a sessions
-    sessions=("${(@f)$(zellij list-sessions --short --no-formatting 2>/dev/null)}")
-    sessions=("${sessions[@]:#}")
-    if (( ${#sessions[@]} > 0 )); then
-        _values 'zellij session' ${sessions[@]}
-    fi
-}
-
-_zj_completion() {
-    if (( CURRENT >= 2 && words[2] == "attach" )); then
-        _zj_session_completion
-        return 0
-    fi
-
-    _zellij
 }
 
 # FZF preview command (shared by FZF_DEFAULT_OPTS and yazi wrapper)
@@ -91,7 +45,7 @@ setup_fzf() {
     _fzf_compgen_dir() { fd --type d --hidden --follow --exclude ".git" . "$1"; }
 
     # Carapace completion
-    export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
+    export CARAPACE_BRIDGES='zsh,bash'
     zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 }
 
@@ -112,17 +66,16 @@ setup_plugins() {
     # Configure autosuggestions
     typeset -g ZSH_AUTOSUGGEST_USE_ASYNC=true
 
-    # Configure zsh-vi-mode cursor shapes
+    # Configure zsh-vi-mode (cursor vars must be set inside zvm_config so they
+    # resolve *after* vi-mode defines $ZVM_CURSOR_* constants)
     export ZVM_CURSOR_STYLE_ENABLED=true
-    export ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
-    export ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
-    export ZVM_VISUAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
-    export ZVM_VISUAL_LINE_MODE_CURSOR=$ZVM_CURSOR_BLOCK
-    export ZVM_OPPEND_MODE_CURSOR=$ZVM_CURSOR_BLINKING_UNDERLINE
-
-    # Custom config function for zsh-vi-mode
     zvm_config() {
         ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
+        ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
+        ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
+        ZVM_VISUAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
+        ZVM_VISUAL_LINE_MODE_CURSOR=$ZVM_CURSOR_BLOCK
+        ZVM_OPPEND_MODE_CURSOR=$ZVM_CURSOR_BLINKING_UNDERLINE
     }
 
     # Load essential plugins
@@ -148,44 +101,10 @@ setup_plugins() {
     fi
     source ~/.cache/starship-init.zsh 2>/dev/null
 
-    # Reset terminal title to current directory before each prompt and
-    # surface agent sessions more clearly inside Zed terminals.
-    _set_terminal_title_literal() { printf '\033]2;%s\007' "$1" }
+    # Reset terminal title to current directory before each prompt.
     _set_terminal_title() {
         [[ -n "$TMUX" ]] && return 0
         print -Pn "\e]2;%~\a"
-    }
-    _git_repo_title() {
-        local root="${$(git rev-parse --show-toplevel 2>/dev/null):-}"
-        [[ -n "$root" ]] && print -r -- "${root:t}" || print -r -- "${PWD:t}"
-    }
-    _git_branch_title() {
-        git symbolic-ref --quiet --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null
-    }
-    _set_agent_terminal_title() {
-        [[ -n "$TMUX" ]] && return 0
-        [[ -n "${ZED_TERM:-}" ]] || return 0
-
-        local -a words
-        local word tool repo branch title
-        words=(${(z)1})
-
-        for word in "${words[@]}"; do
-            case "$word" in
-                *=*|env|command|noglob) continue ;;
-                claude|*/claude) tool="claude"; break ;;
-                codex|*/codex) tool="codex"; break ;;
-                *) break ;;
-            esac
-        done
-
-        [[ -n "$tool" ]] || return 0
-
-        repo="$(_git_repo_title)"
-        branch="$(_git_branch_title)"
-        title="$tool $repo"
-        [[ -n "$branch" ]] && title+=":$branch"
-        _set_terminal_title_literal "$title"
     }
 
     _ghostty_tmux_passthrough_osc() {
@@ -225,30 +144,8 @@ setup_plugins() {
         return $cmd_status
     }
 
-    add-zsh-hook preexec _set_agent_terminal_title
+    autoload -Uz add-zsh-hook
     add-zsh-hook precmd _set_terminal_title
-}
-
-# Lazy loading for heavy tools
-setup_lazy_loading() {
-    # NVM lazy loading
-    nvm() {
-        unfunction nvm
-        export NVM_DIR="$HOME/.nvm"
-        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-        nvm "$@"
-    }
-
-    # Conda lazy loading (uses cached hook from .zshenv)
-    conda() {
-        unfunction conda
-        source "$HOME/.cache/conda-hook.zsh" 2>/dev/null || {
-            echo "Conda: cache missing, regenerating..."
-            /opt/homebrew/Caskroom/miniforge/base/bin/conda shell.zsh hook > "$HOME/.cache/conda-hook.zsh" 2>/dev/null
-            source "$HOME/.cache/conda-hook.zsh"
-        }
-        conda "$@"
-    }
 }
 
 # Custom key bindings
@@ -282,79 +179,30 @@ setup_keybindings() {
 
 # Utility functions and tools
 setup_utils() {
-    # Enhanced file navigation
-    f() {
-        local dir="${1:-$HOME}"
-        FZF_DEFAULT_COMMAND="fd . $dir" fzf
-    }
-
-    function y() {
+    # Yazi wrapper: on exit, cd into the directory yazi was browsing.
+    y() {
         local FZF_DEFAULT_OPTS="--extended --no-sort --reverse --preview \"$_FZF_PREVIEW\" --preview-window=\"right:60%:wrap\""
-    	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-    	yazi "$@" --cwd-file="$tmp"
-    	IFS= read -r -d '' cwd < "$tmp"
-    	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
-    	rm -f -- "$tmp"
+        local tmp cwd
+        tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+        yazi "$@" --cwd-file="$tmp"
+        IFS= read -r -d '' cwd < "$tmp"
+        [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+        rm -f -- "$tmp"
     }
 
-    # Navigate to parent directory of file
-    cd-parent() { cd "$(dirname "$1")"; }
-
-    # Interactive ripgrep search
-    rga() {
-        local file
-        file="$(FZF_DEFAULT_COMMAND="rga --files-with-matches '$1'" \
-            fzf --preview="rga --pretty --context 5 {q} {}" --phony -q "$1" \
-            --bind "change:reload:rga --files-with-matches {q}")" && open "$file"
-    }
-
-    # Load environment variables from file
-    load-dotenv() {
-        [[ ! -f "$1" ]] && echo "File not found: $1" && return 1
-        local count=0
-        while IFS='=' read -r key value || [[ -n "$key" ]]; do
-            [[ "$key" =~ ^# || -z "$key" ]] && continue
-            value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//')
-            export "$key=$value"
-            ((count++))
-        done < "$1"
-        echo "Loaded $count environment variables from $1"
-    }
-
-    # Pipe command output into the current editor.
-    pipe-to-editor() {
-        local tmp=$(mktemp -t "editor-pipe.XXXXXX")
-        cat > "$tmp"
-        "${EDITOR:-nvim}" "$tmp"
-        echo "Output saved to $tmp"
-    }
-    alias pipe-to-nvim='pipe-to-editor'
-    # Shell performance benchmarks using hyperfine
+    # Shell startup benchmarks
     alias benchmark_shell="hyperfine --warmup 3 --runs 10 'zsh -i -c exit'"
     alias benchmark_shell_quick="hyperfine 'zsh -i -c exit'"
     alias benchmark_shell_detailed="hyperfine --warmup 5 --runs 20 --show-output 'zsh -i -c exit'"
-    alias benchmark_shells="hyperfine --warmup 2 'zsh -i -c exit' 'bash -i -c exit' 'fish -c exit' 'nu -c exit'"
-
-}
-
-# Path setup (HOMEBREW_PREFIX already set by .zprofile via brew shellenv)
-setup_paths() {
-    # Homebrew completions
-    if [[ -d "${HOMEBREW_PREFIX:-/opt/homebrew}/share/zsh/site-functions" ]]; then
-        fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" $fpath)
-    fi
-
-    # Dev tool paths (.local/bin already set in .zshenv)
-    export PATH="$HOME/go/bin:$HOME/.cargo/bin:$PATH"
-
-    # Deduplicate PATH
-    typeset -U PATH
 }
 
 # Main initialization
+# (PATH is fully composed in .zprofile; this file only handles interactive concerns)
 init() {
-    # Set up paths (Homebrew already initialized in .zprofile)
-    setup_paths
+    # Homebrew completions must be on fpath before compinit
+    if [[ -d "${HOMEBREW_PREFIX:-/opt/homebrew}/share/zsh/site-functions" ]]; then
+        fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" $fpath)
+    fi
 
     autoload -Uz compinit
     local zcompdump_file="${ZDOTDIR:-$HOME}/.zcompdump"
@@ -388,47 +236,16 @@ init() {
     zvm_after_init_commands+=(
         'setup_aliases'
         'setup_fzf'
-        'setup_lazy_loading'
         'setup_keybindings'  # MUST be after vi-mode to prevent override conflicts
         'setup_utils'
     )
 
-    # Deferred completions and tool paths (zinit turbo-loaded after compinit)
-    # ZeroClaw completions (cached, background-regenerated)
-    if [[ ! -f ~/.cache/zeroclaw-completion.zsh ]] || [[ "$(command -v zeroclaw)" -nt ~/.cache/zeroclaw-completion.zsh ]]; then
-        zeroclaw completions zsh > ~/.cache/zeroclaw-completion.zsh 2>/dev/null &!
-    fi
-    # Bun
-    export BUN_INSTALL="$HOME/.bun"
-    export PATH="$BUN_INSTALL/bin:$PATH"
-
-    # Defer completion/runtime snippets together to avoid loading `null` twice
+    # Defer bun completion until after compinit finishes (PATH set in .zprofile)
     zinit wait'0e' lucid light-mode as'null' for \
-        atinit'[[ -f ~/.cache/zeroclaw-completion.zsh ]] && source ~/.cache/zeroclaw-completion.zsh; \
-              [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"' zdharma-continuum/null
-
+        atinit'[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"' zdharma-continuum/null
 }
 
 init
-
-# Ensure AI notification wrappers are only active in interactive Zed terminal sessions.
-if [[ -o interactive && -n "${ZED_NOTIFY_TERMINAL:-}" ]]; then
-    zed_notify_terminal() {
-        ~/.config/zed/scripts/zed-notify-terminal.sh "$@"
-    }
-
-    codex() {
-        zed_notify_terminal codex "$@"
-    }
-
-    claude() {
-        zed_notify_terminal claude "$@"
-    }
-
-    claude-code() {
-        zed_notify_terminal claude "$@"
-    }
-fi
 
 # OpenClaw completion
 if [[ -r "$HOME/.openclaw/completions/openclaw.zsh" ]]; then
@@ -441,116 +258,3 @@ export _ZO_DOCTOR=0
 export _ZO_FZF_OPTS='--height 60% --layout reverse --border top --extended --no-sort'
 eval "$(zoxide init zsh --cmd j)"
 
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.dBuoYfIQqK/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.m4kNbCC0xi/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.TJspu2XH6P/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.cxwZGtrA30/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.Nb0zZjWmtA/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.6a8Qc7fdJE/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.hZzrs73XSw/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.gc0r1dwNRL/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.RzKhoP8ktb/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.AAIEEpMFHV/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.dAXSFmLcTw/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.S3NcpBieoa/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.rHDFWiNRlJ/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.8hM9dwNs4e/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.8SFCUpoI7x/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.wZwSPZO1oP/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.VAP7At5Qlb/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.IJ0RHEkHCl/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.4Y65WhTMqr/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.90H2wBMhFh/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.c62n9Dx4TP/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.67DGWqxEAZ/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.ZZmnKuKzfK/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.bBQdRHPir8/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.u7DxD69twT/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.9PhKiGkT67/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.GW4LON5DJv/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.XBidnJPaco/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.YWNXG2PheG/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.Mz8iEmN602/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.zoOsoWv2F4/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.U2j3b4n4bN/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.wH4FLFcyrv/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.zaoZwi53Eu/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.bDGvXiAMQR/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.sHUNmqD33i/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.Yiu6YiPZoL/install:$PATH"
-
-# Added by Loong installer
-export PATH="/var/folders/rd/g9lhy43d6v574jcbpz1xt2fc0000gn/T/tmp.lgK5LsEHmD/install:$PATH"
