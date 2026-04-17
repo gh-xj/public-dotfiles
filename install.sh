@@ -125,8 +125,6 @@ install_entry() {
 }
 
 entries=(
-  ".bash_profile"
-  ".bashrc"
   ".claude/CLAUDE.md"
   ".claude/hooks"
   ".claude/settings.json"
@@ -143,11 +141,7 @@ entries=(
   ".codex/AGENTS.md"
   ".codex/rules"
   ".hushlogin"
-  ".procs.toml"
-  ".profile"
   ".tmux.conf"
-  ".vim"
-  ".vimrc"
   ".zlogin"
   ".zprofile"
   ".zsh"
