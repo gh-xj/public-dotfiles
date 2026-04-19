@@ -2,14 +2,14 @@ version: "3"
 
 tasks:
   install:
-    desc: Install public dotfiles into $HOME
+    desc: Install public dotfiles and private-config when available
     cmds:
-      - ./install.sh
+      - ./install.sh {{.CLI_ARGS}}
 
-  install:dry-run:
-    desc: Preview public dotfile install actions
+  private:init:
+    desc: Scaffold a local-only private-config overlay repo
     cmds:
-      - ./install.sh --dry-run
+      - ./init-private-overlay.sh
 
   help:
     desc: Show available tasks

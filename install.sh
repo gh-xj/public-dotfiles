@@ -32,24 +32,47 @@ repo_root="$(resolve_repo_root)" || die "must be run from the repo checkout root
 
 home_root="${HOME}"
 backup_root="$repo_root/.install-backups/$(date +%Y%m%d-%H%M%S)"
+default_private_repo="$(cd "$repo_root/.." && pwd -P)/private-config"
+private_repo="$default_private_repo"
+private_repo_explicit=0
 mode="symlink"
 dry_run=0
+public_only=0
+installer_args=()
+
+if [[ -n "${PRIVATE_REPO_DIR+x}" ]]; then
+  private_repo="${PRIVATE_REPO_DIR}"
+  private_repo_explicit=1
+fi
 
 usage() {
   cat <<EOF
-Usage: $script_name [--copy] [--dry-run] [--help]
+Usage: $script_name [--copy] [--dry-run] [--public-only] [--help]
 
 Options:
-  --copy     copy files instead of creating symlinks
-  --dry-run  print actions without changing the filesystem
-  -h, --help show this help text
+  --copy         copy files instead of creating symlinks
+  --dry-run      print actions without changing the filesystem
+  --public-only  skip the private overlay even if it exists
+  -h, --help     show this help text
+
+The private overlay path defaults to ../private-config relative to this repo.
+Override it with PRIVATE_REPO_DIR=/path/to/private-config.
 EOF
 }
 
 while (($#)); do
   case "$1" in
-    --copy) mode="copy" ;;
-    --dry-run) dry_run=1 ;;
+    --copy)
+      mode="copy"
+      installer_args+=("$1")
+      ;;
+    --dry-run)
+      dry_run=1
+      installer_args+=("$1")
+      ;;
+    --public-only)
+      public_only=1
+      ;;
     -h|--help)
       usage
       exit 0
@@ -197,6 +220,42 @@ merge_codex_config() {
   fi
 }
 
+install_private_overlay() {
+  local target="$private_repo"
+  local installer
+
+  if [[ "$public_only" -eq 1 ]]; then
+    return 0
+  fi
+
+  if [[ ! -d "$target" ]]; then
+    if [[ "$private_repo_explicit" -eq 1 ]]; then
+      die "PRIVATE_REPO_DIR does not exist: $target"
+    fi
+    printf 'skip private-config (tried: %s; run task private:init for a local-only overlay or set PRIVATE_REPO_DIR to override)\n' "$target"
+    return 0
+  fi
+
+  target="$(cd "$target" && pwd -P)" || die "cannot resolve private repo: $target"
+
+  if [[ "$target" == "$repo_root" ]]; then
+    die "private repo path resolves to public-dotfiles: $target"
+  fi
+
+  installer="$target/install.sh"
+
+  if [[ ! -e "$installer" ]]; then
+    die "private repo installer missing: $installer"
+  fi
+
+  if [[ ! -x "$installer" ]]; then
+    die "private repo installer is not executable: $installer"
+  fi
+
+  printf 'private-repo %s\n' "$target"
+  "$installer" "${installer_args[@]}"
+}
+
 for entry in "${entries[@]}"; do
   install_entry "$entry"
 done
@@ -204,6 +263,7 @@ done
 merge_codex_config
 
 warn_tmux_legacy_state
+install_private_overlay
 
 if [[ "$dry_run" -eq 0 && -d "$backup_root" ]]; then
   printf 'backup %s\n' "$backup_root"

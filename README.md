@@ -28,17 +28,45 @@ project-trust lists, marketplace state, and personal archives belong in
 
 ## Install
 
-Preferred daily entrypoint:
+Canonical bootstrap entrypoint:
 
 ```bash
-task -d ../private-config install:public
+task install
 ```
 
-Repo-local install remains supported when you want to work directly in this
-checkout:
+`task install` always installs the public baseline from this repo. If a sibling
+`../private-config` checkout exists, it installs that private overlay in the
+same run. On a machine that only has `public-dotfiles`, the same command still
+works and simply skips the private layer.
+
+If you do not have access to the real private repo, scaffold a local-only
+overlay repo that keeps the same split architecture:
+
+```bash
+task private:init
+```
+
+That creates `../private-config` as a local git repo with no remote. Add the
+private files you want to track there, then rerun `task install`.
+
+Repo-local script entrypoint:
 
 ```bash
 ./install.sh
+```
+
+Pass flags after `--` when needed:
+
+```bash
+task install -- --dry-run
+task install -- --public-only
+task install -- --copy
+```
+
+Override the private repo location with an environment variable:
+
+```bash
+PRIVATE_REPO_DIR=/path/to/private-config task install
 ```
 
 By default the installer creates symlinks into `$HOME`. Use `--copy` to copy
@@ -65,8 +93,13 @@ and per-project trust or provider overrides. A short reference lives in
 
 The public repo should be enough for a clean new-machine baseline.
 
-- run `./install.sh`
-- the installer links tracked config into `$HOME`
+- run `task install`
+- if you need a machine-local private layer with no remote, run `task private:init`
+- if `private-config` is added later, rerun the same command
+- if `PRIVATE_REPO_DIR` is set and missing, install fails loudly; if the
+  default sibling is missing, install skips the overlay
+- the public repo owns the reusable baseline; the private repo is an optional
+  overlay for private durable state
 
 tmux uses an inline One Dark theme with no external plugins required.
 If tmux still reports Catppuccin errors on a machine, it has stale host-local

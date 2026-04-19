@@ -140,6 +140,8 @@ keybind = all:super+shift+]=text:\x13l
 # command = /opt/homebrew/bin/nu
 # command = /bin/bash -c 'export XDG_CONFIG_HOME=~/.config; exec /opt/homebrew/bin/nu'
 
+command = /opt/homebrew/bin/tmux new-session -A -s main
+
 # keybind = performable:ctrl+c=copy_to_clipboard
 # keybind = all:ctrl+o=reload_config
 # keybind = global:ctrl+r=text:atuin-search
