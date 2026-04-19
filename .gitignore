@@ -7,4 +7,8 @@
 .config/zed/prompts/**/*.mdb/lock.mdb
 /Library/Application Support/lazygit/state.yml
 /docs/human-requests
-/.config/nvim/plugged/bufferline.nvim
+# nvim legacy / runtime artifacts (lazy.nvim + pack dir are in ~/.local/share/nvim)
+/.config/nvim/plugged/
+/.config/nvim/autoload/
+/.config/nvim/lazy-lock.json
+/.config/nvim/init.vim.bak
