@@ -1,0 +1,26 @@
+# One relative path per line.
+# The installer skips entries whose source files do not exist yet.
+# Remove lines you do not want this machine-local overlay to own.
+
+.agents/skills
+.claude/plugins/blocklist.json
+.claude/plugins/config.json
+.claude/skills
+.config/.byted_gitconfig
+.config/atuin
+.config/git
+.config/xj_raycast_scripts
+.copilot
+.copilot-init.md
+.docker
+.gitconfig
+.npmrc
+.ssh
+.yarnrc
+.zshenv
+Library/Application Support/Code
+Library/Application Support/Code - Insiders
+Library/Application Support/Transmit
+Library/Application Support/VSCodium
+license
+tool_doc/remarkable
