@@ -34,6 +34,8 @@ type Request struct {
 	Path    string // absolute, symlink-resolved
 	Session string
 	Window  string
+	Line    int // 0 = no cursor anchor
+	Col     int // 0 = column not specified
 }
 
 // Target is an addressable tmux coordinate. WindowIdx and PaneIdx are
@@ -129,12 +131,17 @@ func parseRequest(args []string) (Request, error) {
 		notify("nvim-tmux: URL needs ?session=X&window=Y")
 		return Request{}, usageErr("session and window required")
 	}
+	line, _ := strconv.Atoi(q.Get("line"))
+	col, _ := strconv.Atoi(q.Get("col"))
 
 	path := u.Path
 	if strings.HasPrefix(path, "/~/") {
 		path = filepath.Join(os.Getenv("HOME"), path[3:])
 	}
-	return Request{Path: canonical(path), Session: session, Window: window}, nil
+	return Request{
+		Path: canonical(path), Session: session, Window: window,
+		Line: line, Col: col,
+	}, nil
 }
 
 // ensureTarget makes the session, named window, and an nvim pane for
@@ -143,11 +150,19 @@ func parseRequest(args []string) (Request, error) {
 func ensureTarget(req Request) (Target, error) {
 	t := Target{Session: req.Session}
 
+	// Can't use `new-session -A` here: when the session already exists,
+	// `-A` attaches, which fails in non-tty contexts with "open terminal
+	// failed: not a terminal". Instead, try to create; if the create
+	// fails but the session now exists (racing fire, or we just didn't
+	// see it in hasSession), consider it success.
 	if !hasSession(req.Session) {
 		if err := tmuxRun("new-session", "-d", "-s", req.Session); err != nil {
-			return t, fmt.Errorf("create session: %w", err)
+			if !hasSession(req.Session) {
+				return t, fmt.Errorf("create session: %w", err)
+			}
+		} else {
+			slog.Info("created session", "name", req.Session)
 		}
-		slog.Info("created session", "name", req.Session)
 	}
 
 	winIdx, err := findWindow(req.Session, req.Window)
@@ -168,12 +183,15 @@ func ensureTarget(req Request) (Target, error) {
 		return t, err
 	}
 	if paneIdx < 0 {
-		paneIdx, err = spawnNvimPane(t.Win(), req.Path)
+		paneIdx, err = spawnPane(t.Win(), nvimCmd(req))
 		if err != nil {
 			return t, err
 		}
-		slog.Info("spawned pane", "pane", paneIdx)
+		slog.Info("spawned pane", "pane", paneIdx, "line", req.Line, "col", req.Col)
 	} else {
+		// Note: we don't replay line/col anchors into an existing nvim.
+		// That would require nvim RPC or tmux send-keys gymnastics; the
+		// user sees the nvim in whatever cursor state it already has.
 		slog.Info("reusing pane", "pane", paneIdx)
 	}
 	t.PaneIdx = paneIdx
@@ -266,11 +284,10 @@ func findPaneWithFile(target, absPath string) (int, error) {
 	return -1, nil
 }
 
-// spawnNvimPane splits target with a detached pane running `nvim
-// <path>`, returning the new pane's index.
-func spawnNvimPane(targetWin, path string) (int, error) {
-	out, err := tmuxOut("split-window", "-t", targetWin, "-d", "-P", "-F", "#{pane_index}",
-		"nvim "+shellQuote(path))
+// spawnPane splits target with a detached pane running `cmd`,
+// returning the new pane's index.
+func spawnPane(targetWin, cmd string) (int, error) {
+	out, err := tmuxOut("split-window", "-t", targetWin, "-d", "-P", "-F", "#{pane_index}", cmd)
 	if err != nil {
 		return -1, fmt.Errorf("split-window: %w", err)
 	}
@@ -279,6 +296,23 @@ func spawnNvimPane(targetWin, path string) (int, error) {
 		return -1, fmt.Errorf("parse split-window idx %q: %w", out, err)
 	}
 	return idx, nil
+}
+
+// nvimCmd builds the shell command string that the new pane runs.
+// Honors ?line= and ?col= by prefixing the appropriate `+` or `-c`
+// arguments; both are optional.
+func nvimCmd(req Request) string {
+	quoted := shellQuote(req.Path)
+	switch {
+	case req.Line > 0 && req.Col > 0:
+		return fmt.Sprintf("nvim -c %s %s",
+			shellQuote(fmt.Sprintf("call cursor(%d, %d)", req.Line, req.Col)),
+			quoted)
+	case req.Line > 0:
+		return fmt.Sprintf("nvim +%d %s", req.Line, quoted)
+	default:
+		return "nvim " + quoted
+	}
 }
 
 // mostRecentClientTTY returns the tty of the client with the largest

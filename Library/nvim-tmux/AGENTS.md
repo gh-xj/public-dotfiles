@@ -13,7 +13,7 @@ general tool. Not a publishable library.
 ## Contract (the URL is the API)
 
 ```
-nvim-tmux://<path>[?session=<session>&window=<window>]
+nvim-tmux://<path>?session=<session>&window=<window>[&line=<n>&col=<n>]
 ```
 
 Invariants:
@@ -21,9 +21,15 @@ Invariants:
 - `<path>` is absolute, or begins `/~/` (expanded to `$HOME`).
 - `session` and `window` are **both required**. Missing either →
   macOS notification + exit 2. Don't invent defaults.
+- `line` and `col` are optional cursor anchors. `?line=42` opens at
+  line 42 via `nvim +42`. `?line=42&col=7` uses `nvim -c 'call cursor(42, 7)'`.
+  Anchors apply only to **newly-spawned** panes; existing panes keep
+  their current cursor state (replaying anchors would need nvim RPC
+  or `send-keys` tricks, both out of scope).
 - Window is matched by **name**, not index. Missing window → created
   (with `-n <window>`).
-- Missing session → created (`new-session -d`).
+- Missing session → created (`new-session -d`). Concurrent clicks are
+  tolerated: a failed create retries `hasSession` to catch the race.
 - File already open in **that** session/window → reuse the pane.
   File open elsewhere → ignored; a new pane is spawned in the target.
   Cross-window reuse would require `join-pane`, which violates "user's
@@ -31,9 +37,13 @@ Invariants:
 - Navigation: always switch the **most-recently-active** tmux client
   (any session) to the target pane. Rationale: macOS raises the
   frontmost Ghostty window on `open -a Ghostty`, and that window's
-  tmux client is the most-recently-active one. Yanking a different
-  client defeats focus; yanking the most-recent one ensures the raised
-  window shows the target.
+  tmux client is usually the most-recently-active one. Yanking a
+  different client defeats focus; yanking the most-recent one puts
+  the raised window on target. **Caveat:** the heuristic breaks when
+  you have multiple Ghostty _windows_ (not just tabs). If the last
+  Ghostty window you interacted with isn't macOS-frontmost, `open -a
+Ghostty` raises the frontmost one, which may not be the client we
+  just yanked. Fix is manual (cmd-` or click the right window).
 
 ## The hard rule
 
@@ -61,18 +71,19 @@ the design**, not a missing feature.
 
 ## Known pitfalls (do not relearn)
 
-| Trap                                          | Symptom                                                                                                 | Fix                                                                     |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `pgrep -x Ghostty` (capital G)                | "not running" on a running instance                                                                     | Process name is lowercase `ghostty` on macOS                            |
-| `set -e` + `ps -t <tty>` no-match             | Silent function exit, wrong branch taken                                                                | Don't use `set -e` around probing loops                                 |
-| `/tmp/foo.md` vs nvim's `/private/tmp/…`      | Reuse detector misses existing panes                                                                    | `filepath.EvalSymlinks` both sides                                      |
-| `tmux list-panes -t session:win.pane`         | Returns all panes, not just the targeted                                                                | Iterate all and filter in code                                          |
-| `tmux new-window` without `-d`                | Clients on that session follow the new win                                                              | Use `-d` when creating (we only need to own the name)                   |
-| `tmux new-session` w/o `automatic-rename off` | Window names drift to command names                                                                     | Handler passes explicit `-n`; tmux honors it                            |
-| Path with spaces in `ps -o args=` output      | Arg boundaries ambiguous — reuse fails                                                                  | Document, accept duplicate pane                                         |
-| `tmux switch-client -t session:win.pane`      | `-t` only accepts a session                                                                             | `switch-client` + `select-window` + `select-pane` in sequence           |
-| LaunchServices strips `PATH`                  | Works via terminal `open`, not Godspeed/Chrome. Log: `exec: "tmux": executable file not found in $PATH` | Binary prepends `/opt/homebrew/bin:/usr/local/bin` to `PATH` at startup |
-| `findWindow` after `new-window` returns -1    | Race or re-parse fail under minimal env                                                                 | Use `new-window -P -F '#I'` to read back the new index                  |
+| Trap                                          | Symptom                                                                                                 | Fix                                                                                |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `pgrep -x Ghostty` (capital G)                | "not running" on a running instance                                                                     | Process name is lowercase `ghostty` on macOS                                       |
+| `set -e` + `ps -t <tty>` no-match             | Silent function exit, wrong branch taken                                                                | Don't use `set -e` around probing loops                                            |
+| `/tmp/foo.md` vs nvim's `/private/tmp/…`      | Reuse detector misses existing panes                                                                    | `filepath.EvalSymlinks` both sides                                                 |
+| `tmux list-panes -t session:win.pane`         | Returns all panes, not just the targeted                                                                | Iterate all and filter in code                                                     |
+| `tmux new-window` without `-d`                | Clients on that session follow the new win                                                              | Use `-d` when creating (we only need to own the name)                              |
+| `tmux new-session` w/o `automatic-rename off` | Window names drift to command names                                                                     | Handler passes explicit `-n`; tmux honors it                                       |
+| Path with spaces in `ps -o args=` output      | Arg boundaries ambiguous — reuse fails                                                                  | Document, accept duplicate pane                                                    |
+| `tmux switch-client -t session:win.pane`      | `-t` only accepts a session                                                                             | `switch-client` + `select-window` + `select-pane` in sequence                      |
+| LaunchServices strips `PATH`                  | Works via terminal `open`, not Godspeed/Chrome. Log: `exec: "tmux": executable file not found in $PATH` | Binary prepends `/opt/homebrew/bin:/usr/local/bin` to `PATH` at startup            |
+| `findWindow` after `new-window` returns -1    | Race or re-parse fail under minimal env                                                                 | Use `new-window -P -F '#I'` to read back the new index                             |
+| `tmux new-session -A` in non-tty context      | Exits 1 with "open terminal failed: not a terminal" when session exists (because `-A` tries to attach)  | Don't use `-A`; try plain create, re-check `hasSession` on error to tolerate races |
 
 ## Dev workflow
 
