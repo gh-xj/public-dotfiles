@@ -4,6 +4,7 @@
 *~
 *.log
 .install-backups/
+.task/
 .config/zed/prompts/**/*.mdb/lock.mdb
 /Library/Application Support/lazygit/state.yml
 /docs/human-requests

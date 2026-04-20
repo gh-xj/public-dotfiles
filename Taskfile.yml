@@ -15,3 +15,23 @@ tasks:
     desc: Show available tasks
     cmds:
       - task --list
+
+  nvim-tmux:build:
+    desc: Build the nvim-tmux URL handler binary
+    dir: Library/nvim-tmux
+    sources: [main.go, go.mod]
+    generates: [bin/nvim-tmux]
+    cmds:
+      - go build -trimpath -ldflags="-s -w" -o bin/nvim-tmux .
+
+  nvim-tmux:install:
+    desc: Copy the built nvim-tmux binary into ~/Applications/nvim-tmux.app
+    deps: [nvim-tmux:build]
+    preconditions:
+      - sh: test -d "$HOME/Applications/nvim-tmux.app/Contents/Resources"
+        msg: "~/Applications/nvim-tmux.app doesn't exist yet — see Library/nvim-tmux/README.md for first-time setup"
+    cmds:
+      - cp Library/nvim-tmux/bin/nvim-tmux "$HOME/Applications/nvim-tmux.app/Contents/Resources/nvim-tmux"
+      - cp Library/nvim-tmux/handler.sh "$HOME/Applications/nvim-tmux.app/Contents/Resources/handler.sh"
+      - chmod +x "$HOME/Applications/nvim-tmux.app/Contents/Resources/nvim-tmux"
+      - chmod +x "$HOME/Applications/nvim-tmux.app/Contents/Resources/handler.sh"
