@@ -61,16 +61,18 @@ the design**, not a missing feature.
 
 ## Known pitfalls (do not relearn)
 
-| Trap                                          | Symptom                                    | Fix                                                           |
-| --------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------- |
-| `pgrep -x Ghostty` (capital G)                | "not running" on a running instance        | Process name is lowercase `ghostty` on macOS                  |
-| `set -e` + `ps -t <tty>` no-match             | Silent function exit, wrong branch taken   | Don't use `set -e` around probing loops                       |
-| `/tmp/foo.md` vs nvim's `/private/tmp/…`      | Reuse detector misses existing panes       | `filepath.EvalSymlinks` both sides                            |
-| `tmux list-panes -t session:win.pane`         | Returns all panes, not just the targeted   | Iterate all and filter in code                                |
-| `tmux new-window` without `-d`                | Clients on that session follow the new win | Use `-d` when creating (we only need to own the name)         |
-| `tmux new-session` w/o `automatic-rename off` | Window names drift to command names        | Handler passes explicit `-n`; tmux honors it                  |
-| Path with spaces in `ps -o args=` output      | Arg boundaries ambiguous — reuse fails     | Document, accept duplicate pane                               |
-| `tmux switch-client -t session:win.pane`      | `-t` only accepts a session                | `switch-client` + `select-window` + `select-pane` in sequence |
+| Trap                                          | Symptom                                                                                                 | Fix                                                                     |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `pgrep -x Ghostty` (capital G)                | "not running" on a running instance                                                                     | Process name is lowercase `ghostty` on macOS                            |
+| `set -e` + `ps -t <tty>` no-match             | Silent function exit, wrong branch taken                                                                | Don't use `set -e` around probing loops                                 |
+| `/tmp/foo.md` vs nvim's `/private/tmp/…`      | Reuse detector misses existing panes                                                                    | `filepath.EvalSymlinks` both sides                                      |
+| `tmux list-panes -t session:win.pane`         | Returns all panes, not just the targeted                                                                | Iterate all and filter in code                                          |
+| `tmux new-window` without `-d`                | Clients on that session follow the new win                                                              | Use `-d` when creating (we only need to own the name)                   |
+| `tmux new-session` w/o `automatic-rename off` | Window names drift to command names                                                                     | Handler passes explicit `-n`; tmux honors it                            |
+| Path with spaces in `ps -o args=` output      | Arg boundaries ambiguous — reuse fails                                                                  | Document, accept duplicate pane                                         |
+| `tmux switch-client -t session:win.pane`      | `-t` only accepts a session                                                                             | `switch-client` + `select-window` + `select-pane` in sequence           |
+| LaunchServices strips `PATH`                  | Works via terminal `open`, not Godspeed/Chrome. Log: `exec: "tmux": executable file not found in $PATH` | Binary prepends `/opt/homebrew/bin:/usr/local/bin` to `PATH` at startup |
+| `findWindow` after `new-window` returns -1    | Race or re-parse fail under minimal env                                                                 | Use `new-window -P -F '#I'` to read back the new index                  |
 
 ## Dev workflow
 

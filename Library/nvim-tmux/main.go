@@ -29,6 +29,11 @@ import (
 const logPath = "/tmp/nvim-tmux.log"
 
 func main() {
+	// LaunchServices (Godspeed, Chrome) fires the handler with a minimal
+	// PATH that doesn't include /opt/homebrew/bin where tmux lives.
+	// Terminal `open` inherits the shell's PATH, which masks the issue.
+	os.Setenv("PATH", "/opt/homebrew/bin:/usr/local/bin:"+os.Getenv("PATH"))
+
 	logFile, err := os.Create(logPath)
 	if err != nil {
 		logFile = os.Stderr
@@ -83,10 +88,16 @@ func run(args []string) (int, error) {
 		return 1, err
 	}
 	if winIdx < 0 {
-		if err := tmux("new-window", "-t", session+":", "-d", "-n", window); err != nil {
+		// new-window -P -F '#I' prints the index of the window it created;
+		// more reliable than re-listing (avoids races / parser issues).
+		out, err := tmuxOutput("new-window", "-t", session+":", "-d", "-n", window, "-P", "-F", "#I")
+		if err != nil {
 			return 1, fmt.Errorf("create window: %w", err)
 		}
-		winIdx, _ = findWindow(session, window)
+		winIdx, err = strconv.Atoi(strings.TrimSpace(out))
+		if err != nil || winIdx < 0 {
+			return 1, fmt.Errorf("parse new-window idx %q: %w", out, err)
+		}
 		slog.Info("created window", "name", window, "idx", winIdx)
 	}
 	targetWin := fmt.Sprintf("%s:%d", session, winIdx)
