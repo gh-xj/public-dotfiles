@@ -114,11 +114,15 @@ map("n", "<leader>tb", "<cmd>Telescope buffers<cr>", { silent = true })
 map("n", "<leader>tk", "<cmd>Telescope keymaps<cr>", { silent = true })
 map("n", "<leader>th", "<cmd>Telescope help_tags<cr>", { silent = true })
 
--- ===== Split Navigation (smart-splits handles tmux boundaries) =====
-map("n", "<C-h>", function() require("smart-splits").move_cursor_left() end, { silent = true })
-map("n", "<C-l>", function() require("smart-splits").move_cursor_right() end, { silent = true })
-map("n", "<C-k>", function() require("smart-splits").move_cursor_up() end, { silent = true })
-map("n", "<C-j>", function() require("smart-splits").move_cursor_down() end, { silent = true })
+-- ===== Split Navigation (local nvim/tmux bridge, loaded on demand) =====
+map("n", "<C-h>", function() require("config.tmux_navigation").move("left") end,
+  { silent = true, desc = "Move to left split or tmux pane" })
+map("n", "<C-l>", function() require("config.tmux_navigation").move("right") end,
+  { silent = true, desc = "Move to right split or tmux pane" })
+map("n", "<C-k>", function() require("config.tmux_navigation").move("up") end,
+  { silent = true, desc = "Move to upper split or tmux pane" })
+map("n", "<C-j>", function() require("config.tmux_navigation").move("down") end,
+  { silent = true, desc = "Move to lower split or tmux pane" })
 
 -- ===== Daily workflow =====
 local function close_buffer_no_layout()

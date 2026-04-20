@@ -1,0 +1,4 @@
+prefix_rule(pattern=["/bin/zsh", "-lc", "GOOGLE_WORKSPACE_CLI_CONFIG_DIR=~/.config/gws gws auth login --services gmail --readonly"], decision="allow")
+prefix_rule(pattern=["/bin/zsh", "-lc", "GOOGLE_WORKSPACE_CLI_CONFIG_DIR=~/.config/gws gws gmail users threads get --params '{\"userId\":\"me\",\"id\":\"19dac2bf9d9c9b06\",\"format\":\"full\"}'"], decision="allow")
+prefix_rule(pattern=["/bin/zsh", "-lc", "GOOGLE_WORKSPACE_CLI_CONFIG_DIR=~/.config/gws gws gmail +read --id 19dac2bf9d9c9b06 --headers --format json"], decision="allow")
+prefix_rule(pattern=["/bin/zsh", "-lc", "GOOGLE_WORKSPACE_CLI_CONFIG_DIR=~/.config/gws gws gmail users messages get --params '{\"userId\":\"me\",\"id\":\"19dac2bf9d9c9b06\",\"format\":\"metadata\",\"metadataHeaders\":[\"From\",\"To\",\"Subject\",\"Date\"]}'"], decision="allow")

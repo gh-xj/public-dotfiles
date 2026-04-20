@@ -9,10 +9,12 @@ for _, plugin in ipairs({
   "matchit", "matchparen",
   "tarPlugin", "tar", "zipPlugin", "zip", "gzip",
   "2html_plugin", "tohtml", "tutor", "tutor_mode_plugin",
-  "rplugin", "spellfile_plugin",
+  "spellfile_plugin",
 }) do
   vim.g["loaded_" .. plugin] = 1
 end
+vim.g.loaded_nvim_net_plugin = true
+vim.g.loaded_remote_plugins = true
 
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
