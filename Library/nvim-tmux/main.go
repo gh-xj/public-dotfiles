@@ -10,10 +10,11 @@
 //
 // Policy: NEVER spawn a new Ghostty window/instance. Past incidents with
 // `open -na` and AppleScript cmd+n corrupted xj's multi-session tmux
-// layout. See ~/.claude/projects/.../feedback-ghostty-new-window-forbidden.md.
+// layout. See AGENTS.md in this directory.
 package main
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -21,215 +22,301 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 )
 
 const logPath = "/tmp/nvim-tmux.log"
 
-func main() {
-	// LaunchServices (Godspeed, Chrome) fires the handler with a minimal
-	// PATH that doesn't include /opt/homebrew/bin where tmux lives.
-	// Terminal `open` inherits the shell's PATH, which masks the issue.
-	os.Setenv("PATH", "/opt/homebrew/bin:/usr/local/bin:"+os.Getenv("PATH"))
-
-	logFile, err := os.Create(logPath)
-	if err != nil {
-		logFile = os.Stderr
-	}
-	defer logFile.Close()
-	slog.SetDefault(slog.New(slog.NewTextHandler(logFile, &slog.HandlerOptions{Level: slog.LevelDebug})))
-
-	code, err := run(os.Args)
-	if err != nil {
-		slog.Error("handler failed", "err", err)
-	}
-	os.Exit(code)
+// Request is a validated click. The URL is the API.
+type Request struct {
+	Path    string // absolute, symlink-resolved
+	Session string
+	Window  string
 }
 
-func run(args []string) (int, error) {
-	if len(args) < 2 {
-		notify("nvim-tmux: missing URL argument")
-		return 2, errors.New("missing URL arg")
+// Target is an addressable tmux coordinate. WindowIdx and PaneIdx are
+// the numeric identifiers tmux uses in its target-spec grammar.
+type Target struct {
+	Session   string
+	WindowIdx int
+	PaneIdx   int
+}
+
+func (t Target) Win() string  { return fmt.Sprintf("%s:%d", t.Session, t.WindowIdx) }
+func (t Target) Pane() string { return fmt.Sprintf("%s:%d.%d", t.Session, t.WindowIdx, t.PaneIdx) }
+
+// exitError lets run() return errors with a specific exit code without
+// collapsing the distinction to an int return.
+type exitError struct {
+	code int
+	err  error
+}
+
+func (e *exitError) Error() string { return e.err.Error() }
+func (e *exitError) Unwrap() error { return e.err }
+
+func usageErr(format string, a ...any) error {
+	return &exitError{code: 2, err: fmt.Errorf(format, a...)}
+}
+
+func main() {
+	// LaunchServices (Godspeed, Chrome) strips PATH to launchd's default,
+	// which omits /opt/homebrew/bin where tmux lives. Terminal `open`
+	// masked the bug by inheriting the shell's PATH.
+	os.Setenv("PATH", "/opt/homebrew/bin:/usr/local/bin:"+os.Getenv("PATH"))
+	configureLogger()
+
+	err := run(os.Args[1:])
+	if err == nil {
+		return
 	}
-	raw := args[1]
+	slog.Error("handler failed", "err", err)
+	var ee *exitError
+	if errors.As(err, &ee) {
+		os.Exit(ee.code)
+	}
+	os.Exit(1)
+}
+
+func configureLogger() {
+	var w = os.Stderr
+	if f, err := os.Create(logPath); err == nil {
+		w = f
+	}
+	slog.SetDefault(slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug})))
+}
+
+func run(args []string) error {
+	req, err := parseRequest(args)
+	if err != nil {
+		return err
+	}
+	slog.Info("parsed", "path", req.Path, "session", req.Session, "window", req.Window)
+
+	target, err := ensureTarget(req)
+	if err != nil {
+		return err
+	}
+
+	navigate(target)
+
+	if err := exec.Command("open", "-a", "Ghostty").Run(); err != nil {
+		return fmt.Errorf("open Ghostty: %w", err)
+	}
+	return nil
+}
+
+// parseRequest validates args[0] as an nvim-tmux URL and returns the
+// canonicalized request. Side effect: user-facing notification on error.
+func parseRequest(args []string) (Request, error) {
+	if len(args) < 1 {
+		notify("nvim-tmux: missing URL argument")
+		return Request{}, usageErr("missing URL")
+	}
+	raw := args[0]
 	slog.Info("invoked", "url", raw)
 
 	u, err := url.Parse(raw)
 	if err != nil || u.Scheme != "nvim-tmux" {
 		notify("nvim-tmux: malformed URL (expected nvim-tmux://...)")
-		return 2, fmt.Errorf("parse %q: %w", raw, err)
+		return Request{}, usageErr("parse %q: %w", raw, err)
+	}
+	q := u.Query()
+	session, window := q.Get("session"), q.Get("window")
+	if session == "" || window == "" {
+		notify("nvim-tmux: URL needs ?session=X&window=Y")
+		return Request{}, usageErr("session and window required")
 	}
 
 	path := u.Path
 	if strings.HasPrefix(path, "/~/") {
 		path = filepath.Join(os.Getenv("HOME"), path[3:])
 	}
-	abs := canonical(path)
+	return Request{Path: canonical(path), Session: session, Window: window}, nil
+}
 
-	session := u.Query().Get("session")
-	window := u.Query().Get("window")
-	if session == "" || window == "" {
-		notify("nvim-tmux: URL needs ?session=X&window=Y")
-		return 2, errors.New("session/window required")
-	}
-	slog.Info("parsed", "path", abs, "session", session, "window", window)
+// ensureTarget makes the session, named window, and an nvim pane for
+// req.Path all exist. Reuses an existing nvim pane in the target window
+// if one is already editing the file.
+func ensureTarget(req Request) (Target, error) {
+	t := Target{Session: req.Session}
 
-	if !hasSession(session) {
-		if err := tmux("new-session", "-d", "-s", session); err != nil {
-			return 1, fmt.Errorf("create session: %w", err)
+	if !hasSession(req.Session) {
+		if err := tmuxRun("new-session", "-d", "-s", req.Session); err != nil {
+			return t, fmt.Errorf("create session: %w", err)
 		}
-		slog.Info("created session", "name", session)
+		slog.Info("created session", "name", req.Session)
 	}
 
-	winIdx, err := findWindow(session, window)
+	winIdx, err := findWindow(req.Session, req.Window)
 	if err != nil {
-		return 1, err
+		return t, err
 	}
 	if winIdx < 0 {
-		// new-window -P -F '#I' prints the index of the window it created;
-		// more reliable than re-listing (avoids races / parser issues).
-		out, err := tmuxOutput("new-window", "-t", session+":", "-d", "-n", window, "-P", "-F", "#I")
+		winIdx, err = createWindow(req.Session, req.Window)
 		if err != nil {
-			return 1, fmt.Errorf("create window: %w", err)
+			return t, err
 		}
-		winIdx, err = strconv.Atoi(strings.TrimSpace(out))
-		if err != nil || winIdx < 0 {
-			return 1, fmt.Errorf("parse new-window idx %q: %w", out, err)
-		}
-		slog.Info("created window", "name", window, "idx", winIdx)
+		slog.Info("created window", "name", req.Window, "idx", winIdx)
 	}
-	targetWin := fmt.Sprintf("%s:%d", session, winIdx)
+	t.WindowIdx = winIdx
 
-	paneIdx, err := findPaneWithFile(targetWin, abs)
+	paneIdx, err := findPaneWithFile(t.Win(), req.Path)
 	if err != nil {
-		return 1, err
+		return t, err
 	}
 	if paneIdx < 0 {
-		if err := tmux("split-window", "-t", targetWin, "-d", "nvim "+shellQuote(abs)); err != nil {
-			return 1, fmt.Errorf("split-window: %w", err)
+		paneIdx, err = spawnNvimPane(t.Win(), req.Path)
+		if err != nil {
+			return t, err
 		}
-		paneIdx, _ = newestPane(targetWin)
 		slog.Info("spawned pane", "pane", paneIdx)
 	} else {
 		slog.Info("reusing pane", "pane", paneIdx)
 	}
-	targetPane := fmt.Sprintf("%s.%d", targetWin, paneIdx)
+	t.PaneIdx = paneIdx
+	return t, nil
+}
 
-	if tty := mostRecentClientTTY(); tty != "" {
-		// switch-client yanks the driver client to target session (consent-given
-		// via URL). select-window + select-pane then navigate within it.
-		_ = tmux("switch-client", "-c", tty, "-t", session)
-		_ = tmux("select-window", "-t", targetWin)
-		_ = tmux("select-pane", "-t", targetPane)
-		slog.Info("yanked driver", "tty", tty, "pane", targetPane)
-	} else {
+// navigate yanks the most-recently-active client to target. Rationale:
+// macOS `open -a Ghostty` raises the frontmost Ghostty window, and that
+// window's tmux client IS the most-recently-active one. Yanking it
+// guarantees the raised window is showing the target.
+func navigate(t Target) {
+	tty := mostRecentClientTTY()
+	if tty == "" {
 		slog.Info("no tmux clients; focusing Ghostty without yank")
+		return
 	}
-
-	if err := exec.Command("open", "-a", "Ghostty").Run(); err != nil {
-		return 1, fmt.Errorf("open Ghostty: %w", err)
-	}
-	return 0, nil
+	// switch-client only accepts a session as -t; window and pane
+	// require separate select-* calls.
+	_ = tmuxRun("switch-client", "-c", tty, "-t", t.Session)
+	_ = tmuxRun("select-window", "-t", t.Win())
+	_ = tmuxRun("select-pane", "-t", t.Pane())
+	slog.Info("yanked driver", "tty", tty, "pane", t.Pane())
 }
 
-// canonical returns the realpath of path when possible, falling back to
-// an absolute form when the file doesn't exist (macOS /tmp → /private/tmp).
-func canonical(path string) string {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return path
-	}
-	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
-		return resolved
-	}
-	// file missing — resolve parent dir symlinks, keep basename
-	dir, base := filepath.Split(abs)
-	if resolved, err := filepath.EvalSymlinks(filepath.Clean(dir)); err == nil {
-		return filepath.Join(resolved, base)
-	}
-	return abs
-}
+// ---- tmux helpers ----
 
-func tmux(args ...string) error {
+func tmuxRun(args ...string) error {
 	return exec.Command("tmux", args...).Run()
 }
 
-func tmuxOutput(args ...string) (string, error) {
+func tmuxOut(args ...string) (string, error) {
 	out, err := exec.Command("tmux", args...).Output()
 	return strings.TrimSpace(string(out)), err
 }
 
 func hasSession(name string) bool {
-	return exec.Command("tmux", "has-session", "-t", "="+name).Run() == nil
+	return tmuxRun("has-session", "-t", "="+name) == nil
 }
 
+// findWindow returns the index of the window named `name` in `session`,
+// or -1 if no such window exists.
 func findWindow(session, name string) (int, error) {
-	out, err := tmuxOutput("list-windows", "-t", session, "-F", "#I\t#W")
+	out, err := tmuxOut("list-windows", "-t", session, "-F", "#I\t#W")
 	if err != nil {
 		return -1, fmt.Errorf("list-windows: %w", err)
 	}
-	for _, line := range strings.Split(out, "\n") {
-		parts := strings.SplitN(line, "\t", 2)
-		if len(parts) == 2 && parts[1] == name {
-			idx, _ := strconv.Atoi(parts[0])
+	for _, line := range nonEmptyLines(out) {
+		idxStr, winName, _ := strings.Cut(line, "\t")
+		if winName == name {
+			idx, _ := strconv.Atoi(idxStr)
 			return idx, nil
 		}
 	}
 	return -1, nil
 }
 
-func newestPane(target string) (int, error) {
-	out, err := tmuxOutput("list-panes", "-t", target, "-F", "#{pane_index}")
+// createWindow runs `new-window -P -F '#I'` which creates the window
+// detached and prints its index. Avoids races vs re-listing.
+func createWindow(session, name string) (int, error) {
+	out, err := tmuxOut("new-window", "-t", session+":", "-d", "-n", name, "-P", "-F", "#I")
 	if err != nil {
-		return -1, err
+		return -1, fmt.Errorf("new-window: %w", err)
 	}
-	lines := strings.Split(out, "\n")
-	idx, _ := strconv.Atoi(lines[len(lines)-1])
+	idx, err := strconv.Atoi(out)
+	if err != nil {
+		return -1, fmt.Errorf("parse new-window idx %q: %w", out, err)
+	}
 	return idx, nil
 }
 
+// findPaneWithFile walks every pane in `target` running nvim and
+// returns the pane index whose nvim argv resolves to `absPath`.
+// Returns -1 when no pane matches.
 func findPaneWithFile(target, absPath string) (int, error) {
-	want := absPath
-	out, err := tmuxOutput("list-panes", "-t", target, "-F", "#{pane_tty}\t#{pane_index}\t#{pane_current_command}")
+	out, err := tmuxOut("list-panes", "-t", target, "-F", "#{pane_tty}\t#{pane_index}\t#{pane_current_command}")
 	if err != nil {
 		return -1, fmt.Errorf("list-panes: %w", err)
 	}
-	for _, line := range strings.Split(out, "\n") {
+	for _, line := range nonEmptyLines(out) {
 		parts := strings.SplitN(line, "\t", 3)
 		if len(parts) < 3 || parts[2] != "nvim" {
 			continue
 		}
 		tty := strings.TrimPrefix(parts[0], "/dev/")
-		pid := nvimPIDOnTTY(tty)
-		if pid == 0 {
-			continue
-		}
-		argv, err := psArgs(pid)
-		if err != nil {
-			continue
-		}
-		fields := strings.Fields(argv)
-		for i, arg := range fields {
-			if i == 0 || strings.HasPrefix(arg, "-") {
-				continue
-			}
-			if canonical(arg) == want {
-				idx, _ := strconv.Atoi(parts[1])
-				return idx, nil
-			}
+		if pid := nvimPIDOnTTY(tty); pid != 0 && nvimHasFile(pid, absPath) {
+			idx, _ := strconv.Atoi(parts[1])
+			return idx, nil
 		}
 	}
 	return -1, nil
 }
+
+// spawnNvimPane splits target with a detached pane running `nvim
+// <path>`, returning the new pane's index.
+func spawnNvimPane(targetWin, path string) (int, error) {
+	out, err := tmuxOut("split-window", "-t", targetWin, "-d", "-P", "-F", "#{pane_index}",
+		"nvim "+shellQuote(path))
+	if err != nil {
+		return -1, fmt.Errorf("split-window: %w", err)
+	}
+	idx, err := strconv.Atoi(out)
+	if err != nil {
+		return -1, fmt.Errorf("parse split-window idx %q: %w", out, err)
+	}
+	return idx, nil
+}
+
+// mostRecentClientTTY returns the tty of the client with the largest
+// client_activity timestamp (≈ the last-focused Ghostty window).
+// Empty string when no clients are attached.
+func mostRecentClientTTY() string {
+	out, err := tmuxOut("list-clients", "-F", "#{client_activity}\t#{client_tty}")
+	if err != nil || out == "" {
+		return ""
+	}
+	type row struct {
+		activity int64
+		tty      string
+	}
+	var rows []row
+	for _, line := range nonEmptyLines(out) {
+		actStr, tty, ok := strings.Cut(line, "\t")
+		if !ok {
+			continue
+		}
+		a, _ := strconv.ParseInt(actStr, 10, 64)
+		rows = append(rows, row{a, tty})
+	}
+	if len(rows) == 0 {
+		return ""
+	}
+	best := slices.MaxFunc(rows, func(a, b row) int { return cmp.Compare(a.activity, b.activity) })
+	return best.tty
+}
+
+// ---- ps helpers ----
 
 func nvimPIDOnTTY(tty string) int {
 	out, err := exec.Command("ps", "-t", tty, "-o", "pid=,command=").Output()
 	if err != nil {
 		return 0
 	}
-	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+	for _, line := range nonEmptyLines(strings.TrimSpace(string(out))) {
 		fields := strings.Fields(line)
 		if len(fields) >= 2 && fields[1] == "nvim" {
 			pid, _ := strconv.Atoi(fields[0])
@@ -239,43 +326,64 @@ func nvimPIDOnTTY(tty string) int {
 	return 0
 }
 
-func psArgs(pid int) (string, error) {
+// nvimHasFile reports whether the nvim process `pid` was launched with
+// a file argument whose realpath equals `abs`. Paths with spaces are
+// not reliably detectable — see AGENTS.md.
+func nvimHasFile(pid int, abs string) bool {
 	out, err := exec.Command("ps", "-o", "args=", "-p", strconv.Itoa(pid)).Output()
 	if err != nil {
-		return "", err
+		return false
 	}
-	return strings.TrimSpace(string(out)), nil
-}
-
-func mostRecentClientTTY() string {
-	out, err := tmuxOutput("list-clients", "-F", "#{client_activity}\t#{client_tty}")
-	if err != nil || out == "" {
-		return ""
-	}
-	type row struct {
-		activity int64
-		tty      string
-	}
-	var rows []row
-	for _, line := range strings.Split(out, "\n") {
-		parts := strings.SplitN(line, "\t", 2)
-		if len(parts) != 2 {
+	fields := strings.Fields(strings.TrimSpace(string(out)))
+	for i, arg := range fields {
+		if i == 0 || strings.HasPrefix(arg, "-") {
 			continue
 		}
-		a, _ := strconv.ParseInt(parts[0], 10, 64)
-		rows = append(rows, row{a, parts[1]})
+		if canonical(arg) == abs {
+			return true
+		}
 	}
-	sort.Slice(rows, func(i, j int) bool { return rows[i].activity > rows[j].activity })
-	if len(rows) == 0 {
-		return ""
-	}
-	return rows[0].tty
+	return false
 }
 
+// ---- path + misc helpers ----
+
+// canonical returns the realpath of path when possible, falling back to
+// resolving parent symlinks when the file doesn't exist (macOS /tmp →
+// /private/tmp).
+func canonical(path string) string {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
+		return resolved
+	}
+	dir, base := filepath.Split(abs)
+	if resolved, err := filepath.EvalSymlinks(filepath.Clean(dir)); err == nil {
+		return filepath.Join(resolved, base)
+	}
+	return abs
+}
+
+// nonEmptyLines splits on \n and drops empty lines so callers don't
+// special-case `strings.Split("", "\n") == [""]`.
+func nonEmptyLines(s string) []string {
+	if s == "" {
+		return nil
+	}
+	lines := strings.Split(s, "\n")
+	return slices.DeleteFunc(lines, func(l string) bool { return l == "" })
+}
+
+// shellQuote wraps s for POSIX sh single-quoting, matching what tmux
+// passes to sh -c when it runs a shell-command arg.
 func shellQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
+// notify pops a macOS notification via osascript. Used for user-facing
+// usage errors from the URL scheme dispatch (where stderr is invisible).
 func notify(msg string) {
 	script := fmt.Sprintf(`display notification %q with title "nvim-tmux"`, msg)
 	_ = exec.Command("osascript", "-e", script).Run()
