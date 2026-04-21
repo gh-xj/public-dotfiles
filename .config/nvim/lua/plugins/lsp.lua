@@ -3,6 +3,17 @@ local server_list = {
   "jsonls", "yamlls", "marksman", "bashls",
 }
 
+local lsp_filetypes = {
+  "lua",
+  "javascript", "javascriptreact",
+  "typescript", "typescriptreact",
+  "python",
+  "go",
+  "json", "jsonc",
+  "yaml",
+  "sh", "bash", "zsh",
+}
+
 return {
   {
     "williamboman/mason.nvim",
@@ -23,11 +34,30 @@ return {
 
   {
     "neovim/nvim-lspconfig",
-    event = { "BufReadPre", "BufNewFile" },
-    dependencies = { "hrsh7th/cmp-nvim-lsp" },
+    ft = lsp_filetypes,
+    init = function()
+      local group = vim.api.nvim_create_augroup("xj_lsp_markdown_lazy", { clear = true })
+      vim.api.nvim_create_autocmd("FileType", {
+        group = group,
+        pattern = "markdown",
+        callback = function(ev)
+          if require("config.large_file").is_large_markdown(ev.buf) then
+            return
+          end
+
+          require("lazy").load({ plugins = { "nvim-lspconfig" } })
+        end,
+      })
+    end,
     config = function()
-      local ok, cmp_lsp = pcall(require, "cmp_nvim_lsp")
-      local capabilities = ok and cmp_lsp.default_capabilities() or {}
+      local capabilities = {}
+      local current_buf = vim.api.nvim_get_current_buf()
+      local is_large_markdown = vim.bo[current_buf].filetype == "markdown"
+        and require("config.large_file").is_large_markdown(current_buf)
+      if not is_large_markdown then
+        local ok, cmp_lsp = pcall(require, "cmp_nvim_lsp")
+        capabilities = ok and cmp_lsp.default_capabilities() or {}
+      end
 
       local function legacy_setup(server_name)
         local ok_lsp, lspconfig = pcall(require, "lspconfig")
@@ -47,13 +77,20 @@ return {
         end
       end
 
+      local enabled_servers = vim.deepcopy(server_list)
+      if is_large_markdown then
+        enabled_servers = vim.tbl_filter(function(name)
+          return name ~= "marksman"
+        end, enabled_servers)
+      end
+
       if vim.lsp and vim.lsp.config and vim.lsp.enable then
         for _, name in ipairs(server_list) do
           pcall(vim.lsp.config, name, { capabilities = capabilities })
         end
-        pcall(vim.lsp.enable, server_list)
+        pcall(vim.lsp.enable, enabled_servers)
       else
-        for _, name in ipairs(server_list) do
+        for _, name in ipairs(enabled_servers) do
           legacy_setup(name)
         end
       end

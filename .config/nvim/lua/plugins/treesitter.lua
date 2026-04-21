@@ -1,8 +1,20 @@
+local ts_filetypes = {
+  "lua",
+  "vim",
+  "help",
+  "javascript",
+  "typescript",
+  "python",
+  "html",
+  "css",
+  "markdown",
+}
+
 return {
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
-    event = { "BufReadPost", "BufNewFile" },
+    ft = ts_filetypes,
     dependencies = {
       "nvim-treesitter/nvim-treesitter-textobjects",
     },
@@ -23,7 +35,12 @@ return {
           "html", "css",
           "markdown", "markdown_inline",
         },
-        highlight = { enable = true },
+        highlight = {
+          enable = true,
+          disable = function(_, buf)
+            return require("config.large_file").is_large_buffer(buf)
+          end,
+        },
         textobjects = {
           select = {
             enable = true,

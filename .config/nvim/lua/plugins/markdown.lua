@@ -1,10 +1,44 @@
+local function load_small_markdown_plugin(group_name, plugin_name, module_name, after_load)
+  return function()
+    local group = vim.api.nvim_create_augroup(group_name, { clear = true })
+    vim.api.nvim_create_autocmd("FileType", {
+      group = group,
+      pattern = "markdown",
+      callback = function(ev)
+        local large_file = require("config.large_file")
+        if large_file.is_large_markdown(ev.buf) then
+          return
+        end
+
+        local already_loaded = package.loaded[module_name] ~= nil
+        require("lazy").load({ plugins = { plugin_name } })
+
+        if not already_loaded and after_load then
+          after_load()
+        end
+      end,
+    })
+  end
+end
+
 return {
   -- In-buffer markdown rendering: headings with icons, code block borders,
   -- task-list symbols, table alignment, bullet typography.
   {
     "MeanderingProgrammer/render-markdown.nvim",
-    ft = { "markdown" },
+    cmd = { "RenderMarkdown" },
     dependencies = { "nvim-treesitter/nvim-treesitter" },
+    init = load_small_markdown_plugin(
+      "xj_render_markdown_lazy",
+      "render-markdown.nvim",
+      "render-markdown",
+      function()
+        local ok, render_markdown = pcall(require, "render-markdown")
+        if ok and type(render_markdown.enable) == "function" then
+          render_markdown.enable()
+        end
+      end
+    ),
     opts = function()
       local large_file = require("config.large_file")
       return {
@@ -37,7 +71,8 @@ return {
   -- wiki-style link following. Folds/conceal disabled so treesitter owns them.
   {
     "jakewvincent/mkdnflow.nvim",
-    ft = "markdown",
+    cmd = { "Mkdnflow" },
+    init = load_small_markdown_plugin("xj_mkdnflow_lazy", "mkdnflow.nvim", "mkdnflow"),
     opts = {
       modules = {
         bib = false,

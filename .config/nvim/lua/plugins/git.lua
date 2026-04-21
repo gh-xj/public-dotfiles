@@ -1,8 +1,41 @@
+local function should_enable_gitsigns(buf)
+  local large_file = require("config.large_file")
+  if vim.bo[buf].buftype ~= "" or large_file.is_large_buffer(buf) then
+    return false
+  end
+
+  local name = vim.api.nvim_buf_get_name(buf)
+  if name == "" then
+    return false
+  end
+
+  local dir = vim.fs.dirname(name)
+  if not dir or dir == "" then
+    return false
+  end
+
+  return #vim.fs.find(".git", { path = dir, upward = true, limit = 1 }) > 0
+end
+
 return {
   {
     "lewis6991/gitsigns.nvim",
-    event = { "BufReadPre", "BufNewFile" },
+    cmd = { "Gitsigns" },
+    init = function()
+      local group = vim.api.nvim_create_augroup("xj_gitsigns_lazy", { clear = true })
+      vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
+        group = group,
+        callback = function(ev)
+          if not should_enable_gitsigns(ev.buf) then
+            return
+          end
+
+          require("lazy").load({ plugins = { "gitsigns.nvim" } })
+        end,
+      })
+    end,
     opts = {
+      max_file_length = require("config.large_file").max_lines,
       on_attach = function(bufnr)
         local gs = require("gitsigns")
         local function map(mode, lhs, rhs, desc)

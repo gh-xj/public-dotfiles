@@ -105,7 +105,7 @@ map("n", "<leader>/", "<cmd>Telescope current_buffer_fuzzy_find<cr>", { silent =
 -- Zed-aligned symbol search (Telescope-backed)
 map("n", "gs", "<cmd>Telescope lsp_document_symbols<cr>", { silent = true, desc = "Symbols in file" })
 map("n", "gS", "<cmd>Telescope lsp_workspace_symbols<cr>", { silent = true, desc = "Symbols in project" })
-map("n", "<leader>o", function() require("aerial").toggle({ focus = true }) end,
+map("n", "<leader>o", "<cmd>AerialToggle<cr>",
   { silent = true, desc = "Toggle outline panel" })
 
 map("n", "<leader>tf", "<cmd>Telescope find_files<cr>", { silent = true })
@@ -140,6 +140,7 @@ end
 vim.api.nvim_create_user_command("CloseBufferNoLayout", close_buffer_no_layout, {})
 vim.api.nvim_create_user_command("LazyGit", "terminal lazygit", {})
 vim.api.nvim_create_user_command("Format", function()
+  require("lazy").load({ plugins = { "conform.nvim" } })
   require("conform").format({ lsp_fallback = true, async = false })
 end, {})
 

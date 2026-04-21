@@ -2,7 +2,13 @@ return {
   {
     "jake-stewart/multicursor.nvim",
     branch = "1.0",
-    event = "VeryLazy",
+    keys = {
+      { "gl", mode = { "n", "v" }, desc = "Add cursor to next match of word" },
+      { "gL", mode = { "n", "v" }, desc = "Add cursor to prev match of word" },
+      { "g>", mode = { "n", "v" }, desc = "Skip to next match of word" },
+      { "g<", mode = { "n", "v" }, desc = "Skip to prev match of word" },
+      { "ga", mode = { "n", "v" }, desc = "Cursor on every match" },
+    },
     config = function()
       local mc = require("multicursor-nvim")
       mc.setup()

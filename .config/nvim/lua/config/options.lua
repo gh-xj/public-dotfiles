@@ -21,11 +21,12 @@ opt.smartcase = true
 
 vim.g.highlightedyank_highlight_duration = 300
 
--- Folding — treesitter-based, start fully unfolded (Zed-aligned).
-opt.foldmethod = "expr"
-opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+-- Folding defaults. Treesitter folding is enabled per-buffer for supported
+-- filetypes so empty startup and unsupported buffers stay cheap.
+opt.foldmethod = "manual"
+opt.foldexpr = "0"
 opt.foldenable = true
 opt.foldlevel = 99
 opt.foldlevelstart = 99
-opt.foldcolumn = "1"
+opt.foldcolumn = "0"
 opt.fillchars:append({ fold = " " })
