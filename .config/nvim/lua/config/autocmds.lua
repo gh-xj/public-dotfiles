@@ -1,5 +1,6 @@
 local augroup = vim.api.nvim_create_augroup
 local autocmd = vim.api.nvim_create_autocmd
+local large_file = require("config.large_file")
 
 -- Auto-close NERDTree when it's the last window.
 autocmd("BufEnter", {
@@ -35,8 +36,19 @@ autocmd("FileType", {
     vim.opt_local.breakindent = true
     vim.opt_local.conceallevel = 2
     vim.opt_local.concealcursor = "nc"
-    vim.opt_local.spell = true
+    vim.opt_local.spell = false
     vim.opt_local.textwidth = 0
+
+    if not large_file.is_large_markdown(ev.buf) then
+      return
+    end
+
+    -- Large markdown buffers keep the editing keymaps, but skip the expensive
+    -- prose niceties that slow redraw and file-open time.
+    vim.opt_local.conceallevel = 0
+    vim.opt_local.spell = false
+    vim.opt_local.foldmethod = "manual"
+    vim.opt_local.foldexpr = "0"
   end,
 })
 

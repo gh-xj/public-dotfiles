@@ -5,7 +5,20 @@ return {
     "MeanderingProgrammer/render-markdown.nvim",
     ft = { "markdown" },
     dependencies = { "nvim-treesitter/nvim-treesitter" },
-    opts = {},
+    opts = function()
+      local large_file = require("config.large_file")
+      return {
+        max_file_size = large_file.max_markdown_megabytes(),
+        ignore = function(buf)
+          return large_file.is_large_markdown(buf)
+        end,
+        -- Avoid eagerly loading nvim-cmp/LuaSnip just to get markdown checkbox
+        -- and callout completion hooks.
+        completions = {
+          lsp = { enabled = true },
+        },
+      }
+    end,
   },
 
   -- Browser preview (requires `node` — build step runs `npm install` under the
@@ -13,7 +26,6 @@ return {
   {
     "iamcco/markdown-preview.nvim",
     cmd = { "MarkdownPreview", "MarkdownPreviewToggle", "MarkdownPreviewStop" },
-    ft = { "markdown" },
     build = function() vim.fn["mkdp#util#install"]() end,
     init = function()
       vim.g.mkdp_auto_close = 1
