@@ -332,7 +332,7 @@
                         ]
                     },
                     {
-                        "description": "[xj] jk simultaneous to esc, ctrl+h to cmd+shift+[, ctrl+l to cmd+shift+]",
+                        "description": "[xj] jk simultaneous to esc",
                         "manipulators": [
                             {
                                 "from": {
@@ -356,32 +356,6 @@
                                     {
                                         "key_code": "escape",
                                         "modifiers": ["command"]
-                                    }
-                                ],
-                                "type": "basic"
-                            },
-                            {
-                                "from": {
-                                    "key_code": "h",
-                                    "modifiers": { "mandatory": ["control"] }
-                                },
-                                "to": [
-                                    {
-                                        "key_code": "open_bracket",
-                                        "modifiers": ["command", "shift"]
-                                    }
-                                ],
-                                "type": "basic"
-                            },
-                            {
-                                "from": {
-                                    "key_code": "l",
-                                    "modifiers": { "mandatory": ["control"] }
-                                },
-                                "to": [
-                                    {
-                                        "key_code": "close_bracket",
-                                        "modifiers": ["command", "shift"]
                                     }
                                 ],
                                 "type": "basic"

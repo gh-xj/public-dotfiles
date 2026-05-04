@@ -96,16 +96,18 @@ keybind = ctrl+8=text:\x1bp
 keybind = ctrl+digit_9=text:\x1by
 keybind = ctrl+9=text:\x1by
 # Ghostty bridges shortcuts into tmux.
-# Prefix-backed shortcuts must match tmux's prefix byte; meta-backed shortcuts stay on \x1b.
+# Prefix-backed shortcuts must match tmux's prefix byte.
+# Keep Option/Alt available to shell and terminal apps; avoid tmux bridges on \x1b.
 keybind = shift+left=text:\x13p
 keybind = shift+right=text:\x13n
 keybind = ctrl+shift+comma=text:\x13H
 keybind = ctrl+shift+period=text:\x13L
 keybind = super+t=text:\x13c
-keybind = super+w=text:\x1bw
-keybind = super+d=text:\x1bd
-keybind = super+shift+d=new_split:down
-keybind = super+ctrl+equal=equalize_splits
+keybind = super+w=text:\x13X
+keybind = super+d=text:\x13|
+keybind = super+shift+d=text:\x13_
+keybind = super+shift+enter=text:\x13z
+keybind = super+ctrl+equal=text:\x13E
 keybind = super+digit_1=text:\x1b1
 keybind = super+1=text:\x1b1
 keybind = super+digit_2=text:\x1b2
