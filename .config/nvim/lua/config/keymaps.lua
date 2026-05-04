@@ -140,6 +140,16 @@ end
 vim.api.nvim_create_user_command("CloseBufferNoLayout", close_buffer_no_layout, {})
 local lazygit_win
 
+local function current_git_root()
+  local file_dir = vim.fn.expand("%:p:h")
+  local start_dir = file_dir ~= "" and file_dir or vim.fn.getcwd()
+  local root = vim.fn.systemlist({ "git", "-C", start_dir, "rev-parse", "--show-toplevel" })
+  if vim.v.shell_error == 0 and root[1] and root[1] ~= "" then
+    return root[1]
+  end
+  return vim.fn.getcwd()
+end
+
 local function open_lazygit()
   if lazygit_win and vim.api.nvim_win_is_valid(lazygit_win) then
     vim.api.nvim_set_current_win(lazygit_win)
@@ -147,6 +157,7 @@ local function open_lazygit()
     return
   end
 
+  local cwd = current_git_root()
   local width = math.floor(vim.o.columns * 0.95)
   local height = math.floor(vim.o.lines * 0.9)
   local row = math.floor((vim.o.lines - height) / 2)
@@ -160,14 +171,14 @@ local function open_lazygit()
     row = row,
     col = col,
     border = "rounded",
-    title = " lazygit ",
+    title = " lazygit: " .. vim.fn.fnamemodify(cwd, ":t") .. " ",
     title_pos = "center",
   })
 
   vim.bo[buf].bufhidden = "wipe"
   vim.bo[buf].filetype = "lazygit"
   vim.fn.termopen("lazygit", {
-    cwd = vim.fn.getcwd(),
+    cwd = cwd,
     env = { NVIM = vim.v.servername },
     on_exit = function()
       vim.schedule(function()

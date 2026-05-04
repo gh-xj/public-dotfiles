@@ -39,6 +39,25 @@ customCommands:
         description: "Create PR for current branch"
         command: "gh pr create --web --fill"
         output: terminal
+      - key: "m"
+        context: "global"
+        description: "Open current branch compare with main"
+        command: >
+          branch=$(git branch --show-current);
+          base=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##');
+          base=${base:-main};
+          gh browse "compare/${base}...${branch}"
+        output: none
+      - key: "b"
+        context: "global"
+        description: "Copy current branch name"
+        command: "git branch --show-current | pbcopy"
+        output: none
+      - key: "l"
+        context: "localBranches"
+        description: "Copy selected branch name"
+        command: "printf %s {{.SelectedLocalBranch.Name | quote}} | pbcopy"
+        output: none
       - key: "c"
         context: "commits"
         description: "Open selected commit in GitHub"
