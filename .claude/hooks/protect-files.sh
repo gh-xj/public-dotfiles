@@ -3,14 +3,14 @@ set -euo pipefail
 file=$(jq -r '.tool_input.file_path // .tool_input.path // ""')
 
 protected=(
-  ".env"
-  ".env.*"
-  ".git/.*"
-  "package-lock.json"
-  "yarn.lock"
-  ".*\.pem"
-  ".*\.key"
-  "secrets/.*"
+  "(^|/)\.env$"
+  "(^|/)\.env\..*"
+  "(^|/)\.git/"
+  "(^|/)package-lock\.json$"
+  "(^|/)yarn\.lock$"
+  ".*\.pem$"
+  ".*\.key$"
+  "(^|/)secrets/"
 )
 
 for pattern in "${protected[@]}"; do

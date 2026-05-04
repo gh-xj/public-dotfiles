@@ -258,3 +258,6 @@ export _ZO_DOCTOR=0
 export _ZO_FZF_OPTS='--height 60% --layout reverse --border top --extended --no-sort'
 eval "$(zoxide init zsh --cmd j)"
 
+
+# agents-cli: version switching for AI coding agents
+export PATH="/Users/xj/.agents/shims:$PATH"

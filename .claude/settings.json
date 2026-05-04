@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path // empty' | xargs -I{} npx prettier --write {} 2>/dev/null; exit 0"
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.md|*.markdown|*.yaml|*.yml) exit 0 ;; esac; [ -n \"$f\" ] && npx prettier --write \"$f\" 2>/dev/null; exit 0"
           },
           {
             "type": "command",
@@ -71,7 +71,6 @@
     "gopls-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
-    "rust-skills@rust-skills": true,
     "superpowers@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true
   },
@@ -103,8 +102,11 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
+  "tui": "fullscreen",
   "autoDreamEnabled": true,
   "skipDangerousModePermissionPrompt": true,
+  "theme": "light",
+  "editorMode": "vim",
   "preferences": {
     "tmuxSplitPanes": true
   }
