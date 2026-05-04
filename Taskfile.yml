@@ -11,6 +11,32 @@ tasks:
     cmds:
       - ./init-private-overlay.sh
 
+  dotfiles:verify:
+    desc: Verify public dotfile config surfaces
+    cmds:
+      - task: verify:lazygit
+      - task: verify:nvim
+      - task: secrets:staged
+
+  verify:lazygit:
+    desc: Verify lazygit config and required helpers
+    cmds:
+      - ruby -ryaml -e 'YAML.load_file(".config/lazygit/config.yml")'
+      - command -v lazygit
+      - command -v delta
+      - command -v difft
+      - command -v gh
+
+  verify:nvim:
+    desc: Verify Neovim starts with this config
+    cmds:
+      - nvim --headless +qa
+
+  secrets:staged:
+    desc: Scan staged public-dotfiles changes for secrets
+    cmds:
+      - gitleaks protect --staged --source . --redact --no-banner
+
   help:
     desc: Show available tasks
     cmds:

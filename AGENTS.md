@@ -1,0 +1,40 @@
+# Agent Rules
+
+## Scope
+
+This repository owns the public, reusable dotfile baseline. Keep private
+machine state, credentials, account-local provider settings, sessions, caches,
+and personal archives in `private-config`.
+
+Use the `config-manager` skill for app configuration work. Edit source files in
+this repo, not the live symlinks under `$HOME`.
+
+## Commit Discipline
+
+- Treat `public-dotfiles` and `private-config` as separate repositories with
+  separate commits and pushes.
+- Start every git operation with `git status --short` in the target repo. Notice
+  unrelated dirty files and leave them unstaged.
+- Stage explicit paths only: `git add -- path/to/file ...`. Do not use broad
+  staging commands for dotfiles work.
+- Inspect `git diff --cached` before committing.
+- Keep each commit atomic: one behavior, policy, package ledger update, or doc
+  update. Split unrelated concerns even when they are discovered together.
+- Use imperative commit subjects that describe the behavior changed.
+- Never amend, rebase, reset, checkout away, or force-push existing work unless
+  the user explicitly asks for that operation.
+- After committing or pushing, log the operation: repo, commit hash, files, and
+  verification commands run.
+
+## Verification
+
+- Run `task dotfiles:verify` before committing public dotfile changes.
+- Run `task secrets:staged` before committing any change that touches scripts,
+  agent config, shell config, tokens, URLs, headers, or generated config.
+- If a check cannot run, state the exact command and failure reason in the final
+  report.
+
+## Daily Workflow
+
+Read `docs/daily-git-workflow.md` for the normal branch, commit, verification,
+and push path.
