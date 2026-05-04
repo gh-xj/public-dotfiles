@@ -19,12 +19,16 @@ this repo, not the live symlinks under `$HOME`.
   staging commands for dotfiles work.
 - Inspect `git diff --cached` before committing.
 - Keep each commit atomic: one behavior, policy, package ledger update, or doc
-  update. Split unrelated concerns even when they are discovered together.
+  update. Before staging, write the operation boundary in one sentence; if a
+  second concern appears, split it into a separate commit.
+- Treat each commit as an audit record. The final log for an operation must
+  name the repo, commit hash, pushed branch, exact files staged, and
+  verification commands run.
 - Use imperative commit subjects that describe the behavior changed.
 - Never amend, rebase, reset, checkout away, or force-push existing work unless
   the user explicitly asks for that operation.
-- After committing or pushing, log the operation: repo, commit hash, files, and
-  verification commands run.
+- Keep `CLAUDE.md` as `@AGENTS.md` so Claude and Codex share the same commit
+  discipline.
 
 ## Verification
 
