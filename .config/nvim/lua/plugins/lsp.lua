@@ -123,7 +123,19 @@ return {
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
       "L3MON4D3/LuaSnip",
-      "saadparwaiz1/cmp_luasnip",
+      {
+        "saadparwaiz1/cmp_luasnip",
+        -- nvim 0.12: old vim.validate({}) triggers broken deprecation path in lazy's loader
+        build = function(plugin)
+          local f = plugin.dir .. "/lua/cmp_luasnip/init.lua"
+          local src = io.open(f):read("*a")
+          local patched = src:gsub(
+            "vim%.validate%(%{%s*\n%s*use_show_condition = %{ params%.option%.use_show_condition, 'boolean' %},%s*\n%s*show_autosnippets  = %{ params%.option%.show_autosnippets,  'boolean' %},%s*\n%s*%}%)",
+            "vim.validate('use_show_condition', params.option.use_show_condition, 'boolean')\n\tvim.validate('show_autosnippets', params.option.show_autosnippets, 'boolean')"
+          )
+          io.open(f, "w"):write(patched)
+        end,
+      },
     },
     config = function()
       local cmp = require("cmp")
