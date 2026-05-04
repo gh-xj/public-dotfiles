@@ -21,6 +21,15 @@ this repo, not the live symlinks under `$HOME`.
 - Keep each commit atomic: one behavior, policy, package ledger update, or doc
   update. Before staging, write the operation boundary in one sentence; if a
   second concern appears, split it into a separate commit.
+- Treat an accepted atomic operation as incomplete until its intended changes
+  are committed in the owning repo, unless the user explicitly asks to defer the
+  commit. If a commit cannot be made because the scope is ambiguous, checks
+  fail, or unrelated dirty files overlap the same paths, stop and report the
+  blocker instead of silently leaving completed work uncommitted.
+- If a final report includes uncommitted changes, name the exact reason. The
+  reason this rule exists is that prior agent work sometimes stopped after
+  editing and verification, while the written discipline only emphasized
+  commit shape rather than requiring a commit for the completed operation.
 - Treat each commit as an audit record. The final log for an operation must
   name the repo, commit hash, pushed branch, exact files staged, and
   verification commands run.

@@ -21,6 +21,15 @@ Use this flow for routine work in `public-dotfiles`.
    `task dotfiles:verify`
 4. Commit one behavior at a time:
    `git commit -m "Improve lazygit workflow"`
+5. Do not leave an accepted atomic operation uncommitted by default. If the
+   commit is deferred, the final report must say exactly why.
+
+## Atomic Completion
+
+An accepted atomic operation is complete only after this repo has a commit for
+it, unless the user explicitly asked to stop before committing or a blocker was
+reported. This closes the gap in the previous rule text: it described how to
+shape commits, but did not say that verified completed work must be committed.
 
 ## After Commit
 
