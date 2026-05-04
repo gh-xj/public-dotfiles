@@ -4,6 +4,10 @@ gui:
   expandFocusedSidePanel: true # Makes the focused side panel larger automatically
 
 git:
+  mainBranches:
+    - main
+    - master
+
   branchLogCmd: "git log --graph --color=always --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --stat {{branchName}} --"
 
 os:
