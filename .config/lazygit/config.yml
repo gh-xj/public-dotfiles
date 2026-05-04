@@ -1,9 +1,15 @@
 gui:
   showIcons: true
+  nerdFontsVersion: "3"
+  showDivergenceFromBaseBranch: arrowAndNumber
   sidePanelWidth: 0.45 # Sets the side panel to 50% width
   expandFocusedSidePanel: true # Makes the focused side panel larger automatically
 
 git:
+  pagers:
+    - pager: 'delta --dark --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"'
+    - externalDiffCommand: 'difft --color=always --display=inline'
+
   mainBranches:
     - main
     - master
@@ -11,6 +17,35 @@ git:
   branchLogCmd: "git log --graph --color=always --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --stat {{branchName}} --"
 
 os:
-  edit: "nvim -- {{filename}}"
-  editAtLine: "nvim +{{line}} -- {{filename}}"
+  editPreset: nvim-remote
   open: "open {{filename}}"
+
+customCommands:
+  - key: "X"
+    description: "GitHub actions"
+    commandMenu:
+      - key: "r"
+        context: "global"
+        description: "Open repository in GitHub"
+        command: "gh browse"
+        output: none
+      - key: "p"
+        context: "global"
+        description: "Open current branch PR in GitHub"
+        command: "gh pr view --web"
+        output: none
+      - key: "n"
+        context: "global"
+        description: "Create PR for current branch"
+        command: "gh pr create --web --fill"
+        output: terminal
+      - key: "c"
+        context: "commits"
+        description: "Open selected commit in GitHub"
+        command: "gh browse {{.SelectedCommit.Hash}}"
+        output: none
+      - key: "f"
+        context: "files"
+        description: "Open selected file in GitHub"
+        command: "gh browse {{.SelectedFile.Name | quote}}"
+        output: none

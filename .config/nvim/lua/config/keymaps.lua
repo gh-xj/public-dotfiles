@@ -138,7 +138,51 @@ local function close_buffer_no_layout()
 end
 
 vim.api.nvim_create_user_command("CloseBufferNoLayout", close_buffer_no_layout, {})
-vim.api.nvim_create_user_command("LazyGit", "terminal lazygit", {})
+local lazygit_win
+
+local function open_lazygit()
+  if lazygit_win and vim.api.nvim_win_is_valid(lazygit_win) then
+    vim.api.nvim_set_current_win(lazygit_win)
+    vim.cmd("startinsert")
+    return
+  end
+
+  local width = math.floor(vim.o.columns * 0.95)
+  local height = math.floor(vim.o.lines * 0.9)
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+  local buf = vim.api.nvim_create_buf(false, true)
+
+  lazygit_win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    border = "rounded",
+    title = " lazygit ",
+    title_pos = "center",
+  })
+
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].filetype = "lazygit"
+  vim.fn.termopen("lazygit", {
+    cwd = vim.fn.getcwd(),
+    env = { NVIM = vim.v.servername },
+    on_exit = function()
+      vim.schedule(function()
+        if lazygit_win and vim.api.nvim_win_is_valid(lazygit_win) then
+          vim.api.nvim_win_close(lazygit_win, true)
+        end
+        lazygit_win = nil
+      end)
+    end,
+  })
+  vim.keymap.set("t", "<Esc><Esc>", [[<C-\><C-n><cmd>close<cr>]], { buffer = buf, silent = true })
+  vim.cmd("startinsert")
+end
+
+vim.api.nvim_create_user_command("LazyGit", open_lazygit, {})
 vim.api.nvim_create_user_command("Format", function()
   require("lazy").load({ plugins = { "conform.nvim" } })
   require("conform").format({ lsp_fallback = true, async = false })
