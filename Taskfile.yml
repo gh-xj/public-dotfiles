@@ -14,9 +14,24 @@ tasks:
   dotfiles:verify:
     desc: Verify public dotfile config surfaces
     cmds:
+      - task: security:no-personal-gh
       - task: verify:lazygit
       - task: verify:nvim
       - task: secrets:staged
+
+  security:no-personal-gh:
+    desc: Reject personal GitHub CLI auth on company machines
+    cmds:
+      - |
+        if ! command -v gh >/dev/null 2>&1; then
+          exit 0
+        fi
+        if gh auth status --hostname github.com >/dev/null 2>&1; then
+          printf '%s\n' "GitHub CLI auth to github.com is forbidden on this company machine." >&2
+          printf '%s\n' "Run: gh auth logout --hostname github.com" >&2
+          exit 1
+        fi
+        exit 0
 
   verify:lazygit:
     desc: Verify lazygit config and required helpers
