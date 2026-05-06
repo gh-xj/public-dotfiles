@@ -6,7 +6,6 @@
 .claude/plugins/blocklist.json
 .claude/plugins/config.json
 .claude/skills
-.config/.byted_gitconfig
 .config/atuin
 .config/git
 .config/xj_raycast_scripts
