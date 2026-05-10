@@ -9,19 +9,15 @@ and personal archives in `private-config`.
 Use the `config-manager` skill for app configuration work. Edit source files in
 this repo, not the live symlinks under `$HOME`.
 
-## Company Account Boundary
+## GitHub CLI Account Boundary
 
-- Never authenticate a personal GitHub account on this company computer.
-- Do not run `gh auth login` for `github.com`, store personal GitHub tokens in
-  Keychain, `~/.config/gh`, Git Credential Manager, shell config, agent config,
-  or any repo file.
-- `gh` may be installed as an unauthenticated CLI helper, but `gh auth status
-  --hostname github.com` must report no logged-in GitHub hosts on this machine.
-- If personal GitHub CLI auth is discovered, immediately run
-  `gh auth logout --hostname github.com` for the affected account and verify the
-  logout before continuing.
-- `task dotfiles:verify` includes `security:no-personal-gh`; do not bypass,
-  weaken, or remove that gate unless the company account policy changes.
+- GitHub CLI auth for `github.com` is allowed only for approved local accounts.
+  The default approved account is `gh-xj`; set
+  `APPROVED_GITHUB_CLI_ACCOUNTS` to a space-separated allowlist when needed.
+- Do not authenticate unapproved GitHub accounts or commit tokens to repo,
+  shell, agent, or generated config.
+- `task dotfiles:verify` includes `security:approved-gh-account`; keep that gate
+  aligned with the approved-account policy.
 
 ## Commit Discipline
 

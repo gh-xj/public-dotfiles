@@ -14,24 +14,37 @@ tasks:
   dotfiles:verify:
     desc: Verify public dotfile config surfaces
     cmds:
-      - task: security:no-personal-gh
+      - task: security:approved-gh-account
       - task: verify:lazygit
       - task: verify:nvim
       - task: secrets:staged
 
-  security:no-personal-gh:
-    desc: Reject personal GitHub CLI auth on company machines
+  security:approved-gh-account:
+    desc: Reject unapproved GitHub CLI auth
     cmds:
       - |
         if ! command -v gh >/dev/null 2>&1; then
           exit 0
         fi
-        if gh auth status --hostname github.com >/dev/null 2>&1; then
-          printf '%s\n' "GitHub CLI auth to github.com is forbidden on this company machine." >&2
-          printf '%s\n' "Run: gh auth logout --hostname github.com" >&2
+        status="$(gh auth status --hostname github.com 2>&1)" || exit 0
+        accounts="$(printf '%s\n' "$status" | sed -nE 's/.*Logged in to github.com account ([^ ]+) .*/\1/p' | sort -u)"
+        approved_accounts="${APPROVED_GITHUB_CLI_ACCOUNTS:-gh-xj}"
+
+        if [ -z "$accounts" ]; then
+          printf '%s\n' "Unable to parse GitHub CLI auth status for github.com." >&2
           exit 1
         fi
-        exit 0
+
+        for account in $accounts; do
+          case " $approved_accounts " in
+            *" $account "*) ;;
+            *)
+              printf '%s\n' "GitHub CLI account '$account' is not approved for this machine." >&2
+              printf '%s\n' "Approved accounts: $approved_accounts" >&2
+              exit 1
+              ;;
+          esac
+        done
 
   verify:lazygit:
     desc: Verify lazygit config and required helpers
