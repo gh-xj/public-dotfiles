@@ -32,7 +32,7 @@ Current tmux prefix:
 
 Native Claude Code passthrough:
 
-- Shared tmux config enables `allow-passthrough` so Claude Code desktop notifications and progress updates can reach Ghostty.
+- Shared tmux config enables `allow-passthrough all` so Claude Code desktop notifications and progress updates can reach Ghostty even when the agent pane/window is not currently visible.
 - Shared tmux config enables `extended-keys` plus `xterm*:extkeys` so Shift+Enter remains distinguishable from Enter inside tmux.
 
 Current pane shortcuts:
