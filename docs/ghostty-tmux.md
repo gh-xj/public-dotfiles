@@ -30,6 +30,11 @@ Current tmux prefix:
 - `Ctrl-s`
 - Prefix byte: `\x13`
 
+Native Claude Code passthrough:
+
+- Shared tmux config enables `allow-passthrough` so Claude Code desktop notifications and progress updates can reach Ghostty.
+- Shared tmux config enables `extended-keys` plus `xterm*:extkeys` so Shift+Enter remains distinguishable from Enter inside tmux.
+
 Current pane shortcuts:
 
 - `super+d` sends `prefix + |`: split active pane to the right and equalize pane sizes.
