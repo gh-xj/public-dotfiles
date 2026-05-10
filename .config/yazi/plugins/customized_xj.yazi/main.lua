@@ -72,7 +72,7 @@ local function entry()
     })
 
     -- Clear selection and refresh
-    ya.mgr_emit("escape", {})
+    ya.emit("escape", {})
 end
 
 return { entry = entry }
