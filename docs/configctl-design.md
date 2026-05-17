@@ -2,6 +2,7 @@
 
 Status: proposed
 Work item: W-0004
+Core belief: `docs/configctl-core-belief.md`
 
 ## Purpose
 
