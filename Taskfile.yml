@@ -25,6 +25,7 @@ tasks:
       - task: security:approved-gh-account
       - task: verify:lazygit
       - task: verify:nvim
+      - task: verify:terminal
       - task: secrets:staged
 
   security:approved-gh-account:
@@ -57,16 +58,20 @@ tasks:
   verify:lazygit:
     desc: Verify lazygit config and required helpers
     cmds:
-      - ruby -ryaml -e 'YAML.load_file(".config/lazygit/config.yml")'
-      - command -v lazygit
-      - command -v delta
-      - command -v difft
-      - command -v gh
+      - task: configctl:build
+      - tools/configctl/bin/configctl app lazygit verify
 
   verify:nvim:
     desc: Verify Neovim starts with this config
     cmds:
-      - nvim --headless +qa
+      - task: configctl:build
+      - tools/configctl/bin/configctl app nvim verify
+
+  verify:terminal:
+    desc: Verify terminal app workflow
+    cmds:
+      - task: configctl:build
+      - tools/configctl/bin/configctl app terminal verify
 
   secrets:staged:
     desc: Scan staged public-dotfiles changes for secrets

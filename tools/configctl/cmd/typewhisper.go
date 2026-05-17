@@ -16,6 +16,12 @@ import (
 
 type AppCmd struct {
 	TypeWhisper TypeWhisperCmd `cmd:"" name:"typewhisper" help:"manage TypeWhisper vocabulary stores"`
+	Nvim        NvimCmd        `cmd:"" name:"nvim" help:"verify Neovim config"`
+	Lazygit     LazygitCmd     `cmd:"" name:"lazygit" help:"verify Lazygit config"`
+	Ghostty     GhosttyCmd     `cmd:"" name:"ghostty" help:"verify Ghostty config"`
+	Tmux        TmuxCmd        `cmd:"" name:"tmux" help:"verify tmux config"`
+	Karabiner   KarabinerCmd   `cmd:"" name:"karabiner" help:"verify Karabiner config"`
+	Terminal    TerminalCmd    `cmd:"" name:"terminal" help:"verify terminal workflow"`
 }
 
 type TypeWhisperCmd struct {

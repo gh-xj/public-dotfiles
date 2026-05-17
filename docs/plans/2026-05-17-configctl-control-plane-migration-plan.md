@@ -263,14 +263,14 @@ Verification:
 
 Operation boundary: move deterministic app checks under `configctl app`.
 
-- [ ] implement `app nvim verify`
-- [ ] implement `app lazygit verify`
-- [ ] implement `app ghostty verify`
-- [ ] implement `app tmux verify`
-- [ ] implement `app karabiner verify`
-- [ ] implement `app terminal verify` as the composite terminal workflow check
-- [ ] keep app-specific external tools behind process adapters
-- [ ] replace Taskfile shell blocks with thin aliases
+- [x] implement `app nvim verify`
+- [x] implement `app lazygit verify`
+- [x] implement `app ghostty verify`
+- [x] implement `app tmux verify`
+- [x] implement `app karabiner verify`
+- [x] implement `app terminal verify` as the composite terminal workflow check
+- [x] keep app-specific external tools behind process adapters
+- [x] replace Taskfile shell blocks with thin aliases
 
 Verification:
 
@@ -356,5 +356,5 @@ Verification:
 
 ## Next Action
 
-Start Milestone 6 by moving deterministic app validators for terminal, Neovim,
-Lazygit, Ghostty, tmux, and Karabiner under `configctl app`.
+Start Milestone 7 by adding read-only package ledger status, audit, and verify
+commands for Homebrew and npm global packages.

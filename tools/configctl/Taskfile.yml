@@ -68,6 +68,12 @@ tasks:
       - ./{{.BIN}} --json agent verify >/dev/null
       - ./{{.BIN}} --json agent skills verify >/dev/null
       - ./{{.BIN}} --json agent codex-auth status >/dev/null
+      - ./{{.BIN}} --json app nvim verify >/dev/null
+      - ./{{.BIN}} --json app lazygit verify >/dev/null
+      - ./{{.BIN}} --json app ghostty verify >/dev/null
+      - ./{{.BIN}} --json app tmux verify >/dev/null
+      - ./{{.BIN}} --json app karabiner verify >/dev/null
+      - ./{{.BIN}} --json app terminal verify >/dev/null
       - ./{{.BIN}} --json app typewhisper validate --lexicon testdata/typewhisper/lexicon.json >/dev/null
       - |
           private_repo="$(cd "{{.TASKFILE_DIR}}/../../.." && pwd)/private-config"
