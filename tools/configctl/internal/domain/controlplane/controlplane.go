@@ -100,7 +100,7 @@ func Verify(ctx context.Context, opts Options, profile verify.Profile) verify.Re
 		registryCheck(opts),
 		homeCheck(opts, profile),
 		workspaceCheck(),
-		agentCheck(),
+		agentCheck(opts),
 		packageCheck(),
 	}}
 	return runner.Run(ctx, profile)
@@ -153,13 +153,24 @@ func workspaceCheck() verify.Check {
 	}
 }
 
-func agentCheck() verify.Check {
+func agentCheck(opts Options) verify.Check {
 	return verify.Check{
 		ID:       "agent.verify",
 		Name:     "agent topology",
 		Required: true,
 		Run: func(_ context.Context) verify.CheckResult {
-			status, failures, err := agent.Verify(agent.Options{})
+			agentOpts, skip, skipDiagnostics, err := agentOptions(opts)
+			if err != nil {
+				return verifyFailure(err, "agent.options_failed", "could not resolve agent topology", "")
+			}
+			if skip {
+				return verify.CheckResult{
+					OK:          true,
+					Summary:     "agent topology skipped: private-config unavailable",
+					Diagnostics: skipDiagnostics,
+				}
+			}
+			status, failures, err := agent.Verify(agentOpts)
 			if err != nil {
 				return verifyFailure(err, "agent.verify_failed", "could not verify agent topology", "")
 			}
@@ -177,6 +188,50 @@ func agentCheck() verify.Check {
 			}
 		},
 	}
+}
+
+func agentOptions(opts Options) (agent.Options, bool, []report.Diagnostic, error) {
+	agentOpts := agent.Options{
+		HomeDir:        opts.HomeDir,
+		PublicRepoDir:  opts.PublicRepoDir,
+		PrivateRepoDir: opts.PrivateRepoDir,
+	}
+	if agentOpts.PublicRepoDir != "" && agentOpts.PrivateRepoDir != "" {
+		return agentOpts, false, nil, nil
+	}
+
+	registryPath, err := resolveRegistryPath(opts.RegistryPath)
+	if err != nil {
+		return agentOpts, false, nil, err
+	}
+	registry, diagnostics, err := repo.LoadRegistry(registryPath)
+	if err != nil {
+		return agentOpts, false, diagnostics, err
+	}
+	for _, definition := range registry.Repos {
+		switch definition.Name {
+		case "public-dotfiles":
+			if agentOpts.PublicRepoDir == "" {
+				agentOpts.PublicRepoDir = definition.Path
+			}
+		case "private-config":
+			if agentOpts.PrivateRepoDir == "" {
+				agentOpts.PrivateRepoDir = definition.Path
+			}
+			if _, err := os.Stat(definition.Path); err != nil {
+				if definition.Required {
+					return agentOpts, false, nil, err
+				}
+				return agentOpts, true, []report.Diagnostic{{
+					Severity: "warning",
+					Code:     "agent.private_repo_missing",
+					Message:  "private-config is unavailable; agent topology checks were skipped",
+					Path:     definition.Path,
+				}}, nil
+			}
+		}
+	}
+	return agentOpts, false, nil, nil
 }
 
 func packageCheck() verify.Check {

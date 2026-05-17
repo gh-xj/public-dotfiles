@@ -131,18 +131,18 @@ func (c *AgentPolicyVerifyCmd) Run(rt *appctx.Runtime) error {
 }
 
 func (c *AgentSkillsListCmd) Run(rt *appctx.Runtime) error {
-	return emitSkillset(rt, "agent.skills.list", agent.Skillset(context.Background(), c.options(), "list", true))
+	return emitSkillset(rt, "agent.skills.list", agent.Skillset(context.Background(), c.options(), "list", false))
 }
 
 func (c *AgentSkillsVerifyCmd) Run(rt *appctx.Runtime) error {
-	return emitSkillset(rt, "agent.skills.verify", agent.Skillset(context.Background(), c.options(), "verify", true))
+	return emitSkillset(rt, "agent.skills.verify", agent.Skillset(context.Background(), c.options(), "verify", false))
 }
 
 func (c *AgentSkillsSyncCmd) Run(rt *appctx.Runtime) error {
 	command := "agent.skills.sync"
 	result := agent.Skillset(context.Background(), c.options(), "sync", c.DryRun)
 	if !c.DryRun || c.ReportOut != "" {
-		result.Diagnostics = c.writeReport(rt, command, result)
+		result.OperationReportPath, result.Diagnostics = c.writeReport(rt, command, result)
 	}
 	return emitSkillset(rt, command, result)
 }
@@ -191,7 +191,7 @@ func emitSkillset(rt *appctx.Runtime, command string, result agent.SkillsetResul
 	return rt.Emit(report.New(command, true, false, result.DryRun, summary, result, result.Diagnostics))
 }
 
-func (c *AgentSkillsSyncCmd) writeReport(rt *appctx.Runtime, command string, result agent.SkillsetResult) []report.Diagnostic {
+func (c *AgentSkillsSyncCmd) writeReport(rt *appctx.Runtime, command string, result agent.SkillsetResult) (string, []report.Diagnostic) {
 	diagnostics := append([]report.Diagnostic{}, result.Diagnostics...)
 	path, err := rt.WriteOperationReport(report.OperationReportInput{
 		Command:           command,
@@ -202,15 +202,15 @@ func (c *AgentSkillsSyncCmd) writeReport(rt *appctx.Runtime, command string, res
 		VerificationHints: []string{"configctl agent skills verify"},
 		Diagnostics:       result.Diagnostics,
 	}, c.ReportOut)
-	_ = path
 	if err != nil {
 		diagnostics = append(diagnostics, report.Diagnostic{
 			Severity: "error",
 			Code:     "operation_report.write_failed",
 			Message:  err.Error(),
 		})
+		return "", diagnostics
 	}
-	return diagnostics
+	return path, diagnostics
 }
 
 func writeAgentMutationReport(rt *appctx.Runtime, command string, reportOut string, result agent.AuthMutationResult, ok bool) (string, []report.Diagnostic) {

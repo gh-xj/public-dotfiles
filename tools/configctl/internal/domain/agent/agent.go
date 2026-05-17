@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -59,13 +60,14 @@ type SkillsStatus struct {
 }
 
 type SkillsetResult struct {
-	Command     string              `json:"command"`
-	Args        []string            `json:"args"`
-	ExitCode    int                 `json:"exit_code"`
-	Stdout      string              `json:"stdout,omitempty"`
-	Stderr      string              `json:"stderr,omitempty"`
-	DryRun      bool                `json:"dry_run"`
-	Diagnostics []report.Diagnostic `json:"diagnostics"`
+	Command             string              `json:"command"`
+	Args                []string            `json:"args"`
+	ExitCode            int                 `json:"exit_code"`
+	Stdout              string              `json:"stdout,omitempty"`
+	Stderr              string              `json:"stderr,omitempty"`
+	DryRun              bool                `json:"dry_run"`
+	OperationReportPath string              `json:"operation_report_path,omitempty"`
+	Diagnostics         []report.Diagnostic `json:"diagnostics"`
 }
 
 type CodexAuthStatus struct {
@@ -112,7 +114,7 @@ func Status(opts Options) (StatusResult, error) {
 
 func Verify(opts Options) (StatusResult, []report.Diagnostic, error) {
 	status, err := Status(opts)
-	skillset := Skillset(context.Background(), opts, "verify", true)
+	skillset := Skillset(context.Background(), opts, "verify", false)
 	status.SkillsetCheck = &skillset
 	status.Diagnostics = append(status.Diagnostics, skillset.Diagnostics...)
 	var failures []report.Diagnostic
@@ -181,17 +183,15 @@ func SkillsStatusResult(opts Options) SkillsStatus {
 		})
 	}
 	if resolved.SkillsetBin != "" {
-		if _, err := os.Stat(resolved.SkillsetBin); err == nil {
+		if found, err := executableExists(resolved.SkillsetBin); found {
 			status.SkillsetFound = true
-		} else if strings.ContainsRune(resolved.SkillsetBin, filepath.Separator) {
+		} else {
 			status.Diagnostics = append(status.Diagnostics, report.Diagnostic{
 				Severity: "error",
 				Code:     "agent.skills.skillset_missing",
 				Message:  err.Error(),
 				Path:     resolved.SkillsetBin,
 			})
-		} else {
-			status.SkillsetFound = true
 		}
 	}
 	return status
@@ -295,7 +295,7 @@ func SaveCodexAuth(opts Options, mode string) (AuthMutationResult, error) {
 	if !authStatus.Exists || !authStatus.ValidJSON {
 		return AuthMutationResult{AuthFile: authStatus, Diagnostics: invalidAuthDiagnostics(authStatus)}, errors.New("current Codex auth is invalid")
 	}
-	if err := copyFile(authPath, snapshotPath, 0o600); err != nil {
+	if err := copyFileSecure(authPath, snapshotPath, 0o600); err != nil {
 		return AuthMutationResult{AuthFile: authStatus, Diagnostics: []report.Diagnostic{{
 			Severity: "error",
 			Code:     "agent.codex_auth.save_failed",
@@ -332,7 +332,7 @@ func UseCodexAuth(opts Options, mode string) (AuthMutationResult, error) {
 		now = time.Now()
 	}
 	backupPath := authPath + ".bak-" + now.Format("20060102-150405")
-	if err := copyFile(authPath, backupPath, 0o600); err != nil {
+	if err := copyFileSecure(authPath, backupPath, 0o600); err != nil {
 		return AuthMutationResult{AuthFile: authStatus, Snapshot: snapshotStatus, Diagnostics: []report.Diagnostic{{
 			Severity: "error",
 			Code:     "agent.codex_auth.backup_failed",
@@ -340,7 +340,7 @@ func UseCodexAuth(opts Options, mode string) (AuthMutationResult, error) {
 			Path:     backupPath,
 		}}}, err
 	}
-	if err := copyFile(snapshotPath, authPath, 0o600); err != nil {
+	if err := copyFileSecure(snapshotPath, authPath, 0o600); err != nil {
 		return AuthMutationResult{AuthFile: authStatus, Snapshot: snapshotStatus, BackupPath: backupPath, Diagnostics: []report.Diagnostic{{
 			Severity: "error",
 			Code:     "agent.codex_auth.use_failed",
@@ -427,6 +427,27 @@ func resolveSkillsetBin(privateRepo string) string {
 	return "skillset"
 }
 
+func executableExists(command string) (bool, error) {
+	if strings.ContainsRune(command, filepath.Separator) {
+		info, err := os.Stat(command)
+		if err != nil {
+			return false, err
+		}
+		if info.IsDir() {
+			return false, fmt.Errorf("%s is a directory", command)
+		}
+		if info.Mode()&0o111 == 0 {
+			return false, fmt.Errorf("%s is not executable", command)
+		}
+		return true, nil
+	}
+	_, err := exec.LookPath(command)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func inspectLink(name string, path string, expected string) LinkStatus {
 	resolved, exists, isSymlink := resolveLive(path)
 	return LinkStatus{
@@ -493,7 +514,7 @@ func invalidAuthDiagnostics(status AuthFileStatus) []report.Diagnostic {
 	}}
 }
 
-func copyFile(source string, destination string, perm os.FileMode) error {
+func copyFileSecure(source string, destination string, perm os.FileMode) error {
 	data, err := os.ReadFile(source)
 	if err != nil {
 		return err
@@ -501,7 +522,38 @@ func copyFile(source string, destination string, perm os.FileMode) error {
 	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(destination, data, perm)
+	return writeFileSecure(destination, data, perm)
+}
+
+func writeFileSecure(path string, data []byte, perm os.FileMode) error {
+	dir := filepath.Dir(path)
+	temp, err := os.CreateTemp(dir, "."+filepath.Base(path)+".tmp-*")
+	if err != nil {
+		return err
+	}
+	tempPath := temp.Name()
+	cleanup := true
+	defer func() {
+		if cleanup {
+			_ = os.Remove(tempPath)
+		}
+	}()
+	if err := temp.Chmod(perm); err != nil {
+		_ = temp.Close()
+		return err
+	}
+	if _, err := temp.Write(data); err != nil {
+		_ = temp.Close()
+		return err
+	}
+	if err := temp.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tempPath, path); err != nil {
+		return err
+	}
+	cleanup = false
+	return os.Chmod(path, perm)
 }
 
 func resolveLive(path string) (string, bool, bool) {
