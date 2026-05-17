@@ -503,7 +503,9 @@ When added:
 - untracked count
 - whether managed files overlap dirty paths
 
-No commands should exist for commit, push, amend, reset, rebase, or checkout.
+The only Git-mutating surface is `release capture`, which stages declared
+paths and commits only when `--apply` is passed. No commands should exist for
+amend, reset, rebase, checkout, or force-push.
 
 ## Taskfile Migration
 
@@ -535,23 +537,8 @@ ported. The end state is no business logic in Taskfile shell blocks.
 
 ## Compatibility
 
-Keep existing user-facing entrypoints as temporary wrappers after replacement
-commands exist.
-
-Example:
-
-```text
-scripts/typewhisper-lexicon import
-```
-
-should delegate to:
-
-```text
-tools/configctl/bin/configctl app typewhisper import
-```
-
-Documentation should prefer the new `configctl` command after the wrapper
-exists. Remove wrappers later in separate cleanup work.
+Keep exact-path wrappers only when an external caller still needs them. New
+documentation should use the `configctl` command directly.
 
 ## Roadmap
 
@@ -569,7 +556,8 @@ exists. Remove wrappers later in separate cleanup work.
 - Implement `app typewhisper validate/status/import/export`.
 - Port TypeWhisper schema and SQLite logic to Go.
 - Add tests for schema validation and import planning.
-- Keep `scripts/typewhisper-lexicon` as a compatibility wrapper.
+- Prefer `configctl app typewhisper` directly; keep no generic TypeWhisper
+  wrapper unless an external caller needs an exact path.
 - Update TypeWhisper README.
 
 ### Milestone 2: Home Topology

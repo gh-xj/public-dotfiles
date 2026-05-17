@@ -327,14 +327,14 @@ Verification:
 
 Operation boundary: delete legacy policy surfaces once every caller has moved.
 
-- [ ] inventory scripts, Taskfile shell blocks, docs, and templates that still
+- [x] inventory scripts, Taskfile shell blocks, docs, and templates that still
       mention legacy commands
-- [ ] replace docs with `configctl` commands before deleting wrappers
-- [ ] keep exact-path shims only when an external caller still needs them
-- [ ] delete `install.sh` after it is only a `configctl home apply` shim and
+- [x] replace docs with `configctl` commands before deleting wrappers
+- [x] keep exact-path shims only when an external caller still needs them
+- [x] delete `install.sh` after it is only a `configctl home apply` shim and
       references are gone
-- [ ] delete obsolete skillsctl/codex-auth/workspace shell logic after parity
-- [ ] keep Taskfile aliases minimal and documented
+- [x] delete obsolete skillsctl/codex-auth/workspace shell logic after parity
+- [x] keep Taskfile aliases minimal and documented
 
 Verification:
 
@@ -356,5 +356,5 @@ Verification:
 
 ## Next Action
 
-Start Milestone 9 by inventorying and removing legacy compatibility surfaces
-after replacing docs and wrappers with `configctl` commands.
+Run final public and private verification, then commit and push the cleanup
+slices in their owning repos.

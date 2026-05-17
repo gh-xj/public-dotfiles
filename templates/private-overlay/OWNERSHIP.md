@@ -7,7 +7,7 @@ Rules:
 - each live path has exactly one owner
 - `public-dotfiles` owns public reusable config
 - this local-only `private-config` repo owns private durable state on this machine
-- only paths listed in `private-paths.txt` are installed by this repo
+- only paths listed in `configctl/home.toml` are installed by this repo
 
 Typical private paths include:
 

@@ -49,12 +49,6 @@ task private:init
 That creates `../private-config` as a local git repo with no remote. Add the
 private files you want to track there, then rerun `task install`.
 
-Repo-local script entrypoint:
-
-```bash
-./install.sh
-```
-
 Pass flags after `--` when needed:
 
 ```bash
@@ -69,8 +63,8 @@ Override the private repo location with an environment variable:
 PRIVATE_REPO_DIR=/path/to/private-config task install
 ```
 
-By default the installer creates symlinks into `$HOME`. Use `--copy` to copy
-files instead, or `--dry-run` to preview actions.
+By default `configctl home apply` creates symlinks into `$HOME`. Use `--copy`
+to copy files instead, or `--dry-run` to preview actions.
 
 ## Agent Baseline
 

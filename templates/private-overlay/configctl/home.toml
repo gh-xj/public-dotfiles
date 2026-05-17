@@ -1,0 +1,8 @@
+# Add one entry for each private or machine-local path this local overlay owns.
+# Keep paths relative to $HOME. Missing source files are reported by configctl,
+# so add entries as you create the corresponding files in this repo.
+#
+# [[entries]]
+# owner = "private"
+# path = ".zshenv"
+# mode = "link"

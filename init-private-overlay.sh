@@ -18,7 +18,7 @@ resolve_repo_root() {
     return 1
   fi
 
-  git -C "$git_root" ls-files --error-unmatch install.sh README.md >/dev/null 2>&1 || return 1
+  git -C "$git_root" ls-files --error-unmatch Taskfile.yml README.md configctl/home.toml >/dev/null 2>&1 || return 1
 
   printf '%s\n' "$git_root"
 }
@@ -41,7 +41,7 @@ if [[ -e "$target" && ! -d "$target" ]]; then
   die "target exists and is not a directory: $target"
 fi
 
-if [[ -d "$target" && -f "$target/install.sh" && -f "$target/private-paths.txt" ]]; then
+if [[ -d "$target" && -f "$target/configctl/home.toml" ]]; then
   printf 'skip private overlay scaffold (already exists: %s)\n' "$target"
   exit 0
 fi
@@ -52,7 +52,6 @@ fi
 
 mkdir -p "$target"
 cp -R "$template_root/." "$target"
-chmod +x "$target/install.sh"
 
 if [[ ! -d "$target/.git" ]]; then
   git -C "$target" init -q

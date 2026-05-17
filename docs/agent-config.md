@@ -57,8 +57,8 @@ task private:init
 ```
 
 That scaffolds a sibling `../private-config` as a local-only git repo. The
-scaffolded repo owns only the paths listed in `private-paths.txt`, and its
-installer skips entries whose source files do not exist yet.
+scaffolded repo owns only the paths listed in `configctl/home.toml`. Add
+manifest entries as you create matching source files in the local overlay.
 
 Use flags only when needed:
 
