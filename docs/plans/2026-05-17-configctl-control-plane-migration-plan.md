@@ -214,15 +214,16 @@ Verification:
 
 Operation boundary: migrate external workspace links into typed manifest logic.
 
-- [ ] add `configctl/workspaces.toml`
-- [ ] define `oss` with local path, external path, symlink mode, and required
+- [x] add `configctl/workspaces.toml`
+- [x] define `oss` with local path, external path, symlink mode, and required
       profile behavior
-- [ ] implement `workspace status`
-- [ ] implement `workspace verify [name]`
-- [ ] implement `workspace link <name> --dry-run`
-- [ ] make `link` refuse to overwrite real directories
-- [ ] make optional external absence a warning in default verify
-- [ ] remove or wrap the legacy workspace script after command parity
+- [x] implement `workspace status`
+- [x] implement `workspace verify [name]`
+- [x] implement `workspace link <name> --dry-run`
+- [x] make `link` refuse to overwrite real directories
+- [x] make optional external absence a warning in default verify
+- [x] remove or wrap the legacy workspace script after command parity
+      (no legacy workspace script found in this repo)
 
 Verification:
 
@@ -355,5 +356,5 @@ Verification:
 
 ## Next Action
 
-Start Milestone 4 by migrating workspace links into typed `workspaces.toml`
-manifest logic and `workspace` commands.
+Start Milestone 5 by migrating agent topology checks, skillset wrapping, and
+Codex auth snapshot commands under `configctl agent`.

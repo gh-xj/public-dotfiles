@@ -61,6 +61,9 @@ tasks:
       - ./{{.BIN}} --json home apply --dry-run --copy >/dev/null
       - ./{{.BIN}} --json home resolve ~/.zshrc >/dev/null
       - ./{{.BIN}} --json home verify >/dev/null
+      - ./{{.BIN}} --json workspace status >/dev/null
+      - ./{{.BIN}} --json workspace verify oss >/dev/null
+      - ./{{.BIN}} --json workspace link oss --dry-run --report-out "$(mktemp)" >/dev/null
       - ./{{.BIN}} --json app typewhisper validate --lexicon testdata/typewhisper/lexicon.json >/dev/null
       - |
           private_repo="$(cd "{{.TASKFILE_DIR}}/../../.." && pwd)/private-config"

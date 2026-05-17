@@ -1,0 +1,8 @@
+schema_version = "configctl.workspaces.v1"
+
+[[workspaces]]
+name = "oss"
+local = "/Users/xj/github/oss"
+external = "/Volumes/xj-sandisk-4T/dev/oss"
+mode = "link"
+required = false

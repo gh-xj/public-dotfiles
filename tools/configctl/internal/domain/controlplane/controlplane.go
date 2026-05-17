@@ -9,6 +9,7 @@ import (
 	gitadapter "configctl/internal/adapters/git"
 	"configctl/internal/domain/home"
 	"configctl/internal/domain/repo"
+	"configctl/internal/domain/workspace"
 	"configctl/internal/report"
 	"configctl/internal/verify"
 )
@@ -22,11 +23,12 @@ type Options struct {
 }
 
 type StatusResult struct {
-	Registry    RegistryStatus      `json:"registry"`
-	Repos       []RepoStatus        `json:"repos"`
-	Home        home.StatusResult   `json:"home"`
-	Checks      verify.Counts       `json:"checks"`
-	Diagnostics []report.Diagnostic `json:"diagnostics"`
+	Registry    RegistryStatus         `json:"registry"`
+	Repos       []RepoStatus           `json:"repos"`
+	Home        home.StatusResult      `json:"home"`
+	Workspace   workspace.StatusResult `json:"workspace"`
+	Checks      verify.Counts          `json:"checks"`
+	Diagnostics []report.Diagnostic    `json:"diagnostics"`
 }
 
 type RegistryStatus struct {
@@ -77,6 +79,13 @@ func Status(ctx context.Context, opts Options) (StatusResult, error) {
 	}
 	result.Home = homeStatus
 	result.Diagnostics = append(result.Diagnostics, homeStatus.Diagnostics...)
+	workspaceStatus, err := workspace.Status(workspace.Options{})
+	if err == nil {
+		result.Workspace = workspaceStatus
+		result.Diagnostics = append(result.Diagnostics, workspaceStatus.Diagnostics...)
+	} else {
+		result.Diagnostics = append(result.Diagnostics, workspaceStatus.Diagnostics...)
+	}
 
 	verifyResult := Verify(ctx, opts, verify.ProfileDefault)
 	result.Checks = verifyResult.Counts
@@ -88,6 +97,7 @@ func Verify(ctx context.Context, opts Options, profile verify.Profile) verify.Re
 	runner := verify.Runner{Checks: []verify.Check{
 		registryCheck(opts),
 		homeCheck(opts, profile),
+		workspaceCheck(),
 	}}
 	return runner.Run(ctx, profile)
 }
@@ -109,6 +119,34 @@ func Summary(status StatusResult) string {
 		status.Checks.Passed,
 		status.Checks.Total,
 	)
+}
+
+func workspaceCheck() verify.Check {
+	return verify.Check{
+		ID:       "workspace.verify",
+		Name:     "workspace links",
+		Required: true,
+		Run: func(_ context.Context) verify.CheckResult {
+			status, failures, err := workspace.Verify(workspace.Options{})
+			if err != nil {
+				return verifyFailure(err, "workspace.verify_failed", "could not verify workspace links", "")
+			}
+			diagnostics := append([]report.Diagnostic{}, status.Diagnostics...)
+			diagnostics = append(diagnostics, failures...)
+			if diagnosticsHaveErrors(failures) {
+				return verify.CheckResult{
+					OK:          false,
+					Summary:     fmt.Sprintf("workspace links failed: %d issue(s)", len(failures)),
+					Diagnostics: diagnostics,
+				}
+			}
+			return verify.CheckResult{
+				OK:          true,
+				Summary:     fmt.Sprintf("workspace links verified: %d workspace(s)", len(status.Workspaces)),
+				Diagnostics: diagnostics,
+			}
+		},
+	}
 }
 
 func VerifySummary(result verify.Result) string {
@@ -262,6 +300,15 @@ func repoDiagnostics(statuses []RepoStatus) []report.Diagnostic {
 		diagnostics = append(diagnostics, status.Diagnostics...)
 	}
 	return diagnostics
+}
+
+func diagnosticsHaveErrors(diagnostics []report.Diagnostic) bool {
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Severity == "error" {
+			return true
+		}
+	}
+	return false
 }
 
 func resolveRegistryPath(explicit string) (string, error) {
