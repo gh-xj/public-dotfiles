@@ -1,0 +1,72 @@
+version: "3"
+
+vars:
+  BIN: bin/configctl
+
+tasks:
+  default:
+    desc: List available configctl tasks
+    cmds:
+      - task --list
+
+  deps:
+    desc: Sync module dependencies
+    cmds:
+      - go mod tidy
+
+  fmt:
+    desc: Format Go files in place
+    cmds:
+      - gofmt -w $(find . -name '*.go' -type f)
+
+  fmt:check:
+    desc: Fail when gofmt would change files
+    cmds:
+      - test -z "$(gofmt -l $(find . -name '*.go' -type f))"
+
+  lint:
+    desc: Run static checks
+    deps: [deps, fmt:check]
+    cmds:
+      - go vet ./...
+
+  test:
+    desc: Run tests
+    deps: [deps, fmt:check]
+    cmds:
+      - go test ./...
+
+  build:
+    desc: Build configctl
+    deps: [deps, fmt:check]
+    sources: ["**/*.go", "go.mod", "go.sum"]
+    generates: ["{{.BIN}}"]
+    method: checksum
+    cmds:
+      - mkdir -p "$(dirname {{.BIN}})"
+      - go build -o {{.BIN}} .
+
+  smoke:
+    desc: Run deterministic configctl smoke checks
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} --json version >/dev/null
+      - ./{{.BIN}} --json home status >/dev/null
+      - ./{{.BIN}} --json home plan >/dev/null
+      - ./{{.BIN}} --json home resolve ~/.zshrc >/dev/null
+      - ./{{.BIN}} --json home verify >/dev/null
+      - ./{{.BIN}} --json app typewhisper validate --lexicon testdata/typewhisper/lexicon.json >/dev/null
+      - |
+          private_repo="$(cd "{{.TASKFILE_DIR}}/../../.." && pwd)/private-config"
+          lexicon="$private_repo/Library/Application Support/TypeWhisper/lexicon.json"
+          if [ -f "$lexicon" ]; then
+            ./{{.BIN}} --json app typewhisper import --dry-run --lexicon "$lexicon" >/dev/null
+          fi
+
+  ci:
+    desc: Canonical configctl CI target
+    deps: [lint, test, smoke]
+
+  verify:
+    desc: Local configctl verification gate
+    deps: [ci]

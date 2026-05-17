@@ -1,0 +1,115 @@
+[[entries]]
+owner = "public"
+path = ".claude/CLAUDE.md"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".claude/hooks"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".claude/settings.json"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".claude/statusline-command.sh"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".config/amethyst"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".config/bat"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".config/ghostty"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".config/karabiner"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".config/lazydocker"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".config/lazygit"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".config/nvim"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".config/starship.toml"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".config/yazi"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".codex/rules"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".hushlogin"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".tmux.conf"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".zlogin"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".zprofile"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".zsh"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".zshrc"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = "Library/Application Support/com.pais.handy/settings_store.json"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = "Library/Application Support/lazygit"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".codex/config.toml"
+mode = "merge"
+strategy = "codex-top-level-keys"

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "dictionary": {
+    "terms": ["codex"],
+    "corrections": [
+      {
+        "original": "codexx",
+        "replacement": "codex"
+      }
+    ]
+  },
+  "snippets": [
+    {
+      "trigger": ";sig",
+      "replacement": "xj"
+    }
+  ]
+}
