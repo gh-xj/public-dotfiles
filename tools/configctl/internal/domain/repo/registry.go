@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	RegistryRelPath       = "configctl/repos.toml"
 	RegistrySchemaVersion = "configctl.repos.v1"
 	OverlaySchemaVersion  = "configctl.repos.overlay.v1"
 )
@@ -82,6 +83,24 @@ func LoadRegistry(path string) (Registry, []report.Diagnostic, error) {
 		return registry, diagnostics, fmt.Errorf("repo registry validation failed: %s", registryPath)
 	}
 	return registry, diagnostics, nil
+}
+
+func DefaultRegistryPath() (string, error) {
+	if wd, err := os.Getwd(); err == nil {
+		if path, ok := searchUpRegistry(wd); ok {
+			return path, nil
+		}
+	}
+	if exe, err := os.Executable(); err == nil {
+		if path, ok := searchUpRegistry(filepath.Dir(exe)); ok {
+			return path, nil
+		}
+	}
+	return "", fmt.Errorf("could not locate %s", RegistryRelPath)
+}
+
+func PublicRootFromRegistry(registryPath string) string {
+	return filepath.Dir(filepath.Dir(registryPath))
 }
 
 func validateRegistry(path string, registry *Registry) []report.Diagnostic {
@@ -241,4 +260,23 @@ func diagnosticsHaveErrors(diagnostics []report.Diagnostic) bool {
 		}
 	}
 	return false
+}
+
+func searchUpRegistry(start string) (string, bool) {
+	dir, err := filepath.Abs(start)
+	if err != nil {
+		return "", false
+	}
+	for {
+		candidate := filepath.Join(dir, RegistryRelPath)
+		info, err := os.Stat(candidate)
+		if err == nil && !info.IsDir() {
+			return candidate, true
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", false
+		}
+		dir = parent
+	}
 }

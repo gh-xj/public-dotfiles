@@ -174,15 +174,15 @@ Verification:
 
 Operation boundary: add read-only root inspection and verification contracts.
 
-- [ ] add `configctl status`
-- [ ] add `configctl verify --profile default|full`
-- [ ] implement sequential stable check execution
-- [ ] collect all safe failures before exiting nonzero
-- [ ] make root status summarize managed repos, Git dirty counts, manifests,
+- [x] add `configctl status`
+- [x] add `configctl verify --profile default|full`
+- [x] implement sequential stable check execution
+- [x] collect all safe failures before exiting nonzero
+- [x] make root status summarize managed repos, Git dirty counts, manifests,
       check counts, and high-level drift
-- [ ] make default verify fast and required-only
-- [ ] map `task doctor` to `configctl verify --profile full` if retained
-- [ ] keep existing Taskfile verify aliases as thin wrappers
+- [x] make default verify fast and required-only
+- [x] map `task doctor` to `configctl verify --profile full` if retained
+- [x] keep existing Taskfile verify aliases as thin wrappers
 
 Verification:
 
@@ -355,5 +355,5 @@ Verification:
 
 ## Next Action
 
-Start Milestone 2 by adding read-only root `status` and `verify` commands on top
-of the runtime, registry, report, and adapter foundation.
+Start Milestone 3 by writing durable redacted operation reports for mutating
+commands, beginning with `home apply` and TypeWhisper import.

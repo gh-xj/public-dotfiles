@@ -51,6 +51,9 @@ tasks:
     deps: [build]
     cmds:
       - ./{{.BIN}} --json version >/dev/null
+      - ./{{.BIN}} --json status >/dev/null
+      - ./{{.BIN}} --json verify >/dev/null
+      - ./{{.BIN}} --json verify --profile full >/dev/null
       - ./{{.BIN}} --json home status >/dev/null
       - ./{{.BIN}} --json home plan >/dev/null
       - ./{{.BIN}} --json home apply --dry-run >/dev/null

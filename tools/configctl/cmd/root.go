@@ -22,6 +22,8 @@ type CLI struct {
 	VersionFlag kong.VersionFlag `name:"version" help:"print version and exit"`
 
 	Version VersionCmd `cmd:"" help:"print build metadata"`
+	Status  StatusCmd  `cmd:"" help:"summarize root configctl control-plane state"`
+	Verify  VerifyCmd  `cmd:"" help:"run root configctl verification checks"`
 	Home    HomeCmd    `cmd:"" help:"inspect repo-backed home topology"`
 	App     AppCmd     `cmd:"" help:"inspect and apply app-specific config"`
 }

@@ -21,6 +21,7 @@ tasks:
     desc: Verify public dotfile config surfaces
     cmds:
       - task: configctl:verify
+      - tools/configctl/bin/configctl --json verify --profile full >/dev/null
       - task: security:approved-gh-account
       - task: verify:lazygit
       - task: verify:nvim
@@ -71,6 +72,12 @@ tasks:
     desc: Scan staged public-dotfiles changes for secrets
     cmds:
       - gitleaks protect --staged --source . --redact --no-banner
+
+  doctor:
+    desc: Run full configctl verification
+    cmds:
+      - task: configctl:build
+      - tools/configctl/bin/configctl verify --profile full
 
   help:
     desc: Show available tasks
