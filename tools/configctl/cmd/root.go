@@ -26,6 +26,7 @@ type CLI struct {
 	Verify    VerifyCmd    `cmd:"" help:"run root configctl verification checks"`
 	Home      HomeCmd      `cmd:"" help:"inspect repo-backed home topology"`
 	App       AppCmd       `cmd:"" help:"inspect and apply app-specific config"`
+	Agent     AgentCmd     `cmd:"" help:"inspect and apply agent runtime config"`
 	Workspace WorkspaceCmd `cmd:"" help:"inspect and link external workspaces"`
 }
 

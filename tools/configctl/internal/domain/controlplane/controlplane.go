@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	gitadapter "configctl/internal/adapters/git"
+	"configctl/internal/domain/agent"
 	"configctl/internal/domain/home"
 	"configctl/internal/domain/repo"
 	"configctl/internal/domain/workspace"
@@ -98,6 +99,7 @@ func Verify(ctx context.Context, opts Options, profile verify.Profile) verify.Re
 		registryCheck(opts),
 		homeCheck(opts, profile),
 		workspaceCheck(),
+		agentCheck(),
 	}}
 	return runner.Run(ctx, profile)
 }
@@ -144,6 +146,32 @@ func workspaceCheck() verify.Check {
 				OK:          true,
 				Summary:     fmt.Sprintf("workspace links verified: %d workspace(s)", len(status.Workspaces)),
 				Diagnostics: diagnostics,
+			}
+		},
+	}
+}
+
+func agentCheck() verify.Check {
+	return verify.Check{
+		ID:       "agent.verify",
+		Name:     "agent topology",
+		Required: true,
+		Run: func(_ context.Context) verify.CheckResult {
+			status, failures, err := agent.Verify(agent.Options{})
+			if err != nil {
+				return verifyFailure(err, "agent.verify_failed", "could not verify agent topology", "")
+			}
+			if len(failures) > 0 {
+				return verify.CheckResult{
+					OK:          false,
+					Summary:     fmt.Sprintf("agent topology failed: %d issue(s)", len(failures)),
+					Diagnostics: status.Diagnostics,
+				}
+			}
+			return verify.CheckResult{
+				OK:          true,
+				Summary:     "agent topology verified",
+				Diagnostics: status.Diagnostics,
 			}
 		},
 	}

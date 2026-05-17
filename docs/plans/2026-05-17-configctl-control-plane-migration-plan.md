@@ -237,17 +237,17 @@ Verification:
 
 Operation boundary: migrate agent topology without changing source ownership.
 
-- [ ] implement `agent status`
-- [ ] implement `agent verify`
-- [ ] implement `agent policy status`
-- [ ] implement `agent policy verify`
-- [ ] implement `agent skills list|verify|sync --dry-run`
-- [ ] call `skillset` as an external tool behind a process adapter
-- [ ] implement `agent codex-auth status|save|use`
-- [ ] validate Codex auth JSON before save/use
-- [ ] always back up current auth before switching snapshots
-- [ ] remove hardcoded dated backup assumptions
-- [ ] redact every token-adjacent value from human and JSON output
+- [x] implement `agent status`
+- [x] implement `agent verify`
+- [x] implement `agent policy status`
+- [x] implement `agent policy verify`
+- [x] implement `agent skills list|verify|sync --dry-run`
+- [x] call `skillset` as an external tool behind a process adapter
+- [x] implement `agent codex-auth status|save|use`
+- [x] validate Codex auth JSON before save/use
+- [x] always back up current auth before switching snapshots
+- [x] remove hardcoded dated backup assumptions
+- [x] redact every token-adjacent value from human and JSON output
 - [ ] move old Taskfile/script logic to wrappers or delete it after parity
 
 Verification:

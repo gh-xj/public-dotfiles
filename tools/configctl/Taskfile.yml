@@ -64,6 +64,10 @@ tasks:
       - ./{{.BIN}} --json workspace status >/dev/null
       - ./{{.BIN}} --json workspace verify oss >/dev/null
       - ./{{.BIN}} --json workspace link oss --dry-run --report-out "$(mktemp)" >/dev/null
+      - ./{{.BIN}} --json agent status >/dev/null
+      - ./{{.BIN}} --json agent verify >/dev/null
+      - ./{{.BIN}} --json agent skills verify >/dev/null
+      - ./{{.BIN}} --json agent codex-auth status >/dev/null
       - ./{{.BIN}} --json app typewhisper validate --lexicon testdata/typewhisper/lexicon.json >/dev/null
       - |
           private_repo="$(cd "{{.TASKFILE_DIR}}/../../.." && pwd)/private-config"
