@@ -28,6 +28,7 @@ type CLI struct {
 	App       AppCmd       `cmd:"" help:"inspect and apply app-specific config"`
 	Agent     AgentCmd     `cmd:"" help:"inspect and apply agent runtime config"`
 	Package   PackageCmd   `cmd:"" help:"inspect package ledgers"`
+	Release   ReleaseCmd   `cmd:"" help:"capture and release scoped config changes"`
 	Workspace WorkspaceCmd `cmd:"" help:"inspect and link external workspaces"`
 }
 

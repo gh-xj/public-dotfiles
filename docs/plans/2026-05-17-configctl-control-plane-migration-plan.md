@@ -306,15 +306,15 @@ Verification:
 
 Operation boundary: add constrained commit orchestration from operation reports.
 
-- [ ] implement `release capture` for manual edits with explicit paths
-- [ ] implement release eligibility checks for operation reports
-- [ ] recompute current verification requirements before staging
-- [ ] stage only operation-report or capture-declared paths
-- [ ] support cross-repo release as separate commits with one run report
-- [ ] inspect cached diff before commit
-- [ ] record repo, commit hash, branch, staged files, and verification commands
-- [ ] refuse same-major report incompatibility failures closed
-- [ ] avoid push by default unless the command explicitly owns push semantics
+- [x] implement `release capture` for manual edits with explicit paths
+- [x] implement release eligibility checks for operation reports
+- [x] recompute current verification requirements before staging
+- [x] stage only operation-report or capture-declared paths
+- [x] support cross-repo release as separate commits with one run report
+- [x] inspect cached diff before commit
+- [x] record repo, commit hash, branch, staged files, and verification commands
+- [x] refuse same-major report incompatibility failures closed
+- [x] avoid push by default unless the command explicitly owns push semantics
 
 Verification:
 
@@ -356,5 +356,5 @@ Verification:
 
 ## Next Action
 
-Start Milestone 8 by adding constrained release capture and dry-run commit
-orchestration around declared paths and compatible operation reports.
+Start Milestone 9 by inventorying and removing legacy compatibility surfaces
+after replacing docs and wrappers with `configctl` commands.

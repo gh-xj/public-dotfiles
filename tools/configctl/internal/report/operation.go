@@ -28,6 +28,7 @@ type OperationReport struct {
 	VerificationHints []string          `json:"verification_hints"`
 	Diagnostics       []Diagnostic      `json:"diagnostics"`
 	Redaction         RedactionMetadata `json:"redaction"`
+	Metadata          map[string]any    `json:"metadata,omitempty"`
 	StartedAt         string            `json:"started_at,omitempty"`
 	FinishedAt        string            `json:"finished_at,omitempty"`
 }
@@ -44,6 +45,7 @@ type OperationReportInput struct {
 	Backups           []string
 	VerificationHints []string
 	Diagnostics       []Diagnostic
+	Metadata          map[string]any
 	StartedAt         time.Time
 	FinishedAt        time.Time
 }
@@ -82,6 +84,7 @@ func NewOperationReport(input OperationReportInput) OperationReport {
 		VerificationHints: copySorted(input.VerificationHints),
 		Diagnostics:       append([]Diagnostic{}, input.Diagnostics...),
 		Redaction:         redaction,
+		Metadata:          copyAnyMap(input.Metadata),
 		StartedAt:         formatReportTime(input.StartedAt),
 		FinishedAt:        formatReportTime(input.FinishedAt),
 	}
@@ -239,6 +242,17 @@ func copySorted(values []string) []string {
 
 func copyStringMap(values map[string]string) map[string]string {
 	out := map[string]string{}
+	for key, value := range values {
+		out[key] = value
+	}
+	return out
+}
+
+func copyAnyMap(values map[string]any) map[string]any {
+	if values == nil {
+		return nil
+	}
+	out := map[string]any{}
 	for key, value := range values {
 		out[key] = value
 	}
