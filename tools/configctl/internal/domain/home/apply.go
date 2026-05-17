@@ -15,12 +15,14 @@ import (
 const codexTopLevelKeysStrategy = "codex-top-level-keys"
 
 type ApplyResult struct {
-	HomeDir     string              `json:"home_dir"`
-	Changed     bool                `json:"changed"`
-	Entries     []ApplyEntry        `json:"entries"`
-	Counts      map[string]int      `json:"counts"`
-	BackupRoots []string            `json:"backup_roots,omitempty"`
-	Diagnostics []report.Diagnostic `json:"diagnostics"`
+	HomeDir             string              `json:"home_dir"`
+	Changed             bool                `json:"changed"`
+	RepoRoots           map[string]string   `json:"repo_roots,omitempty"`
+	Entries             []ApplyEntry        `json:"entries"`
+	Counts              map[string]int      `json:"counts"`
+	BackupRoots         []string            `json:"backup_roots,omitempty"`
+	OperationReportPath string              `json:"operation_report_path,omitempty"`
+	Diagnostics         []report.Diagnostic `json:"diagnostics"`
 }
 
 type ApplyEntry struct {
@@ -41,8 +43,15 @@ func Apply(opts Options) (ApplyResult, error) {
 	}
 	result := ApplyResult{
 		HomeDir:     topology.HomeDir,
+		RepoRoots:   map[string]string{},
 		Counts:      map[string]int{},
 		Diagnostics: append([]report.Diagnostic{}, topology.Diagnostics...),
+	}
+	if topology.PublicRepo != "" {
+		result.RepoRoots["public"] = topology.PublicRepo
+	}
+	if topology.PrivateRepo != "" {
+		result.RepoRoots["private"] = topology.PrivateRepo
 	}
 	backupRoots := map[string]struct{}{}
 	for _, entry := range topology.Entries {

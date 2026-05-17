@@ -195,14 +195,14 @@ Verification:
 
 Operation boundary: make mutating commands leave durable audited run records.
 
-- [ ] create `.configctl/runs/` as ignored generated state in invoking repos
-- [ ] add `--report-out` global or mutation-scoped option
-- [ ] write reports for `home apply` and TypeWhisper import first
-- [ ] include schema version, command, sanitized args, repo roots, touched paths,
+- [x] create `.configctl/runs/` as ignored generated state in invoking repos
+- [x] add `--report-out` global or mutation-scoped option
+- [x] write reports for `home apply` and TypeWhisper import first
+- [x] include schema version, command, sanitized args, repo roots, touched paths,
       backups, verification hints, diagnostics, and redaction metadata
-- [ ] mark reports as release-eligible only when the command can be safely
+- [x] mark reports as release-eligible only when the command can be safely
       replayed into a commit boundary
-- [ ] avoid report writes for read-only commands unless explicitly requested
+- [x] avoid report writes for read-only commands unless explicitly requested
 
 Verification:
 
@@ -355,5 +355,5 @@ Verification:
 
 ## Next Action
 
-Start Milestone 3 by writing durable redacted operation reports for mutating
-commands, beginning with `home apply` and TypeWhisper import.
+Start Milestone 4 by migrating workspace links into typed `workspaces.toml`
+manifest logic and `workspace` commands.

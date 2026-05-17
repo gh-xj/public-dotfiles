@@ -38,6 +38,7 @@ type TypeWhisperImportCmd struct {
 	StoreDir     string `name:"store-dir" help:"live TypeWhisper store directory" type:"path"`
 	DryRun       bool   `name:"dry-run" help:"preview changes without writing stores"`
 	AllowRunning bool   `name:"allow-running" help:"allow import while TypeWhisper is running"`
+	ReportOut    string `name:"report-out" help:"write operation report to this file or directory" type:"path"`
 }
 
 type TypeWhisperExportCmd struct {
@@ -82,13 +83,21 @@ func (c *TypeWhisperImportCmd) Run(rt *appctx.Runtime) error {
 	lexicon, diagnostics, err := typewhisper.LoadLexicon(lexiconPath)
 	diagnostics = appendWarning(diagnostics, warning)
 	if err != nil {
+		reportPath, reportDiagnostics := c.maybeWriteReport(rt, command, false, false, lexiconPath, storeDir, nil, diagnostics)
+		diagnostics = reportDiagnostics
 		return rt.Fail(command, c.DryRun, "invalid TypeWhisper lexicon", map[string]any{
-			"lexicon_path": lexiconPath,
-			"store_dir":    storeDir,
+			"lexicon_path":          lexiconPath,
+			"store_dir":             storeDir,
+			"operation_report_path": reportPath,
 		}, diagnostics)
 	}
 	running := typewhisper.IsRunning(ctx)
 	if running && !c.DryRun && !c.AllowRunning {
+		reportPath, reportDiagnostics := c.maybeWriteReport(rt, command, false, false, lexiconPath, storeDir, nil, append(diagnostics, report.Diagnostic{
+			Severity: "error",
+			Code:     "typewhisper.app_running",
+			Message:  "TypeWhisper is running",
+		}))
 		return rt.Fail(command, c.DryRun, "TypeWhisper is running; quit it before import or pass --allow-running", map[string]any{
 			"lexicon_path":          lexiconPath,
 			"store_dir":             storeDir,
@@ -97,45 +106,105 @@ func (c *TypeWhisperImportCmd) Run(rt *appctx.Runtime) error {
 			"lexicon":               lexicon.Summary(),
 			"dictionary_store_path": filepath.Join(storeDir, "dictionary.store"),
 			"snippets_store_path":   filepath.Join(storeDir, "snippets.store"),
-		}, append(diagnostics, report.Diagnostic{
-			Severity: "error",
-			Code:     "typewhisper.app_running",
-			Message:  "TypeWhisper is running",
-		}))
+			"operation_report_path": reportPath,
+		}, reportDiagnostics)
 	}
 	plan, planDiagnostics, err := typewhisper.PlanImport(ctx, lexicon, storeDir, running)
 	diagnostics = append(diagnostics, planDiagnostics...)
 	if err != nil {
+		reportPath, reportDiagnostics := c.maybeWriteReport(rt, command, false, false, lexiconPath, storeDir, nil, diagnostics)
+		diagnostics = reportDiagnostics
 		return rt.Fail(command, c.DryRun, "could not plan TypeWhisper import", map[string]any{
-			"lexicon_path": lexiconPath,
-			"store_dir":    storeDir,
-			"lexicon":      lexicon.Summary(),
+			"lexicon_path":          lexiconPath,
+			"store_dir":             storeDir,
+			"lexicon":               lexicon.Summary(),
+			"operation_report_path": reportPath,
 		}, diagnostics)
 	}
 	if c.DryRun {
 		summary := fmt.Sprintf("dry-run TypeWhisper import: dictionary updates=%d insertions=%d, snippet updates=%d insertions=%d", plan.Dictionary.Updates, plan.Dictionary.Insertions, plan.Snippets.Updates, plan.Snippets.Insertions)
+		reportPath, reportDiagnostics := c.maybeWriteReport(rt, command, true, false, lexiconPath, storeDir, nil, diagnostics)
+		if hasErrorDiagnostics(reportDiagnostics, "operation_report") {
+			return rt.Fail(command, c.DryRun, "could not write TypeWhisper import operation report", map[string]any{
+				"lexicon_path":          lexiconPath,
+				"store_dir":             storeDir,
+				"plan":                  plan,
+				"operation_report_path": reportPath,
+			}, reportDiagnostics)
+		}
 		return rt.Emit(report.New(command, true, false, true, summary, map[string]any{
-			"lexicon_path": lexiconPath,
-			"store_dir":    storeDir,
-			"plan":         plan,
-		}, diagnostics))
+			"lexicon_path":          lexiconPath,
+			"store_dir":             storeDir,
+			"plan":                  plan,
+			"operation_report_path": reportPath,
+		}, reportDiagnostics))
 	}
 	repoRoot, _ := paths.PrivateConfigRoot()
 	result, applyDiagnostics, err := typewhisper.ApplyImport(ctx, lexicon, storeDir, repoRoot, time.Now(), running)
 	diagnostics = append(diagnostics, applyDiagnostics...)
 	if err != nil {
+		reportPath, reportDiagnostics := c.maybeWriteReport(rt, command, false, false, lexiconPath, storeDir, nil, diagnostics)
+		diagnostics = reportDiagnostics
 		return rt.Fail(command, false, "could not import TypeWhisper lexicon", map[string]any{
-			"lexicon_path": lexiconPath,
-			"store_dir":    storeDir,
-			"plan":         plan,
+			"lexicon_path":          lexiconPath,
+			"store_dir":             storeDir,
+			"plan":                  plan,
+			"operation_report_path": reportPath,
 		}, diagnostics)
 	}
 	summary := fmt.Sprintf("imported TypeWhisper lexicon: dictionary updates=%d insertions=%d, snippet updates=%d insertions=%d", result.Plan.Dictionary.Updates, result.Plan.Dictionary.Insertions, result.Plan.Snippets.Updates, result.Plan.Snippets.Insertions)
+	reportPath, reportDiagnostics := c.maybeWriteReport(rt, command, true, typewhisper.PlanChanged(result.Plan), lexiconPath, storeDir, &result, diagnostics)
+	if hasErrorDiagnostics(reportDiagnostics, "operation_report") {
+		return rt.Fail(command, false, "could not write TypeWhisper import operation report", map[string]any{
+			"lexicon_path":          lexiconPath,
+			"store_dir":             storeDir,
+			"result":                result,
+			"operation_report_path": reportPath,
+		}, reportDiagnostics)
+	}
 	return rt.Emit(report.New(command, true, typewhisper.PlanChanged(result.Plan), false, summary, map[string]any{
-		"lexicon_path": lexiconPath,
-		"store_dir":    storeDir,
-		"result":       result,
-	}, diagnostics))
+		"lexicon_path":          lexiconPath,
+		"store_dir":             storeDir,
+		"result":                result,
+		"operation_report_path": reportPath,
+	}, reportDiagnostics))
+}
+
+func (c *TypeWhisperImportCmd) maybeWriteReport(rt *appctx.Runtime, command string, ok bool, changed bool, lexiconPath string, storeDir string, result *typewhisper.ImportResult, diagnostics []report.Diagnostic) (string, []report.Diagnostic) {
+	outDiagnostics := append([]report.Diagnostic{}, diagnostics...)
+	if c.DryRun && c.ReportOut == "" {
+		return "", outDiagnostics
+	}
+	touched := []string{filepath.Join(storeDir, "dictionary.store"), filepath.Join(storeDir, "snippets.store")}
+	var backups []string
+	if result != nil && result.BackupDir != "" {
+		backups = append(backups, result.BackupDir)
+	}
+	repoRoots := map[string]string{}
+	if repoRoot, err := paths.PrivateConfigRoot(); err == nil {
+		repoRoots["private"] = repoRoot
+	}
+	path, err := rt.WriteOperationReport(report.OperationReportInput{
+		Command:           command,
+		OK:                ok,
+		Changed:           changed,
+		DryRun:            c.DryRun,
+		ReleaseEligible:   false,
+		RepoRoots:         repoRoots,
+		TouchedPaths:      touched,
+		Backups:           backups,
+		VerificationHints: []string{"configctl app typewhisper status"},
+		Diagnostics:       diagnostics,
+	}, c.ReportOut)
+	if err != nil {
+		outDiagnostics = append(outDiagnostics, report.Diagnostic{
+			Severity: "error",
+			Code:     "operation_report.write_failed",
+			Message:  err.Error(),
+		})
+		return "", outDiagnostics
+	}
+	return path, outDiagnostics
 }
 
 func (c *TypeWhisperExportCmd) Run(rt *appctx.Runtime) error {

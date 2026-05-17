@@ -92,3 +92,23 @@ func TestSanitizeArgsRedactsSensitiveFlagValues(t *testing.T) {
 		t.Fatalf("redaction hits = %#v, want 4", metadata.Rules)
 	}
 }
+
+func TestWriteOperationReportCreatesParentDirectories(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".configctl", "runs", "report.json")
+	operation := NewOperationReport(OperationReportInput{
+		Command: "home.apply",
+		OK:      true,
+		Args:    []string{"home", "apply", "--token", "secret"},
+	})
+
+	if err := WriteOperationReport(path, operation); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) == "" {
+		t.Fatal("expected report data")
+	}
+}

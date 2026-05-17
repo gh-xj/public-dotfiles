@@ -57,6 +57,7 @@ tasks:
       - ./{{.BIN}} --json home status >/dev/null
       - ./{{.BIN}} --json home plan >/dev/null
       - ./{{.BIN}} --json home apply --dry-run >/dev/null
+      - ./{{.BIN}} --json home apply --dry-run --report-out "$(mktemp)" >/dev/null
       - ./{{.BIN}} --json home apply --dry-run --copy >/dev/null
       - ./{{.BIN}} --json home resolve ~/.zshrc >/dev/null
       - ./{{.BIN}} --json home verify >/dev/null
@@ -65,7 +66,7 @@ tasks:
           private_repo="$(cd "{{.TASKFILE_DIR}}/../../.." && pwd)/private-config"
           lexicon="$private_repo/Library/Application Support/TypeWhisper/lexicon.json"
           if [ -f "$lexicon" ]; then
-            ./{{.BIN}} --json app typewhisper import --dry-run --lexicon "$lexicon" >/dev/null
+            ./{{.BIN}} --json app typewhisper import --dry-run --report-out "$(mktemp)" --lexicon "$lexicon" >/dev/null
           fi
 
   ci:

@@ -1,6 +1,7 @@
 package report
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -84,6 +85,18 @@ func NewOperationReport(input OperationReportInput) OperationReport {
 		StartedAt:         formatReportTime(input.StartedAt),
 		FinishedAt:        formatReportTime(input.FinishedAt),
 	}
+}
+
+func WriteOperationReport(path string, operation OperationReport) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(operation, "", "  ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	return os.WriteFile(path, data, 0o644)
 }
 
 func ResolveOperationReportPath(policy ReportPathPolicy) (string, error) {

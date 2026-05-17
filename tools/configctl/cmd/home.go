@@ -43,9 +43,10 @@ type HomePlanCmd struct {
 
 type HomeApplyCmd struct {
 	homeOptions
-	Mode   string `name:"mode" enum:"symlink,copy" default:"symlink" help:"override link/copy entries for apply"`
-	Copy   bool   `name:"copy" help:"copy files instead of symlinking link/copy entries"`
-	DryRun bool   `name:"dry-run" help:"preview apply actions without changing the filesystem"`
+	Mode      string `name:"mode" enum:"symlink,copy" default:"symlink" help:"override link/copy entries for apply"`
+	Copy      bool   `name:"copy" help:"copy files instead of symlinking link/copy entries"`
+	DryRun    bool   `name:"dry-run" help:"preview apply actions without changing the filesystem"`
+	ReportOut string `name:"report-out" help:"write operation report to this file or directory" type:"path"`
 }
 
 type HomeVerifyCmd struct {
@@ -104,9 +105,43 @@ func (c *HomeApplyCmd) Run(rt *appctx.Runtime) error {
 	opts.DryRun = c.DryRun
 	result, err := home.Apply(opts)
 	if err != nil {
+		result.OperationReportPath, result.Diagnostics = c.maybeWriteReport(rt, command, result, false)
 		return rt.Fail(command, c.DryRun, "could not apply home topology", result, result.Diagnostics)
 	}
+	result.OperationReportPath, result.Diagnostics = c.maybeWriteReport(rt, command, result, true)
+	if hasErrorDiagnostics(result.Diagnostics, "operation_report") {
+		return rt.Fail(command, c.DryRun, "could not write home apply operation report", result, result.Diagnostics)
+	}
 	return rt.Emit(report.New(command, true, result.Changed, c.DryRun, homeApplySummary(result, c.DryRun), result, result.Diagnostics))
+}
+
+func (c *HomeApplyCmd) maybeWriteReport(rt *appctx.Runtime, command string, result home.ApplyResult, ok bool) (string, []report.Diagnostic) {
+	diagnostics := append([]report.Diagnostic{}, result.Diagnostics...)
+	if c.DryRun && c.ReportOut == "" {
+		return "", diagnostics
+	}
+	touched, backups := homeApplyReportPaths(result)
+	path, err := rt.WriteOperationReport(report.OperationReportInput{
+		Command:           command,
+		OK:                ok,
+		Changed:           result.Changed,
+		DryRun:            c.DryRun,
+		ReleaseEligible:   false,
+		RepoRoots:         result.RepoRoots,
+		TouchedPaths:      touched,
+		Backups:           backups,
+		VerificationHints: []string{"configctl verify --profile full"},
+		Diagnostics:       result.Diagnostics,
+	}, c.ReportOut)
+	if err != nil {
+		diagnostics = append(diagnostics, report.Diagnostic{
+			Severity: "error",
+			Code:     "operation_report.write_failed",
+			Message:  err.Error(),
+		})
+		return "", diagnostics
+	}
+	return path, diagnostics
 }
 
 func (c *HomePlanCmd) modeOverride() string {
@@ -208,6 +243,29 @@ func homeApplySummary(result home.ApplyResult, dryRun bool) string {
 		prefix += " dry-run"
 	}
 	return prefix + ": " + strings.Join(parts, ", ")
+}
+
+func homeApplyReportPaths(result home.ApplyResult) ([]string, []string) {
+	var touched []string
+	var backups []string
+	for _, entry := range result.Entries {
+		if entry.Changed {
+			touched = append(touched, entry.TargetPath)
+		}
+		if entry.BackupPath != "" {
+			backups = append(backups, entry.BackupPath)
+		}
+	}
+	return touched, backups
+}
+
+func hasErrorDiagnostics(diagnostics []report.Diagnostic, codePrefix string) bool {
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Severity == "error" && strings.HasPrefix(diagnostic.Code, codePrefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func homeVerifySummary(status home.StatusResult, all bool) string {

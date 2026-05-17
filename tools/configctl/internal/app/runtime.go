@@ -2,7 +2,9 @@ package app
 
 import (
 	"io"
+	"time"
 
+	"configctl/internal/adapters/reporoot"
 	"configctl/internal/report"
 )
 
@@ -45,4 +47,44 @@ func (rt *Runtime) JSONOutput() bool {
 
 func (rt *Runtime) SanitizedArgs() ([]string, report.RedactionMetadata) {
 	return report.SanitizeArgs(rt.Options.Args)
+}
+
+func (rt *Runtime) WriteOperationReport(input report.OperationReportInput, explicitPath string) (string, error) {
+	now := time.Now()
+	if input.StartedAt.IsZero() {
+		input.StartedAt = now
+	}
+	if input.FinishedAt.IsZero() {
+		input.FinishedAt = now
+	}
+	input.Args = rt.Options.Args
+	root, err := reporoot.GitFinder{}.Find("")
+	if err != nil {
+		if explicitPath == "" {
+			return "", err
+		}
+		root.Path = ""
+	}
+	if input.RepoRoots == nil {
+		input.RepoRoots = map[string]string{}
+	}
+	if root.Path != "" {
+		if _, ok := input.RepoRoots["invoking"]; !ok {
+			input.RepoRoots["invoking"] = root.Path
+		}
+	}
+	repoRoot := root.Path
+	if repoRoot == "" {
+		repoRoot = "."
+	}
+	path, err := report.ResolveOperationReportPath(report.ReportPathPolicy{
+		RepoRoot:     repoRoot,
+		ExplicitPath: explicitPath,
+		Command:      input.Command,
+		Now:          now,
+	})
+	if err != nil {
+		return "", err
+	}
+	return path, report.WriteOperationReport(path, report.NewOperationReport(input))
 }
