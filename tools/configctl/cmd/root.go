@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	appctx "configctl/internal/app"
 	"configctl/internal/logx"
 	"configctl/internal/paths"
 	"configctl/internal/report"
@@ -23,12 +24,6 @@ type CLI struct {
 	Version VersionCmd `cmd:"" help:"print build metadata"`
 	Home    HomeCmd    `cmd:"" help:"inspect repo-backed home topology"`
 	App     AppCmd     `cmd:"" help:"inspect and apply app-specific config"`
-}
-
-type Runtime struct {
-	CLI *CLI
-	Out io.Writer
-	Err io.Writer
 }
 
 type VersionCmd struct{}
@@ -64,7 +59,12 @@ func execute(args []string, stdout io.Writer, stderr io.Writer) int {
 		return 2
 	}
 	logx.Setup(logx.Options{Verbose: cli.Verbose, NoColor: cli.NoColor, Writer: stderr})
-	runtime := &Runtime{CLI: &cli, Out: stdout, Err: stderr}
+	runtime := appctx.NewRuntime(appctx.Options{
+		JSON:    cli.JSON,
+		Verbose: cli.Verbose,
+		NoColor: cli.NoColor,
+		Args:    args,
+	}, stdout, stderr)
 	if err := ctx.Run(runtime); err != nil {
 		var exit report.ExitError
 		if errors.As(err, &exit) {
@@ -76,24 +76,13 @@ func execute(args []string, stdout io.Writer, stderr io.Writer) int {
 	return 0
 }
 
-func (c *VersionCmd) Run(rt *Runtime) error {
+func (c *VersionCmd) Run(rt *appctx.Runtime) error {
 	return rt.Emit(report.New("version", true, false, false, "configctl "+version.String(), map[string]string{
 		"name":    "configctl",
 		"version": version.Version,
 		"commit":  version.Commit,
 		"date":    version.Date,
 	}, nil))
-}
-
-func (rt *Runtime) Emit(env report.Envelope) error {
-	return report.Write(rt.Out, env, rt.CLI.JSON)
-}
-
-func (rt *Runtime) Fail(command string, dryRun bool, summary string, data any, diagnostics []report.Diagnostic) error {
-	if err := rt.Emit(report.New(command, false, false, dryRun, summary, data, diagnostics)); err != nil {
-		return err
-	}
-	return report.ExitError{Code: 1}
 }
 
 func defaultLexiconPath(explicit string) (string, report.Diagnostic) {

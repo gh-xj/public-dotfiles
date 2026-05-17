@@ -152,17 +152,17 @@ Contracts:
 
 Operation boundary: reshape `configctl` internals without adding new behavior.
 
-- [ ] introduce root runtime package for shared command options and execution
-- [ ] move common emit/fail helpers out of `cmd`
-- [ ] define operation report schema version, report path policy, sanitized args,
+- [x] introduce root runtime package for shared command options and execution
+- [x] move common emit/fail helpers out of `cmd`
+- [x] define operation report schema version, report path policy, sanitized args,
       and redaction metadata
-- [ ] add adapter interfaces for filesystem, process execution, Git inspection,
+- [x] add adapter interfaces for filesystem, process execution, Git inspection,
       clock, and repo root discovery
-- [ ] add public `configctl/repos.toml` with public-safe repo names and relative
+- [x] add public `configctl/repos.toml` with public-safe repo names and relative
       path defaults
-- [ ] add private overlay loading hook without requiring the private repo
-- [ ] preserve current command behavior and JSON envelope
-- [ ] add tests for report path selection, repo registry loading, and redaction
+- [x] add private overlay loading hook without requiring the private repo
+- [x] preserve current command behavior and JSON envelope
+- [x] add tests for report path selection, repo registry loading, and redaction
 
 Verification:
 
@@ -355,6 +355,5 @@ Verification:
 
 ## Next Action
 
-Start with Milestone 1. The first implementation commit should be an
-architecture foundation commit that preserves behavior while creating the report
-schema, repo registry hook, adapters, and root runtime needed by later domains.
+Start Milestone 2 by adding read-only root `status` and `verify` commands on top
+of the runtime, registry, report, and adapter foundation.

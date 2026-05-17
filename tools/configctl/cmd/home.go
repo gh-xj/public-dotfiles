@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	appctx "configctl/internal/app"
 	"configctl/internal/domain/home"
 	"configctl/internal/paths"
 	"configctl/internal/report"
@@ -52,7 +53,7 @@ type HomeVerifyCmd struct {
 	All bool `name:"all" help:"verify every manifest entry instead of the representative ownership set"`
 }
 
-func (c *HomeStatusCmd) Run(rt *Runtime) error {
+func (c *HomeStatusCmd) Run(rt *appctx.Runtime) error {
 	command := "home.status"
 	status, err := home.Status(c.options(""))
 	if err != nil {
@@ -65,7 +66,7 @@ func (c *HomeStatusCmd) Run(rt *Runtime) error {
 	return rt.Emit(report.New(command, true, false, false, homeStatusSummary(status), status, status.Diagnostics))
 }
 
-func (c *HomeResolveCmd) Run(rt *Runtime) error {
+func (c *HomeResolveCmd) Run(rt *appctx.Runtime) error {
 	command := "home.resolve"
 	result, err := home.Resolve(c.Path, c.options(""))
 	if err != nil {
@@ -84,7 +85,7 @@ func (c *HomeResolveCmd) Run(rt *Runtime) error {
 	return rt.Emit(report.New(command, true, false, false, summary, result, result.Diagnostics))
 }
 
-func (c *HomePlanCmd) Run(rt *Runtime) error {
+func (c *HomePlanCmd) Run(rt *appctx.Runtime) error {
 	command := "home.plan"
 	status, err := home.Status(c.options(c.modeOverride()))
 	if err != nil {
@@ -97,7 +98,7 @@ func (c *HomePlanCmd) Run(rt *Runtime) error {
 	return rt.Emit(report.New(command, true, false, true, homePlanSummary(status), status, status.Diagnostics))
 }
 
-func (c *HomeApplyCmd) Run(rt *Runtime) error {
+func (c *HomeApplyCmd) Run(rt *appctx.Runtime) error {
 	command := "home.apply"
 	opts := c.options(c.modeOverride())
 	opts.DryRun = c.DryRun
@@ -122,7 +123,7 @@ func (c *HomeApplyCmd) modeOverride() string {
 	return c.Mode
 }
 
-func (c *HomeVerifyCmd) Run(rt *Runtime) error {
+func (c *HomeVerifyCmd) Run(rt *appctx.Runtime) error {
 	command := "home.verify"
 	opts := c.options("")
 	opts.VerifyAll = c.All

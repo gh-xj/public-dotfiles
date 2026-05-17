@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	appctx "configctl/internal/app"
 	"configctl/internal/domain/typewhisper"
 	"configctl/internal/paths"
 	"configctl/internal/report"
@@ -44,7 +45,7 @@ type TypeWhisperExportCmd struct {
 	Output   string `name:"output" help:"write exported lexicon to this path" type:"path"`
 }
 
-func (c *TypeWhisperValidateCmd) Run(rt *Runtime) error {
+func (c *TypeWhisperValidateCmd) Run(rt *appctx.Runtime) error {
 	command := "app.typewhisper.validate"
 	lexiconPath, warning := defaultLexiconPath(c.Lexicon)
 	lexicon, diagnostics, err := typewhisper.LoadLexicon(lexiconPath)
@@ -59,7 +60,7 @@ func (c *TypeWhisperValidateCmd) Run(rt *Runtime) error {
 	return rt.Emit(report.New(command, true, false, false, "TypeWhisper lexicon valid: "+typewhisper.SummaryText(lexicon.Summary()), data, diagnostics))
 }
 
-func (c *TypeWhisperStatusCmd) Run(rt *Runtime) error {
+func (c *TypeWhisperStatusCmd) Run(rt *appctx.Runtime) error {
 	command := "app.typewhisper.status"
 	ctx := context.Background()
 	storeDir := defaultStoreDir(c.StoreDir)
@@ -73,7 +74,7 @@ func (c *TypeWhisperStatusCmd) Run(rt *Runtime) error {
 	return rt.Emit(report.New(command, true, false, false, summary, data, diagnostics))
 }
 
-func (c *TypeWhisperImportCmd) Run(rt *Runtime) error {
+func (c *TypeWhisperImportCmd) Run(rt *appctx.Runtime) error {
 	command := "app.typewhisper.import"
 	ctx := context.Background()
 	lexiconPath, warning := defaultLexiconPath(c.Lexicon)
@@ -137,7 +138,7 @@ func (c *TypeWhisperImportCmd) Run(rt *Runtime) error {
 	}, diagnostics))
 }
 
-func (c *TypeWhisperExportCmd) Run(rt *Runtime) error {
+func (c *TypeWhisperExportCmd) Run(rt *appctx.Runtime) error {
 	command := "app.typewhisper.export"
 	ctx := context.Background()
 	storeDir := defaultStoreDir(c.StoreDir)
@@ -168,7 +169,7 @@ func (c *TypeWhisperExportCmd) Run(rt *Runtime) error {
 			"lexicon":     lexicon.Summary(),
 		}, diagnostics))
 	}
-	if rt.CLI.JSON {
+	if rt.JSONOutput() {
 		return rt.Emit(report.New(command, true, false, false, "exported TypeWhisper lexicon", map[string]any{
 			"store_dir": storeDir,
 			"lexicon":   lexicon,
