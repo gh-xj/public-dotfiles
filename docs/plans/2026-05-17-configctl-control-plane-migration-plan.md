@@ -248,7 +248,7 @@ Operation boundary: migrate agent topology without changing source ownership.
 - [x] always back up current auth before switching snapshots
 - [x] remove hardcoded dated backup assumptions
 - [x] redact every token-adjacent value from human and JSON output
-- [ ] move old Taskfile/script logic to wrappers or delete it after parity
+- [x] move old Taskfile/script logic to wrappers or delete it after parity
 
 Verification:
 
@@ -356,5 +356,5 @@ Verification:
 
 ## Next Action
 
-Start Milestone 5 by migrating agent topology checks, skillset wrapping, and
-Codex auth snapshot commands under `configctl agent`.
+Start Milestone 6 by moving deterministic app validators for terminal, Neovim,
+Lazygit, Ghostty, tmux, and Karabiner under `configctl app`.
