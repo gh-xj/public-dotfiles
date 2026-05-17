@@ -27,6 +27,7 @@ type CLI struct {
 	Home      HomeCmd      `cmd:"" help:"inspect repo-backed home topology"`
 	App       AppCmd       `cmd:"" help:"inspect and apply app-specific config"`
 	Agent     AgentCmd     `cmd:"" help:"inspect and apply agent runtime config"`
+	Package   PackageCmd   `cmd:"" help:"inspect package ledgers"`
 	Workspace WorkspaceCmd `cmd:"" help:"inspect and link external workspaces"`
 }
 

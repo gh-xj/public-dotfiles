@@ -68,6 +68,9 @@ tasks:
       - ./{{.BIN}} --json agent verify >/dev/null
       - ./{{.BIN}} --json agent skills verify >/dev/null
       - ./{{.BIN}} --json agent codex-auth status >/dev/null
+      - ./{{.BIN}} --json package status >/dev/null
+      - ./{{.BIN}} --json package audit >/dev/null
+      - ./{{.BIN}} --json package verify >/dev/null
       - ./{{.BIN}} --json app nvim verify >/dev/null
       - ./{{.BIN}} --json app lazygit verify >/dev/null
       - ./{{.BIN}} --json app ghostty verify >/dev/null

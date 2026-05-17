@@ -286,14 +286,14 @@ Verification:
 
 Operation boundary: add package ledger inspection without install mutation.
 
-- [ ] inspect public and private `Brewfile`
-- [ ] inspect public and private `npm-globals.txt`
-- [ ] inspect installed Homebrew formulae and casks
-- [ ] inspect installed global npm packages
-- [ ] report tracked-missing, installed-untracked, duplicated, and config-without
+- [x] inspect public and private `Brewfile`
+- [x] inspect public and private `npm-globals.txt`
+- [x] inspect installed Homebrew formulae and casks
+- [x] inspect installed global npm packages
+- [x] report tracked-missing, installed-untracked, duplicated, and config-without
       package-ledger support
-- [ ] include package checks in full verify when external tools are available
-- [ ] avoid network freshness checks by default
+- [x] include package checks in full verify when external tools are available
+- [x] avoid network freshness checks by default
 
 Verification:
 
@@ -356,5 +356,5 @@ Verification:
 
 ## Next Action
 
-Start Milestone 7 by adding read-only package ledger status, audit, and verify
-commands for Homebrew and npm global packages.
+Start Milestone 8 by adding constrained release capture and dry-run commit
+orchestration around declared paths and compatible operation reports.

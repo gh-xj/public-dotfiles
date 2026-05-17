@@ -9,6 +9,7 @@ import (
 	gitadapter "configctl/internal/adapters/git"
 	"configctl/internal/domain/agent"
 	"configctl/internal/domain/home"
+	"configctl/internal/domain/packageaudit"
 	"configctl/internal/domain/repo"
 	"configctl/internal/domain/workspace"
 	"configctl/internal/report"
@@ -100,6 +101,7 @@ func Verify(ctx context.Context, opts Options, profile verify.Profile) verify.Re
 		homeCheck(opts, profile),
 		workspaceCheck(),
 		agentCheck(),
+		packageCheck(),
 	}}
 	return runner.Run(ctx, profile)
 }
@@ -171,6 +173,30 @@ func agentCheck() verify.Check {
 			return verify.CheckResult{
 				OK:          true,
 				Summary:     "agent topology verified",
+				Diagnostics: status.Diagnostics,
+			}
+		},
+	}
+}
+
+func packageCheck() verify.Check {
+	return verify.Check{
+		ID:       "package.verify",
+		Name:     "package ledgers",
+		Required: true,
+		FullOnly: true,
+		Run: func(ctx context.Context) verify.CheckResult {
+			status, failures := packageaudit.Verify(ctx, packageaudit.Options{})
+			if len(failures) > 0 {
+				return verify.CheckResult{
+					OK:          false,
+					Summary:     fmt.Sprintf("package ledgers failed: %d issue(s)", len(failures)),
+					Diagnostics: status.Diagnostics,
+				}
+			}
+			return verify.CheckResult{
+				OK:          true,
+				Summary:     packageaudit.VerifySummary(failures),
 				Diagnostics: status.Diagnostics,
 			}
 		},
