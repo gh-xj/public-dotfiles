@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"configctl/internal/report"
 )
@@ -16,8 +17,11 @@ type Options struct {
 	PublicRepoDir  string
 	PrivateRepoDir string
 	PublicOnly     bool
+	PrivateOnly    bool
 	ModeOverride   Mode
 	VerifyAll      bool
+	DryRun         bool
+	Now            time.Time
 }
 
 type Topology struct {
@@ -85,7 +89,7 @@ func Load(opts Options) (Topology, error) {
 		PublicRepo:  publicRepo,
 		PrivateRepo: privateRepo,
 	}
-	if publicRepo != "" && ManifestExists(publicRepo) {
+	if !opts.PrivateOnly && publicRepo != "" && ManifestExists(publicRepo) {
 		loaded, diagnostics, err := LoadManifest("public", publicRepo)
 		topology.Diagnostics = append(topology.Diagnostics, diagnostics...)
 		if err != nil {
@@ -93,7 +97,7 @@ func Load(opts Options) (Topology, error) {
 		}
 		topology.Manifests = append(topology.Manifests, loaded)
 		topology.Entries = append(topology.Entries, resolveEntries(homeDir, loaded)...)
-	} else if publicRepo != "" {
+	} else if !opts.PrivateOnly && publicRepo != "" {
 		topology.Diagnostics = append(topology.Diagnostics, report.Diagnostic{
 			Severity: "warning",
 			Code:     "home.manifest_missing",

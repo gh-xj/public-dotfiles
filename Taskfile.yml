@@ -1,10 +1,16 @@
 version: "3"
 
+includes:
+  configctl:
+    taskfile: ./tools/configctl/Taskfile.yml
+    dir: ./tools/configctl
+
 tasks:
   install:
     desc: Install public dotfiles and private-config when available
     cmds:
-      - ./install.sh {{.CLI_ARGS}}
+      - task: configctl:build
+      - tools/configctl/bin/configctl home apply {{.CLI_ARGS}}
 
   private:init:
     desc: Scaffold a local-only private-config overlay repo
@@ -14,6 +20,7 @@ tasks:
   dotfiles:verify:
     desc: Verify public dotfile config surfaces
     cmds:
+      - task: configctl:verify
       - task: security:approved-gh-account
       - task: verify:lazygit
       - task: verify:nvim

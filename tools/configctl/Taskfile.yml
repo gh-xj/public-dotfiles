@@ -53,6 +53,8 @@ tasks:
       - ./{{.BIN}} --json version >/dev/null
       - ./{{.BIN}} --json home status >/dev/null
       - ./{{.BIN}} --json home plan >/dev/null
+      - ./{{.BIN}} --json home apply --dry-run >/dev/null
+      - ./{{.BIN}} --json home apply --dry-run --copy >/dev/null
       - ./{{.BIN}} --json home resolve ~/.zshrc >/dev/null
       - ./{{.BIN}} --json home verify >/dev/null
       - ./{{.BIN}} --json app typewhisper validate --lexicon testdata/typewhisper/lexicon.json >/dev/null

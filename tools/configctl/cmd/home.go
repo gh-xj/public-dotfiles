@@ -13,6 +13,7 @@ type HomeCmd struct {
 	Status  HomeStatusCmd  `cmd:"" help:"summarize repo-backed home topology"`
 	Resolve HomeResolveCmd `cmd:"" help:"resolve a live home path to its owning repo entry"`
 	Plan    HomePlanCmd    `cmd:"" help:"preview home topology actions without mutating"`
+	Apply   HomeApplyCmd   `cmd:"" help:"apply home topology actions"`
 	Verify  HomeVerifyCmd  `cmd:"" help:"verify home paths resolve to their owner repos"`
 }
 
@@ -21,6 +22,7 @@ type homeOptions struct {
 	PublicRepo  string `name:"public-repo" help:"public-dotfiles repo path" type:"path"`
 	PrivateRepo string `name:"private-repo" help:"private-config repo path" type:"path"`
 	PublicOnly  bool   `name:"public-only" help:"ignore private overlay manifest"`
+	PrivateOnly bool   `name:"private-only" help:"ignore public manifest"`
 }
 
 type HomeStatusCmd struct {
@@ -35,6 +37,14 @@ type HomeResolveCmd struct {
 type HomePlanCmd struct {
 	homeOptions
 	Mode string `name:"mode" enum:"symlink,copy" default:"symlink" help:"override link/copy entries for the preview"`
+	Copy bool   `name:"copy" help:"copy files instead of symlinking link/copy entries"`
+}
+
+type HomeApplyCmd struct {
+	homeOptions
+	Mode   string `name:"mode" enum:"symlink,copy" default:"symlink" help:"override link/copy entries for apply"`
+	Copy   bool   `name:"copy" help:"copy files instead of symlinking link/copy entries"`
+	DryRun bool   `name:"dry-run" help:"preview apply actions without changing the filesystem"`
 }
 
 type HomeVerifyCmd struct {
@@ -76,7 +86,7 @@ func (c *HomeResolveCmd) Run(rt *Runtime) error {
 
 func (c *HomePlanCmd) Run(rt *Runtime) error {
 	command := "home.plan"
-	status, err := home.Status(c.options(c.Mode))
+	status, err := home.Status(c.options(c.modeOverride()))
 	if err != nil {
 		return rt.Fail(command, true, "could not plan home topology", map[string]any{}, []report.Diagnostic{{
 			Severity: "error",
@@ -85,6 +95,31 @@ func (c *HomePlanCmd) Run(rt *Runtime) error {
 		}})
 	}
 	return rt.Emit(report.New(command, true, false, true, homePlanSummary(status), status, status.Diagnostics))
+}
+
+func (c *HomeApplyCmd) Run(rt *Runtime) error {
+	command := "home.apply"
+	opts := c.options(c.modeOverride())
+	opts.DryRun = c.DryRun
+	result, err := home.Apply(opts)
+	if err != nil {
+		return rt.Fail(command, c.DryRun, "could not apply home topology", result, result.Diagnostics)
+	}
+	return rt.Emit(report.New(command, true, result.Changed, c.DryRun, homeApplySummary(result, c.DryRun), result, result.Diagnostics))
+}
+
+func (c *HomePlanCmd) modeOverride() string {
+	if c.Copy {
+		return string(home.ModeCopy)
+	}
+	return c.Mode
+}
+
+func (c *HomeApplyCmd) modeOverride() string {
+	if c.Copy {
+		return string(home.ModeCopy)
+	}
+	return c.Mode
 }
 
 func (c *HomeVerifyCmd) Run(rt *Runtime) error {
@@ -113,6 +148,7 @@ func (c homeOptions) options(modeOverride string) home.Options {
 		PublicRepoDir:  paths.Expand(c.PublicRepo),
 		PrivateRepoDir: paths.Expand(c.PrivateRepo),
 		PublicOnly:     c.PublicOnly,
+		PrivateOnly:    c.PrivateOnly,
 		ModeOverride:   parseHomeMode(modeOverride),
 	}
 }
@@ -153,6 +189,24 @@ func homePlanSummary(status home.StatusResult) string {
 		parts = append(parts, "no actions")
 	}
 	return "home plan dry-run: " + strings.Join(parts, ", ")
+}
+
+func homeApplySummary(result home.ApplyResult, dryRun bool) string {
+	actions := []string{"skip", "link", "copy", "merge", "backup_then_link", "backup_then_copy"}
+	parts := make([]string, 0, len(actions))
+	for _, action := range actions {
+		if result.Counts[action] > 0 {
+			parts = append(parts, fmt.Sprintf("%s=%d", action, result.Counts[action]))
+		}
+	}
+	if len(parts) == 0 {
+		parts = append(parts, "no actions")
+	}
+	prefix := "home apply"
+	if dryRun {
+		prefix += " dry-run"
+	}
+	return prefix + ": " + strings.Join(parts, ", ")
 }
 
 func homeVerifySummary(status home.StatusResult, all bool) string {

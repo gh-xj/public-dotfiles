@@ -3,7 +3,9 @@ package home
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestStatusDetectsLinkedAndMissingEntries(t *testing.T) {
@@ -139,6 +141,138 @@ mode = "link"
 	}
 }
 
+func TestApplyLinksMissingPathAndBacksUpWrongLink(t *testing.T) {
+	root := t.TempDir()
+	homeDir := filepath.Join(root, "home")
+	publicRepo := filepath.Join(root, "public-dotfiles")
+	writeFile(t, filepath.Join(publicRepo, "configctl", "home.toml"), `[[entries]]
+owner = "public"
+path = ".zshrc"
+mode = "link"
+
+[[entries]]
+owner = "public"
+path = ".tmux.conf"
+mode = "link"
+`)
+	writeFile(t, filepath.Join(publicRepo, ".zshrc"), "source\n")
+	writeFile(t, filepath.Join(publicRepo, ".tmux.conf"), "tmux\n")
+	writeFile(t, filepath.Join(root, "other", ".tmux.conf"), "wrong\n")
+	mkdir(t, homeDir)
+	if err := os.Symlink(filepath.Join(root, "other", ".tmux.conf"), filepath.Join(homeDir, ".tmux.conf")); err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := Apply(Options{
+		HomeDir:       homeDir,
+		PublicRepoDir: publicRepo,
+		PublicOnly:    true,
+		Now:           time.Date(2026, 5, 17, 1, 2, 3, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatalf("Apply returned error: %v diagnostics=%#v", err, result.Diagnostics)
+	}
+	if !result.Changed {
+		t.Fatal("expected apply to report changes")
+	}
+	assertSymlink(t, filepath.Join(homeDir, ".zshrc"), filepath.Join(publicRepo, ".zshrc"))
+	assertSymlink(t, filepath.Join(homeDir, ".tmux.conf"), filepath.Join(publicRepo, ".tmux.conf"))
+	if _, err := os.Lstat(filepath.Join(publicRepo, ".install-backups", "20260517-010203", ".tmux.conf")); err != nil {
+		t.Fatalf("expected backup: %v", err)
+	}
+}
+
+func TestApplyDryRunDoesNotMutate(t *testing.T) {
+	root := t.TempDir()
+	homeDir := filepath.Join(root, "home")
+	publicRepo := filepath.Join(root, "public-dotfiles")
+	writeFile(t, filepath.Join(publicRepo, "configctl", "home.toml"), `[[entries]]
+owner = "public"
+path = ".zshrc"
+mode = "link"
+`)
+	writeFile(t, filepath.Join(publicRepo, ".zshrc"), "source\n")
+	mkdir(t, homeDir)
+
+	result, err := Apply(Options{HomeDir: homeDir, PublicRepoDir: publicRepo, PublicOnly: true, DryRun: true})
+	if err != nil {
+		t.Fatalf("Apply returned error: %v diagnostics=%#v", err, result.Diagnostics)
+	}
+	if !result.Changed {
+		t.Fatal("expected dry run to report planned changes")
+	}
+	if _, err := os.Lstat(filepath.Join(homeDir, ".zshrc")); !os.IsNotExist(err) {
+		t.Fatalf("dry run should not create target, err=%v", err)
+	}
+}
+
+func TestApplyMergeCodexTopLevelKeysBacksUpInResolvedPrivateRepo(t *testing.T) {
+	root := t.TempDir()
+	homeDir := filepath.Join(root, "home")
+	publicRepo := filepath.Join(root, "public-dotfiles")
+	privateRepo := filepath.Join(root, "private-config")
+	writeFile(t, filepath.Join(publicRepo, "configctl", "home.toml"), `[[entries]]
+owner = "public"
+path = ".codex/config.toml"
+mode = "merge"
+strategy = "codex-top-level-keys"
+`)
+	writeFile(t, filepath.Join(publicRepo, ".codex", "config.toml"), "model = \"gpt\"\n\n[tui]\ntheme = \"dark\"\n")
+	writeFile(t, filepath.Join(privateRepo, ".codex", "config.toml"), "\n[projects]\n")
+	mkdir(t, homeDir)
+	if err := os.Symlink(filepath.Join(privateRepo, ".codex"), filepath.Join(homeDir, ".codex")); err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := Apply(Options{
+		HomeDir:        homeDir,
+		PublicRepoDir:  publicRepo,
+		PrivateRepoDir: privateRepo,
+		PublicOnly:     true,
+		Now:            time.Date(2026, 5, 17, 1, 2, 3, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatalf("Apply returned error: %v diagnostics=%#v", err, result.Diagnostics)
+	}
+	content, err := os.ReadFile(filepath.Join(privateRepo, ".codex", "config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(string(content), "model = \"gpt\"\n\n[projects]\n") {
+		t.Fatalf("unexpected merged content: %q", content)
+	}
+	if _, err := os.Stat(filepath.Join(privateRepo, ".install-backups", "20260517-010203", ".codex", "config.toml")); err != nil {
+		t.Fatalf("expected private backup: %v", err)
+	}
+}
+
+func TestPrivateOnlyLoadsPrivateManifestOnly(t *testing.T) {
+	root := t.TempDir()
+	homeDir := filepath.Join(root, "home")
+	publicRepo := filepath.Join(root, "public-dotfiles")
+	privateRepo := filepath.Join(root, "private-config")
+	writeFile(t, filepath.Join(publicRepo, "configctl", "home.toml"), `[[entries]]
+owner = "public"
+path = ".zshrc"
+mode = "link"
+`)
+	writeFile(t, filepath.Join(privateRepo, "configctl", "home.toml"), `[[entries]]
+owner = "private"
+path = ".zshenv"
+mode = "link"
+`)
+	writeFile(t, filepath.Join(publicRepo, ".zshrc"), "source\n")
+	writeFile(t, filepath.Join(privateRepo, ".zshenv"), "private\n")
+
+	status, err := Status(Options{HomeDir: homeDir, PublicRepoDir: publicRepo, PrivateRepoDir: privateRepo, PrivateOnly: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(status.Entries) != 1 || status.Entries[0].Owner != "private" {
+		t.Fatalf("expected private-only status, got %#v", status.Entries)
+	}
+}
+
 func TestResolveMatchesManifestEntry(t *testing.T) {
 	root := t.TempDir()
 	homeDir := filepath.Join(root, "home")
@@ -163,6 +297,17 @@ mode = "link"
 	}
 	if result.Entry == nil || result.Entry.Path != ".zshrc" {
 		t.Fatalf("expected manifest entry, got %#v", result.Entry)
+	}
+}
+
+func assertSymlink(t *testing.T, path string, want string) {
+	t.Helper()
+	got, err := os.Readlink(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != want {
+		t.Fatalf("expected %s -> %s, got %s", path, want, got)
 	}
 }
 
