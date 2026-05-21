@@ -12,6 +12,18 @@ This repo is one live owner for its paths.
 - `private-config` owns private durable state
 - the active architecture is `public-dotfiles` plus `private-config`
 
+## Repository Names
+
+The Nix migration keeps the current repository names:
+
+- public baseline: `gh-xj/public-dotfiles`
+  (`https://github.com/gh-xj/public-dotfiles`)
+- private overlay and full-machine control plane: `gh-xj/private-config`
+  (`https://github.com/gh-xj/private-config`)
+
+Do not rename these to `dotfiles-public` or `dotfiles-private`; those names are
+only conceptual roles in older planning notes.
+
 ## Scope
 
 This repo keeps only reusable and publishable configuration:
