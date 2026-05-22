@@ -61,6 +61,7 @@ rules = [
 	{ url = "bulk-rename.txt", use = "bulk-rename" },
 	{ url = "*.md", use = [ "edit", "nvim", "reveal" ] },
 	{ url = "*.log", use = [ "view-log", "edit", "reveal" ] },
+	{ url = "*.log.*", use = [ "view-log", "edit", "reveal" ] },
 	{ url = "*.jsonl", use = [ "view-log", "edit", "reveal" ] },
 	{ url = "*.ndjson", use = [ "view-log", "edit", "reveal" ] },
 	{ url = "*.db", use = [ "sqlite", "edit", "reveal" ] },
@@ -100,6 +101,7 @@ prepend_previewers = [
   { url = "*.csv", run = "rich-preview" },
   { url = "*.md", run = 'piper -- ~/.config/yazi/scripts/glow-preview.sh "$1" "$w"' },
   { url = "*.log", run = 'piper -- hl --color=always --paging=never "$1"' },
+  { url = "*.log.*", run = 'piper -- hl --color=always --paging=never "$1"' },
   { url = "*.jsonl", run = 'piper -- hl --color=always --paging=never "$1"' },
   { url = "*.ndjson", run = 'piper -- hl --color=always --paging=never "$1"' },
 ]
