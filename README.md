@@ -1,7 +1,35 @@
 # public-dotfiles
 
-Public macOS dotfiles and editor or shell configuration with a direct `$HOME`
-layout.
+`public-dotfiles` is a public-safe macOS baseline for shell, editor, terminal,
+CLI, and agent policy. It can be built directly as a Home Manager example,
+imported by a private flake, or installed as direct `$HOME` symlinks through
+`configctl`; credentials, app sessions, provider endpoints, project trust
+lists, and machine-local runtime state stay out of this repo.
+
+## Quick Start
+
+Build the public Home Manager example without touching your home directory:
+
+```bash
+nix build github:gh-xj/public-dotfiles#homeConfigurations.example.activationPackage
+```
+
+Apply the example only from a matching test account named `example`, or after
+cloning and editing `hosts/example.nix` for your own macOS user:
+
+```bash
+nix run github:nix-community/home-manager/master -- switch --flake .#example
+```
+
+For the direct symlink installer:
+
+```bash
+task install -- --dry-run
+task install
+```
+
+See [docs/bootstrap.md](docs/bootstrap.md) for the full student bootstrap path
+and package set selection.
 
 ## Ownership
 
@@ -87,9 +115,20 @@ The public flake exports named package sets:
 - `packageSets.teaching`
 
 The default public Home Manager module composes all three for
-`homeConfigurations.example`. A student or downstream private flake can import
-only the sets it wants, or run the same module against a different nixpkgs pin
-with `--override-input nixpkgs <flake-url>`.
+`homeConfigurations.example`. A host can choose a subset:
+
+```nix
+{
+  xj.publicDotfiles = {
+    enable = true;
+    packageSets = [ "dev" "teaching" ];
+  };
+}
+```
+
+A downstream private flake can import only the sets it wants, or run the same
+module against a different nixpkgs pin with
+`--override-input nixpkgs <flake-url>`.
 
 ## Agent Baseline
 
