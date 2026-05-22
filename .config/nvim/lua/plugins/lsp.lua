@@ -55,8 +55,8 @@ return {
       local is_large_markdown = vim.bo[current_buf].filetype == "markdown"
         and require("config.large_file").is_large_markdown(current_buf)
       if not is_large_markdown then
-        local ok, cmp_lsp = pcall(require, "cmp_nvim_lsp")
-        capabilities = ok and cmp_lsp.default_capabilities() or {}
+        local ok, blink = pcall(require, "blink.cmp")
+        capabilities = ok and blink.get_lsp_capabilities() or {}
       end
 
       local enabled_servers = vim.deepcopy(server_list)
@@ -94,46 +94,22 @@ return {
   },
 
   {
-    "hrsh7th/nvim-cmp",
+    "saghen/blink.cmp",
+    version = "1.*",
     event = "InsertEnter",
-    dependencies = {
-      "hrsh7th/cmp-nvim-lsp",
-      "L3MON4D3/LuaSnip",
-      {
-        "saadparwaiz1/cmp_luasnip",
-        -- nvim 0.12: old vim.validate({}) triggers broken deprecation path in lazy's loader
-        build = function(plugin)
-          local f = plugin.dir .. "/lua/cmp_luasnip/init.lua"
-          local src = io.open(f):read("*a")
-          local patched = src:gsub(
-            "vim%.validate%(%{%s*\n%s*use_show_condition = %{ params%.option%.use_show_condition, 'boolean' %},%s*\n%s*show_autosnippets  = %{ params%.option%.show_autosnippets,  'boolean' %},%s*\n%s*%}%)",
-            "vim.validate('use_show_condition', params.option.use_show_condition, 'boolean')\n\tvim.validate('show_autosnippets', params.option.show_autosnippets, 'boolean')"
-          )
-          io.open(f, "w"):write(patched)
-        end,
+    opts = {
+      keymap = {
+        preset = "enter",
+        ["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
       },
+      completion = {
+        accept = { auto_brackets = { enabled = true } },
+        documentation = { auto_show = true, auto_show_delay_ms = 150 },
+      },
+      sources = {
+        default = { "lsp", "path", "snippets", "buffer" },
+      },
+      signature = { enabled = true },
     },
-    config = function()
-      local cmp = require("cmp")
-      local ok_snip, luasnip = pcall(require, "luasnip")
-
-      cmp.setup({
-        snippet = {
-          expand = function(args)
-            if ok_snip then luasnip.lsp_expand(args.body) end
-          end,
-        },
-        mapping = cmp.mapping.preset.insert({
-          ["<C-Space>"] = cmp.mapping.complete(),
-          ["<CR>"] = cmp.mapping.confirm({ select = true }),
-        }),
-        sources = cmp.config.sources({
-          { name = "nvim_lsp" },
-          { name = "luasnip" },
-        }, {
-          { name = "buffer" },
-        }),
-      })
-    end,
   },
 }

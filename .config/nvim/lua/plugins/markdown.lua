@@ -46,8 +46,8 @@ return {
         ignore = function(buf)
           return large_file.is_large_markdown(buf)
         end,
-        -- Avoid eagerly loading nvim-cmp/LuaSnip just to get markdown checkbox
-        -- and callout completion hooks.
+        -- Avoid eagerly loading blink.cmp just to get markdown checkbox and
+        -- callout completion hooks.
         completions = {
           lsp = { enabled = true },
         },
