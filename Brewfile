@@ -2,10 +2,6 @@
 #
 # CLI formulae migrated to Nix home.packages:
 # difftastic, gh, git-delta, gitleaks, lazygit.
-
-# Retained until a good nixpkgs replacement exists.
-brew "googleworkspace-cli"
-
-# GUI/app bridge.
-cask "gcloud-cli"
-cask "handy"
+#
+# Remaining Homebrew formulae and casks are declared in
+# modules/darwin/homebrew.nix.
