@@ -59,24 +59,6 @@ return {
         capabilities = ok and cmp_lsp.default_capabilities() or {}
       end
 
-      local function legacy_setup(server_name)
-        local ok_lsp, lspconfig = pcall(require, "lspconfig")
-        if not ok_lsp then return end
-        local candidates = { server_name }
-        if server_name == "ts_ls" then
-          table.insert(candidates, "tsserver")
-        elseif server_name == "tsserver" then
-          table.insert(candidates, "ts_ls")
-        end
-        for _, name in ipairs(candidates) do
-          local entry = lspconfig[name]
-          if type(entry) == "table" and type(entry.setup) == "function" then
-            entry.setup({ capabilities = capabilities })
-            return
-          end
-        end
-      end
-
       local enabled_servers = vim.deepcopy(server_list)
       if is_large_markdown then
         enabled_servers = vim.tbl_filter(function(name)
@@ -84,16 +66,10 @@ return {
         end, enabled_servers)
       end
 
-      if vim.lsp and vim.lsp.config and vim.lsp.enable then
-        for _, name in ipairs(server_list) do
-          pcall(vim.lsp.config, name, { capabilities = capabilities })
-        end
-        pcall(vim.lsp.enable, enabled_servers)
-      else
-        for _, name in ipairs(enabled_servers) do
-          legacy_setup(name)
-        end
+      for _, name in ipairs(server_list) do
+        vim.lsp.config(name, { capabilities = capabilities })
       end
+      vim.lsp.enable(enabled_servers)
 
       -- Zed-aligned LSP keymaps, set on attach so they only exist where a
       -- server is actually answering.
