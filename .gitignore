@@ -6,6 +6,8 @@
 .install-backups/
 .configctl/runs/
 .task/
+/result
+/result-*
 .config/zed/prompts/**/*.mdb/lock.mdb
 /Library/Application Support/lazygit/state.yml
 /docs/human-requests

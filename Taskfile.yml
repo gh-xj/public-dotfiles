@@ -20,6 +20,7 @@ tasks:
   dotfiles:verify:
     desc: Verify public dotfile config surfaces
     cmds:
+      - task: nix:build
       - task: configctl:verify
       - tools/configctl/bin/configctl --json verify --profile full >/dev/null
       - task: security:approved-gh-account
@@ -54,6 +55,14 @@ tasks:
               ;;
           esac
         done
+
+  nix:build:
+    desc: Build the public Nix example Home Manager activation package
+    preconditions:
+      - sh: command -v nix >/dev/null 2>&1
+        msg: "nix is required to build the public dotfiles flake"
+    cmds:
+      - nix build --no-link .#homeConfigurations.example.activationPackage
 
   verify:lazygit:
     desc: Verify lazygit config and required helpers
