@@ -5,6 +5,8 @@ return {
     lazy = false,
     opts = {
       bufdelete = { enabled = true },
+      image = { enabled = true },
+      indent = { enabled = true },
       input = { enabled = true },
       lazygit = {
         enabled = true,
@@ -23,6 +25,8 @@ return {
         ui_select = true,
       },
       quickfile = { enabled = true },
+      scroll = { enabled = true },
+      statuscolumn = { enabled = true },
     },
   },
 }
