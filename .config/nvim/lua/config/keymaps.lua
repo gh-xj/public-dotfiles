@@ -115,6 +115,7 @@ map("n", "<leader>tg", function() Snacks.picker.grep() end,     { silent = true,
 map("n", "<leader>tb", function() Snacks.picker.buffers() end,  { silent = true, desc = "Buffers" })
 map("n", "<leader>tk", function() Snacks.picker.keymaps() end,  { silent = true, desc = "Keymaps" })
 map("n", "<leader>th", function() Snacks.picker.help() end,     { silent = true, desc = "Help tags" })
+map("n", "<leader>?",  function() Snacks.picker.keymaps() end,  { silent = true, desc = "Search keymaps" })
 
 -- ===== Daily workflow =====
 vim.api.nvim_create_user_command("Format", function()
