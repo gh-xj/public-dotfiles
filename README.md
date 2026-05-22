@@ -78,6 +78,19 @@ PRIVATE_REPO_DIR=/path/to/private-config task install
 By default `configctl home apply` creates symlinks into `$HOME`. Use `--copy`
 to copy files instead, or `--dry-run` to preview actions.
 
+## Nix Package Sets
+
+The public flake exports named package sets:
+
+- `packageSets.dev`
+- `packageSets.ops`
+- `packageSets.teaching`
+
+The default public Home Manager module composes all three for
+`homeConfigurations.example`. A student or downstream private flake can import
+only the sets it wants, or run the same module against a different nixpkgs pin
+with `--override-input nixpkgs <flake-url>`.
+
 ## Agent Baseline
 
 This repo now publishes the reusable Claude/Codex baseline:
