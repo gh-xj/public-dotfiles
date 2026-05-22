@@ -9,7 +9,7 @@
 // raises the app.
 //
 // Policy: NEVER spawn a new Ghostty window/instance. Past incidents with
-// `open -na` and AppleScript cmd+n corrupted xj's multi-session tmux
+// `open -na` and AppleScript cmd+n corrupted the user's multi-session tmux
 // layout. See AGENTS.md in this directory.
 package main
 

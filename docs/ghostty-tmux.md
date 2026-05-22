@@ -4,9 +4,9 @@ This setup treats tmux as the primary terminal workspace layer and Ghostty as a 
 
 ## Source of truth
 
-- tmux config: `/Users/xj/public-dotfiles/.tmux.conf`
-- Ghostty config directory: `/Users/xj/public-dotfiles/.config/ghostty`
-- Live Ghostty path: `~/.config/ghostty` -> `/Users/xj/public-dotfiles/.config/ghostty`
+- tmux config: `~/public-dotfiles/.tmux.conf`
+- Ghostty config directory: `~/public-dotfiles/.config/ghostty`
+- Live Ghostty path: `~/.config/ghostty` -> `~/public-dotfiles/.config/ghostty`
 
 Do not create a second standalone Ghostty config file outside the tracked directory.
 
@@ -61,8 +61,8 @@ Examples:
 
 If tmux prefix changes, update both:
 
-1. `set -g prefix ...` and `bind ... send-prefix` in `/Users/xj/public-dotfiles/.tmux.conf`
-2. Every Ghostty prefix-backed `text:\x..` mapping in `/Users/xj/public-dotfiles/.config/ghostty/config`
+1. `set -g prefix ...` and `bind ... send-prefix` in `~/public-dotfiles/.tmux.conf`
+2. Every Ghostty prefix-backed `text:\x..` mapping in `~/public-dotfiles/.config/ghostty/config`
 
 After changing tmux prefix:
 
@@ -74,7 +74,7 @@ After changing tmux prefix:
 Run this after changing Ghostty, tmux, or Karabiner terminal key rules:
 
 ```bash
-task -d /Users/xj/private-config verify:terminal
+task verify:terminal
 ```
 
 This validates Ghostty config, Karabiner complex-modification assets, tmux config parsing, the Karabiner `Ctrl-h/l` no-rewrite policy, root `M-*` migration guards, and the EasyJump `prefix + J` only policy.

@@ -260,4 +260,4 @@ eval "$(zoxide init zsh --cmd j)"
 
 
 # agents-cli: version switching for AI coding agents
-export PATH="/Users/xj/.agents/shims:$PATH"
+export PATH="$HOME/.agents/shims:$PATH"

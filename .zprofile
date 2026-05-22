@@ -9,8 +9,9 @@ setup_environment() {
     export BUN_INSTALL="$HOME/.bun"
     export HOMEBREW_AUTO_UPDATE_SECS=604800
 
-    # sccache: shared Rust compiler cache on the 4T volume (see ~/.cargo/config.toml)
-    export SCCACHE_DIR="/Volumes/xj-sandisk-4T/dev/.sccache"
+    # sccache: host-local Rust compiler cache. Override before shell init when
+    # using an external volume.
+    export SCCACHE_DIR="${SCCACHE_DIR:-$HOME/.cache/sccache}"
     export SCCACHE_CACHE_SIZE="20G"
 
     # Initialize Homebrew (sets HOMEBREW_PREFIX, PATH, MANPATH, INFOPATH)

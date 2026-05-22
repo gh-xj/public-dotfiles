@@ -6,7 +6,7 @@ Core belief: `docs/configctl-core-belief.md`
 
 ## Purpose
 
-`configctl` is the deterministic control-plane CLI for xj's machine
+`configctl` is the deterministic control-plane CLI for a macOS config tree
 configuration. It should give agents and humans one stable command surface for
 repo-backed config operations while leaving judgment and policy routing in the
 `config-manager` skill.
@@ -201,7 +201,7 @@ Diagnostics should use stable codes:
   "severity": "warning",
   "code": "workspace.external_missing",
   "message": "oss external path is missing; volume may not be mounted",
-  "path": "/Volumes/xj-daily/dev/oss"
+  "path": "/Volumes/example-data/dev/oss"
 }
 ```
 
@@ -229,7 +229,7 @@ Example:
 
 ```json
 {
-  "path": "/Users/xj/private-config/.codex/auth.json",
+  "path": "/Users/example/private-config/.codex/auth.json",
   "exists": true,
   "valid_json": true,
   "redacted": true
@@ -339,8 +339,8 @@ External workspace links should be generic and manifest-driven:
 ```toml
 [[workspaces]]
 name = "oss"
-local = "/Users/xj/github/oss"
-external = "/Volumes/xj-daily/dev/oss"
+local = "/Users/example/github/oss"
+external = "/Volumes/example-data/dev/oss"
 required = false
 ```
 
@@ -465,7 +465,7 @@ It should not install or remove packages in v1.
 `workspace` owns symlink-only external workspace mounts such as:
 
 ```text
-oss: /Users/xj/github/oss -> /Volumes/xj-daily/dev/oss
+oss: /Users/example/github/oss -> /Volumes/example-data/dev/oss
 ```
 
 Commands should be generic and manifest-driven:

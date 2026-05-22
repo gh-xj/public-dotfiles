@@ -2,12 +2,12 @@
 
 macOS URL handler that opens files in nvim inside a specific tmux
 session/window. Click a link like
-`nvim-tmux:///Users/xj/notes/foo.md?session=main&window=zsh` (e.g. from
+`nvim-tmux:///Users/example/notes/foo.md?session=main&window=zsh` (e.g. from
 Godspeed, a browser, or any app with a clickable URL) and the handler:
 
 1. Ensures `session=main` exists in tmux (creates if not).
 2. Ensures a window named `zsh` exists in that session (creates if not).
-3. Ensures some pane in that window is running `nvim /Users/xj/notes/foo.md`
+3. Ensures some pane in that window is running `nvim /Users/example/notes/foo.md`
    (reuses an existing pane, or splits the window to spawn one).
 4. Yanks the most-recently-active tmux client (≈ last-focused Ghostty
    window) to that pane, so `open -a Ghostty` raises the right window.
@@ -53,7 +53,7 @@ osacompile -o ~/Applications/nvim-tmux.app /tmp/handler.applescript
 
 # 3. Register the URL scheme and mark the app background-only
 PLIST=~/Applications/nvim-tmux.app/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string com.xj.nvim-tmux-url-handler" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string com.example.nvim-tmux-url-handler" "$PLIST"
 /usr/libexec/PlistBuddy -c "Add :LSUIElement bool true" "$PLIST"
 /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$PLIST"
 /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$PLIST"

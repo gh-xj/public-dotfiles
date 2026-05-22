@@ -49,7 +49,7 @@ Ghostty` raises the frontmost one, which may not be the client we
 
 **Never spawn a new Ghostty window or instance programmatically.**
 This is absolute. All of the following have been verified to corrupt
-xj's multi-session tab layout with ghost clients attached to `main`:
+the user's multi-session tab layout with ghost clients attached to `main`:
 
 - `open -na Ghostty.app --args …`
 - `open -na Ghostty.app --args --command="tmux attach -t X"`
@@ -147,4 +147,4 @@ This repo uses the Lore trailer format defined in the repo-root
 | Installed binary                           | `~/Applications/nvim-tmux.app/Contents/Resources/nvim-tmux`                                    |
 | Runtime log (overwritten per fire)         | `/tmp/nvim-tmux.log`                                                                           |
 | URL scheme registration                    | `~/Applications/nvim-tmux.app/Contents/Info.plist` → `CFBundleURLTypes`                        |
-| Feedback memory enforcing the Ghostty rule | `~/.claude/projects/-Users-xj-public-dotfiles/memory/feedback-ghostty-new-window-forbidden.md` |
+| Feedback memory enforcing the Ghostty rule | repo-local agent memory or the relevant runtime feedback store |
