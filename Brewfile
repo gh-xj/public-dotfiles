@@ -1,10 +1,11 @@
-# Homebrew packages tracked for this public baseline.
+# Homebrew packages retained for this public baseline.
+#
+# CLI formulae migrated to Nix home.packages:
+# difftastic, gh, git-delta, gitleaks, lazygit.
 
-brew "difftastic"
-brew "gh"
-brew "git-delta"
-brew "gitleaks"
+# Retained until a good nixpkgs replacement exists.
 brew "googleworkspace-cli"
-brew "lazygit"
+
+# GUI/app bridge.
 cask "gcloud-cli"
 cask "handy"

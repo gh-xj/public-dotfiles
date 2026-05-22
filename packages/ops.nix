@@ -1,1 +1,4 @@
-_pkgs: [ ]
+pkgs: [
+  pkgs.gh
+  pkgs.gitleaks
+]

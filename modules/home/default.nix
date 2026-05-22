@@ -5,6 +5,7 @@ let
 in
 {
   imports = [
+    ./packages.nix
     ./terminal.nix
   ];
 

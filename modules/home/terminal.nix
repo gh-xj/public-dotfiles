@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   cfg = config.xj.publicDotfiles;
@@ -28,7 +28,7 @@ in
         "macos-option-as-alt" = true;
         theme = "light:Atom One Light,dark:One Dark Two";
         "quick-terminal-animation-duration" = 0;
-        command = "/opt/homebrew/bin/tmux new-session -A -s main";
+        command = "${pkgs.tmux}/bin/tmux new-session -A -s main";
         "font-thicken" = true;
         "font-size" = 16;
         keybind = [
