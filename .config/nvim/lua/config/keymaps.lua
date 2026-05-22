@@ -90,112 +90,45 @@ map("n", "<C-q>", ":wq<CR>", { silent = true })
 map("i", "<C-q>", "<Esc>:wq<CR>", { silent = true })
 map("v", "<C-q>", "<Esc>:wq<CR>", { silent = true })
 
--- ===== Telescope =====
-map("n", "<C-p>", "<cmd>Telescope find_files<cr>", { silent = true })
-map("n", "<leader>f", "<cmd>Telescope find_files<cr>", { silent = true })
-map("n", "<leader>fp", "<cmd>Telescope find_files<cr>", { silent = true })
-map("n", "<leader>gf", "<cmd>Telescope git_files<cr>", { silent = true })
-map("n", "<leader>b", "<cmd>Telescope buffers<cr>", { silent = true })
-map("n", "<leader>r", "<cmd>Telescope live_grep<cr>", { silent = true })
-map("n", "<leader>c", "<cmd>Telescope commands<cr>", { silent = true })
-map("n", "<leader>m", "<cmd>Telescope marks<cr>", { silent = true })
-map("n", "<leader>h", "<cmd>Telescope oldfiles<cr>", { silent = true })
-map("n", "<leader>/", "<cmd>Telescope current_buffer_fuzzy_find<cr>", { silent = true })
+-- ===== Picker (Snacks) =====
+map("n", "<C-p>",      function() Snacks.picker.files() end,                  { silent = true, desc = "Find files" })
+map("n", "<leader>f",  function() Snacks.picker.files() end,                  { silent = true, desc = "Find files" })
+map("n", "<leader>fp", function() Snacks.picker.files() end,                  { silent = true, desc = "Find files" })
+map("n", "<leader>gf", function() Snacks.picker.git_files() end,              { silent = true, desc = "Git files" })
+map("n", "<leader>b",  function() Snacks.picker.buffers() end,                { silent = true, desc = "Buffers" })
+map("n", "<leader>r",  function() Snacks.picker.grep() end,                   { silent = true, desc = "Live grep" })
+map("n", "<leader>c",  function() Snacks.picker.commands() end,               { silent = true, desc = "Commands" })
+map("n", "<leader>m",  function() Snacks.picker.marks() end,                  { silent = true, desc = "Marks" })
+map("n", "<leader>h",  function() Snacks.picker.recent() end,                 { silent = true, desc = "Recent files" })
+map("n", "<leader>/",  function() Snacks.picker.lines() end,                  { silent = true, desc = "Lines in buffer" })
 
--- Zed-aligned symbol search (Telescope-backed)
-map("n", "gs", "<cmd>Telescope lsp_document_symbols<cr>", { silent = true, desc = "Symbols in file" })
-map("n", "gS", "<cmd>Telescope lsp_workspace_symbols<cr>", { silent = true, desc = "Symbols in project" })
+-- Zed-aligned symbol search
+map("n", "gs", function() Snacks.picker.lsp_symbols() end,
+  { silent = true, desc = "Symbols in file" })
+map("n", "gS", function() Snacks.picker.lsp_workspace_symbols() end,
+  { silent = true, desc = "Symbols in project" })
 map("n", "<leader>o", "<cmd>AerialToggle<cr>",
   { silent = true, desc = "Toggle outline panel" })
 
-map("n", "<leader>tf", "<cmd>Telescope find_files<cr>", { silent = true })
-map("n", "<leader>tg", "<cmd>Telescope live_grep<cr>", { silent = true })
-map("n", "<leader>tb", "<cmd>Telescope buffers<cr>", { silent = true })
-map("n", "<leader>tk", "<cmd>Telescope keymaps<cr>", { silent = true })
-map("n", "<leader>th", "<cmd>Telescope help_tags<cr>", { silent = true })
+map("n", "<leader>tf", function() Snacks.picker.files() end,    { silent = true, desc = "Find files" })
+map("n", "<leader>tg", function() Snacks.picker.grep() end,     { silent = true, desc = "Live grep" })
+map("n", "<leader>tb", function() Snacks.picker.buffers() end,  { silent = true, desc = "Buffers" })
+map("n", "<leader>tk", function() Snacks.picker.keymaps() end,  { silent = true, desc = "Keymaps" })
+map("n", "<leader>th", function() Snacks.picker.help() end,     { silent = true, desc = "Help tags" })
 
 -- ===== Daily workflow =====
-local function close_buffer_no_layout()
-  local current = vim.fn.bufnr("%")
-  local listed = vim.tbl_filter(function(b) return vim.fn.buflisted(b) == 1 end, vim.fn.range(1, vim.fn.bufnr("$")))
-  if #listed <= 1 then
-    vim.cmd("enew")
-    vim.cmd("bdelete " .. current)
-    return
-  end
-  vim.cmd("bnext")
-  vim.cmd("bdelete #")
-end
-
-vim.api.nvim_create_user_command("CloseBufferNoLayout", close_buffer_no_layout, {})
-local lazygit_win
-
-local function current_git_root()
-  local file_dir = vim.fn.expand("%:p:h")
-  local start_dir = file_dir ~= "" and file_dir or vim.fn.getcwd()
-  local root = vim.fn.systemlist({ "git", "-C", start_dir, "rev-parse", "--show-toplevel" })
-  if vim.v.shell_error == 0 and root[1] and root[1] ~= "" then
-    return root[1]
-  end
-  return vim.fn.getcwd()
-end
-
-local function open_lazygit()
-  if lazygit_win and vim.api.nvim_win_is_valid(lazygit_win) then
-    vim.api.nvim_set_current_win(lazygit_win)
-    vim.cmd("startinsert")
-    return
-  end
-
-  local cwd = current_git_root()
-  local width = math.floor(vim.o.columns * 0.95)
-  local height = math.floor(vim.o.lines * 0.9)
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
-  local buf = vim.api.nvim_create_buf(false, true)
-
-  lazygit_win = vim.api.nvim_open_win(buf, true, {
-    relative = "editor",
-    width = width,
-    height = height,
-    row = row,
-    col = col,
-    border = "rounded",
-    title = " lazygit: " .. vim.fn.fnamemodify(cwd, ":t") .. " ",
-    title_pos = "center",
-  })
-
-  vim.bo[buf].bufhidden = "wipe"
-  vim.bo[buf].filetype = "lazygit"
-  vim.fn.termopen("lazygit", {
-    cwd = cwd,
-    env = { NVIM = vim.v.servername },
-    on_exit = function()
-      vim.schedule(function()
-        if lazygit_win and vim.api.nvim_win_is_valid(lazygit_win) then
-          vim.api.nvim_win_close(lazygit_win, true)
-        end
-        lazygit_win = nil
-      end)
-    end,
-  })
-  vim.keymap.set("t", "<Esc><Esc>", [[<C-\><C-n><cmd>close<cr>]], { buffer = buf, silent = true })
-  vim.cmd("startinsert")
-end
-
-vim.api.nvim_create_user_command("LazyGit", open_lazygit, {})
 vim.api.nvim_create_user_command("Format", function()
   require("lazy").load({ plugins = { "conform.nvim" } })
   require("conform").format({ lsp_fallback = true, async = false })
 end, {})
 
-map("n", "<leader>gg", ":LazyGit<CR>", { silent = true })
+map("n", "<leader>gg", function() Snacks.lazygit() end, { silent = true, desc = "Lazygit" })
 map("n", "<C-e>", "<cmd>Yazi<cr>", { silent = true, desc = "Open yazi" })
 map("n", "<leader>e", "<cmd>Yazi<cr>", { silent = true, desc = "Open yazi" })
 map("n", "<leader>yp", ":let @+=expand('%:p')<CR>:echo 'Copied: ' . expand('%:p')<CR>", { silent = true })
 map("n", "<leader>=", ":Format<CR>", { silent = true })
 map("n", "<leader>sv", ":source ~/.config/nvim/init.lua<CR>", { silent = true })
-map("n", "<leader>x", ":CloseBufferNoLayout<CR>", { silent = true })
+map("n", "<leader>x", function() Snacks.bufdelete() end, { silent = true, desc = "Close buffer" })
 
 -- ===== Window management =====
 map("n", "<leader>w", "<C-w>")
@@ -208,6 +141,6 @@ map("n", "<leader>tt", "<cmd>botright split<bar>terminal<cr>", { silent = true }
 -- ===== Buffer navigation =====
 map("n", "<leader>bn", "<cmd>bnext<cr>", { silent = true })
 map("n", "<leader>bp", "<cmd>bprevious<cr>", { silent = true })
-map("n", "<leader>bd", ":CloseBufferNoLayout<CR>", { silent = true })
+map("n", "<leader>bd", function() Snacks.bufdelete() end, { silent = true, desc = "Close buffer" })
 map("n", "<M-l>", "<cmd>bnext<cr>", { silent = true })
 map("n", "<M-h>", "<cmd>bprevious<cr>", { silent = true })
