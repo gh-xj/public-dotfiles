@@ -1,18 +1,22 @@
 package home
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"configctl/internal/report"
 )
 
 const codexTopLevelKeysStrategy = "codex-top-level-keys"
+
+var renamePath = os.Rename
 
 type ApplyResult struct {
 	HomeDir             string              `json:"home_dir"`
@@ -207,7 +211,7 @@ func backupTarget(topology Topology, entry ResolvedEntry, state EntryState, now 
 	if err := os.MkdirAll(filepath.Dir(backupPath), 0o755); err != nil {
 		return backupPath, err
 	}
-	return backupPath, os.Rename(state.TargetPath, backupPath)
+	return backupPath, movePath(state.TargetPath, backupPath)
 }
 
 func backupOwnerRoot(topology Topology, entry ResolvedEntry, state EntryState) string {
@@ -261,6 +265,18 @@ func copyPath(src string, dst string) error {
 		return copyDir(src, dst, info.Mode().Perm())
 	}
 	return copyFile(src, dst, info.Mode().Perm())
+}
+
+func movePath(src string, dst string) error {
+	if err := renamePath(src, dst); err == nil {
+		return nil
+	} else if !errors.Is(err, syscall.EXDEV) {
+		return err
+	}
+	if err := copyPath(src, dst); err != nil {
+		return err
+	}
+	return os.RemoveAll(src)
 }
 
 func copyDir(src string, dst string, perm os.FileMode) error {

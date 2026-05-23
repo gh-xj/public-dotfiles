@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -179,6 +180,46 @@ mode = "link"
 	assertSymlink(t, filepath.Join(homeDir, ".tmux.conf"), filepath.Join(publicRepo, ".tmux.conf"))
 	if _, err := os.Lstat(filepath.Join(publicRepo, ".install-backups", "20260517-010203", ".tmux.conf")); err != nil {
 		t.Fatalf("expected backup: %v", err)
+	}
+}
+
+func TestApplyBacksUpAcrossFilesystemsWhenRenameReturnsEXDEV(t *testing.T) {
+	root := t.TempDir()
+	homeDir := filepath.Join(root, "home")
+	publicRepo := filepath.Join(root, "public-dotfiles")
+	writeFile(t, filepath.Join(publicRepo, "configctl", "home.toml"), `[[entries]]
+owner = "public"
+path = ".zshrc"
+mode = "link"
+`)
+	writeFile(t, filepath.Join(publicRepo, ".zshrc"), "source\n")
+	writeFile(t, filepath.Join(homeDir, ".zshrc"), "local\n")
+
+	oldRenamePath := renamePath
+	renamePath = func(oldpath string, newpath string) error {
+		return &os.LinkError{Op: "rename", Old: oldpath, New: newpath, Err: syscall.EXDEV}
+	}
+	t.Cleanup(func() {
+		renamePath = oldRenamePath
+	})
+
+	result, err := Apply(Options{
+		HomeDir:       homeDir,
+		PublicRepoDir: publicRepo,
+		PublicOnly:    true,
+		Now:           time.Date(2026, 5, 17, 1, 2, 3, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatalf("Apply returned error: %v diagnostics=%#v", err, result.Diagnostics)
+	}
+	assertSymlink(t, filepath.Join(homeDir, ".zshrc"), filepath.Join(publicRepo, ".zshrc"))
+	backupPath := filepath.Join(publicRepo, ".install-backups", "20260517-010203", ".zshrc")
+	content, err := os.ReadFile(backupPath)
+	if err != nil {
+		t.Fatalf("expected backup: %v", err)
+	}
+	if string(content) != "local\n" {
+		t.Fatalf("unexpected backup content: %q", content)
 	}
 }
 
