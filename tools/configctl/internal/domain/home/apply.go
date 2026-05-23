@@ -135,7 +135,7 @@ func applyLink(topology Topology, entry ResolvedEntry, state EntryState, opts Op
 	if backup {
 		operation = "backup_then_link"
 		applied.Operation = operation
-		backupPath, err := backupTarget(topology, entry, state, now, opts.DryRun)
+		backupPath, err := backupTarget(topology, entry, state, state.TargetPath, now, opts.DryRun)
 		if err != nil {
 			return applied, err
 		}
@@ -166,7 +166,8 @@ func applyMerge(topology Topology, entry ResolvedEntry, state EntryState, opts O
 	if entry.Strategy != codexTopLevelKeysStrategy {
 		return applied, fmt.Errorf("%s uses unsupported merge strategy %q", state.TargetPath, entry.Strategy)
 	}
-	toPrepend, err := missingTopLevelAssignments(state.SourcePath, state.TargetPath)
+	mergeTargetPath := mergeTarget(state)
+	toPrepend, err := missingTopLevelAssignments(state.SourcePath, mergeTargetPath)
 	if err != nil {
 		return applied, err
 	}
@@ -175,7 +176,7 @@ func applyMerge(topology Topology, entry ResolvedEntry, state EntryState, opts O
 		return applied, nil
 	}
 	applied.Changed = true
-	backupPath, err := backupTarget(topology, entry, state, now, opts.DryRun)
+	backupPath, err := backupTarget(topology, entry, state, mergeTargetPath, now, opts.DryRun)
 	if err != nil {
 		return applied, err
 	}
@@ -192,18 +193,22 @@ func applyMerge(topology Topology, entry ResolvedEntry, state EntryState, opts O
 	if err != nil {
 		return applied, err
 	}
-	if err := os.MkdirAll(filepath.Dir(state.TargetPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(mergeTargetPath), 0o755); err != nil {
 		return applied, err
 	}
-	return applied, os.WriteFile(state.TargetPath, []byte(content), info.Mode().Perm())
+	return applied, os.WriteFile(mergeTargetPath, []byte(content), info.Mode().Perm())
 }
 
-func backupTarget(topology Topology, entry ResolvedEntry, state EntryState, now time.Time, dryRun bool) (string, error) {
-	root := backupOwnerRoot(topology, entry, state)
-	rel, err := filepath.Rel(topology.HomeDir, state.TargetPath)
-	if err != nil || strings.HasPrefix(rel, "..") {
-		rel = filepath.Base(state.TargetPath)
+func mergeTarget(state EntryState) string {
+	if state.ResolvedTarget != "" {
+		return state.ResolvedTarget
 	}
+	return state.TargetPath
+}
+
+func backupTarget(topology Topology, entry ResolvedEntry, state EntryState, sourcePath string, now time.Time, dryRun bool) (string, error) {
+	root := backupOwnerRoot(topology, entry, state)
+	rel := entry.Path
 	backupPath := filepath.Join(root, ".install-backups", now.Format("20060102-150405"), rel)
 	if dryRun {
 		return backupPath, nil
@@ -211,7 +216,8 @@ func backupTarget(topology Topology, entry ResolvedEntry, state EntryState, now 
 	if err := os.MkdirAll(filepath.Dir(backupPath), 0o755); err != nil {
 		return backupPath, err
 	}
-	return backupPath, movePath(state.TargetPath, backupPath)
+	backupPath = availableBackupPath(backupPath)
+	return backupPath, movePath(sourcePath, backupPath)
 }
 
 func backupOwnerRoot(topology Topology, entry ResolvedEntry, state EntryState) string {
@@ -242,6 +248,18 @@ func backupInstallRoot(path string) string {
 		return filepath.Clean(root)
 	}
 	return ""
+}
+
+func availableBackupPath(path string) string {
+	if _, err := os.Lstat(path); errors.Is(err, os.ErrNotExist) {
+		return path
+	}
+	for i := 1; ; i++ {
+		candidate := fmt.Sprintf("%s.%d", path, i)
+		if _, err := os.Lstat(candidate); errors.Is(err, os.ErrNotExist) {
+			return candidate
+		}
+	}
 }
 
 func pathWithinDir(path string, dir string) bool {

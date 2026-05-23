@@ -287,6 +287,61 @@ strategy = "codex-top-level-keys"
 	}
 }
 
+func TestApplyLinkThenMergeSamePathConvergesWithDistinctBackups(t *testing.T) {
+	root := t.TempDir()
+	homeDir := filepath.Join(root, "home")
+	publicRepo := filepath.Join(root, "public-dotfiles")
+	privateRepo := filepath.Join(root, "private-config")
+	writeFile(t, filepath.Join(publicRepo, "configctl", "home.toml"), `[[entries]]
+owner = "public"
+path = ".codex/config.toml"
+mode = "merge"
+strategy = "codex-top-level-keys"
+`)
+	writeFile(t, filepath.Join(privateRepo, "configctl", "home.toml"), `[[entries]]
+owner = "private"
+path = ".codex/config.toml"
+mode = "link"
+`)
+	writeFile(t, filepath.Join(publicRepo, ".codex", "config.toml"), "model = \"gpt\"\n")
+	writeFile(t, filepath.Join(privateRepo, ".codex", "config.toml"), "\n[projects]\n")
+	writeFile(t, filepath.Join(homeDir, ".codex", "config.toml"), "local\n")
+
+	result, err := Apply(Options{
+		HomeDir:        homeDir,
+		PublicRepoDir:  publicRepo,
+		PrivateRepoDir: privateRepo,
+		Now:            time.Date(2026, 5, 17, 1, 2, 3, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatalf("Apply returned error: %v diagnostics=%#v", err, result.Diagnostics)
+	}
+	assertSymlink(t, filepath.Join(homeDir, ".codex", "config.toml"), filepath.Join(privateRepo, ".codex", "config.toml"))
+	content, err := os.ReadFile(filepath.Join(privateRepo, ".codex", "config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(string(content), "model = \"gpt\"\n\n[projects]\n") {
+		t.Fatalf("unexpected merged content: %q", content)
+	}
+	firstBackup := filepath.Join(privateRepo, ".install-backups", "20260517-010203", ".codex", "config.toml")
+	firstContent, err := os.ReadFile(firstBackup)
+	if err != nil {
+		t.Fatalf("expected first backup: %v", err)
+	}
+	if string(firstContent) != "local\n" {
+		t.Fatalf("unexpected first backup content: %q", firstContent)
+	}
+	secondBackup := firstBackup + ".1"
+	secondContent, err := os.ReadFile(secondBackup)
+	if err != nil {
+		t.Fatalf("expected second backup: %v", err)
+	}
+	if string(secondContent) != "\n[projects]\n" {
+		t.Fatalf("unexpected second backup content: %q", secondContent)
+	}
+}
+
 func TestPrivateOnlyLoadsPrivateManifestOnly(t *testing.T) {
 	root := t.TempDir()
 	homeDir := filepath.Join(root, "home")
