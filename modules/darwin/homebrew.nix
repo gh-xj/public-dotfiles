@@ -11,6 +11,7 @@ in
 
       brews = [
         "googleworkspace-cli"
+        "hl"
       ];
 
       casks = [
