@@ -60,6 +60,20 @@ return {
     },
   },
 
+  -- Markdown editing ergonomics: `gs{b|i|c|s}` toggles inline bold/italic/
+  -- code/strike, `gl` inserts/edits links, `<M-l><M-{hjkl}>` moves table
+  -- cells, `:MDInsertToc` writes a table of contents. `gh` left alone to
+  -- not shadow LSP hover (markdown LSP attaches via marksman).
+  {
+    "tadmccorkle/markdown.nvim",
+    ft = { "markdown" },
+    opts = {
+      mappings = {
+        go_curr_heading = false,
+      },
+    },
+  },
+
   -- Prose-writing helpers: auto list continuation, task toggle, internal
   -- wiki-style link following. Folds/conceal disabled so treesitter owns them.
   {
