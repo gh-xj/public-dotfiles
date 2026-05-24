@@ -12,6 +12,7 @@ in
       brews = [
         "googleworkspace-cli"
         "hl"
+        "markdownlint-cli2"
         "marksman"
         "pngpaste"
       ];
