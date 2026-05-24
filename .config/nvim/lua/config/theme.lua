@@ -22,23 +22,23 @@ local function apply_theme(opts)
   opts = opts or {}
   local dark = is_dark_mode()
   local background = dark and "dark" or "light"
+  local colorscheme = dark and "tokyonight-night" or "tokyonight-day"
 
-  if not opts.force and vim.g.xj_nvim_background == background and vim.g.colors_name == "one" then
+  if not opts.force and vim.g.xj_nvim_background == background and vim.g.colors_name == colorscheme then
     return
   end
 
   vim.o.background = background
-  vim.g.one_allow_italics = 1
 
-  local ok = pcall(vim.cmd.colorscheme, "one")
+  local ok = pcall(vim.cmd.colorscheme, colorscheme)
   if ok then
     vim.g.xj_nvim_background = background
     if not opts.silent then
-      vim.notify("[nvim] applied Atom One (" .. background .. ")")
+      vim.notify("[nvim] applied Tokyo Night (" .. background .. ")")
     end
   else
     if not opts.silent then
-      vim.notify("[nvim] Atom One not installed yet; run :Lazy install", vim.log.levels.WARN)
+      vim.notify("[nvim] Tokyo Night not installed yet; run :Lazy install", vim.log.levels.WARN)
     end
     pcall(vim.cmd.colorscheme, "default")
   end

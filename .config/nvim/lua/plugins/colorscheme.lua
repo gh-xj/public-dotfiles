@@ -1,6 +1,6 @@
 return {
   {
-    "rakr/vim-one",
+    "folke/tokyonight.nvim",
     lazy = false,
     priority = 1000,
   },
