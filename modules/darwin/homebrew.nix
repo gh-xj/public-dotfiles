@@ -12,6 +12,8 @@ in
       brews = [
         "googleworkspace-cli"
         "hl"
+        "marksman"
+        "pngpaste"
       ];
 
       casks = [
