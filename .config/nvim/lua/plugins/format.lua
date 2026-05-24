@@ -8,6 +8,11 @@ return {
         json = { "jq" },
         markdown = { "prettier" },
       },
+      formatters = {
+        prettier = {
+          prepend_args = { "--prose-wrap", "always", "--print-width", "80" },
+        },
+      },
     },
   },
 }
