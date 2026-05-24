@@ -104,17 +104,33 @@ return {
     end,
   },
 
-  -- Per-level visual differentiation for H1–H6: extmark backgrounds + a thin
-  -- separator under each heading line. Colors follow the active colorscheme,
-  -- so the auto dark/light switch in config/theme.lua keeps working. Set
-  -- fat_headlines = true if you want the chunkier "block" look.
+  -- Per-level visual differentiation for H1–H6: extmark backgrounds for
+  -- each level, plus block-style upper/lower bars. Highlight groups
+  -- Headline1..6, CodeBlock, Dash, Quote are defined by the tokyonight
+  -- colorscheme. Block follows the README's canonical markdown setup.
   {
     "lukas-reineke/headlines.nvim",
     ft = { "markdown" },
     dependencies = { "nvim-treesitter/nvim-treesitter" },
     opts = {
       markdown = {
-        fat_headlines = false,
+        headline_highlights = {
+          "Headline1",
+          "Headline2",
+          "Headline3",
+          "Headline4",
+          "Headline5",
+          "Headline6",
+        },
+        bullets = { "◉", "○", "✸", "✿" },
+        codeblock_highlight = "CodeBlock",
+        dash_highlight = "Dash",
+        dash_string = "-",
+        quote_highlight = "Quote",
+        quote_string = "┃",
+        fat_headlines = true,
+        fat_headline_upper_string = "▄",
+        fat_headline_lower_string = "▀",
       },
     },
   },
