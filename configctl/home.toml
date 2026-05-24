@@ -107,9 +107,3 @@ mode = "link"
 owner = "public"
 path = "Library/Application Support/lazygit"
 mode = "link"
-
-[[entries]]
-owner = "public"
-path = ".codex/config.toml"
-mode = "merge"
-strategy = "codex-top-level-keys"
