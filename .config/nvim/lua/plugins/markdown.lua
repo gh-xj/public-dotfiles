@@ -104,6 +104,21 @@ return {
     end,
   },
 
+  -- Per-level visual differentiation for H1–H6: extmark backgrounds + a thin
+  -- separator under each heading line. Colors follow the active colorscheme,
+  -- so the auto dark/light switch in config/theme.lua keeps working. Set
+  -- fat_headlines = true if you want the chunkier "block" look.
+  {
+    "lukas-reineke/headlines.nvim",
+    ft = { "markdown" },
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    opts = {
+      markdown = {
+        fat_headlines = false,
+      },
+    },
+  },
+
   -- Prose-writing helpers: auto list continuation, task toggle, internal
   -- wiki-style link following. Folds/conceal disabled so treesitter owns them.
   {
