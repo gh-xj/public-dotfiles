@@ -34,6 +34,32 @@ return {
     end,
   },
 
+  -- Clipboard image paste: <leader>ip in a markdown buffer saves the macOS
+  -- clipboard PNG to ./assets/ and inserts ![](relative/path). Requires
+  -- `pngpaste` on macOS.
+  {
+    "HakonHarnes/img-clip.nvim",
+    ft = { "markdown" },
+    opts = {
+      default = {
+        dir_path = "assets",
+        relative_to_current_file = true,
+        use_absolute_path = false,
+        prompt_for_file_name = false,
+        file_name = "%Y%m%d-%H%M%S",
+      },
+    },
+    keys = {
+      {
+        "<leader>ip",
+        function() require("img-clip").paste_image() end,
+        mode = "n",
+        ft = "markdown",
+        desc = "Paste clipboard image as markdown link",
+      },
+    },
+  },
+
   -- Prose-writing helpers: auto list continuation, task toggle, internal
   -- wiki-style link following. Folds/conceal disabled so treesitter owns them.
   {
