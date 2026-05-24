@@ -75,6 +75,7 @@ function M.open()
     source = "palette",
     title = "Palette (commands + keymaps)",
     items = build_items(),
+    preview = "none",
     format = function(item) return { { item.text, "Normal" } } end,
     confirm = function(picker, item)
       picker:close()
