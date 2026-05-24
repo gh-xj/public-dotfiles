@@ -755,6 +755,10 @@
                                         "name": "spacefn_mode",
                                         "type": "variable_if",
                                         "value": 1
+                                    },
+                                    {
+                                        "bundle_identifiers": ["^com\\.mitchellh\\.ghostty$"],
+                                        "type": "frontmost_application_if"
                                     }
                                 ],
                                 "from": {
@@ -762,10 +766,8 @@
                                     "modifiers": { "optional": ["any"] }
                                 },
                                 "to": [
-                                    {
-                                        "key_code": "tab",
-                                        "modifiers": ["command"]
-                                    }
+                                    { "key_code": "s", "modifiers": ["control"] },
+                                    { "key_code": "open_bracket" }
                                 ],
                                 "type": "basic"
                             },
