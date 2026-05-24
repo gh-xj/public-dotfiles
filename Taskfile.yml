@@ -28,6 +28,7 @@ tasks:
       - task: verify:nvim
       - task: verify:terminal
       - task: secrets:staged
+      - task: secrets:full
 
   security:approved-gh-account:
     desc: Reject unapproved GitHub CLI auth
@@ -86,6 +87,11 @@ tasks:
     desc: Scan staged public-dotfiles changes for secrets
     cmds:
       - gitleaks protect --staged --source . --redact --no-banner
+
+  secrets:full:
+    desc: Scan the entire working tree (including history) for secrets
+    cmds:
+      - gitleaks detect --source . --redact --no-banner
 
   doctor:
     desc: Run full configctl verification
