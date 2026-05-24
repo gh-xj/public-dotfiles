@@ -74,6 +74,36 @@ return {
     },
   },
 
+  -- LSP / completion / diagnostics inside fenced code blocks. otter parses
+  -- the markdown buffer with treesitter and attaches the matching language
+  -- server to each ```lang block (lua_ls in ```lua, pyright in ```python,
+  -- etc.). Lazy on markdown FileType and skipped for large markdown buffers
+  -- to keep open-time cheap.
+  {
+    "jmbuhr/otter.nvim",
+    ft = { "markdown" },
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    opts = {},
+    config = function(_, opts)
+      require("otter").setup(opts)
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("xj_otter_activate", { clear = true }),
+        pattern = "markdown",
+        callback = function(ev)
+          if require("config.large_file").is_large_markdown(ev.buf) then
+            return
+          end
+          require("otter").activate()
+        end,
+      })
+      if vim.bo.filetype == "markdown"
+        and not require("config.large_file").is_large_markdown(0)
+      then
+        require("otter").activate()
+      end
+    end,
+  },
+
   -- Prose-writing helpers: auto list continuation, task toggle, internal
   -- wiki-style link following. Folds/conceal disabled so treesitter owns them.
   {
