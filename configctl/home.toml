@@ -10,11 +10,6 @@ mode = "link"
 
 [[entries]]
 owner = "public"
-path = ".config/lazydocker"
-mode = "link"
-
-[[entries]]
-owner = "public"
 path = ".config/nvim"
 mode = "link"
 
