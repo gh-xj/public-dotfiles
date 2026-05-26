@@ -100,6 +100,14 @@ return {
     opts = {
       render_modes = true,
       anti_conceal = { enabled = false },
+      -- render-markdown defaults concealcursor to 'nvic' (conceal the
+      -- cursor line in every mode, insert included), which hides the
+      -- '**' / '*' / '`' markers when you're trying to edit them. Pin
+      -- it to the user's `concealcursor="nc"` from autocmds.lua so
+      -- insert/visual reveal raw syntax on the cursor line.
+      win_options = {
+        concealcursor = { rendered = "nc" },
+      },
       heading = {
         sign = false,
         icons = { "◉ ", "○ ", "✸ ", "✿ ", "✦ ", "✧ " },
