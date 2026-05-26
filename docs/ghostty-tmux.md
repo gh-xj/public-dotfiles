@@ -5,10 +5,10 @@ This setup treats tmux as the primary terminal workspace layer and Ghostty as a 
 ## Source of truth
 
 - tmux config: `~/public-dotfiles/.tmux.conf`
-- Ghostty config directory: `~/public-dotfiles/.config/ghostty`
-- Live Ghostty path: `~/.config/ghostty` -> `~/public-dotfiles/.config/ghostty`
+- Ghostty config source: `~/public-dotfiles/modules/home/terminal.nix`
+- Live Ghostty config: Home Manager renders `~/.config/ghostty/config`
 
-Do not create a second standalone Ghostty config file outside the tracked directory.
+Do not create a second standalone Ghostty config file outside Home Manager.
 
 ## Coupling rules
 
@@ -62,7 +62,7 @@ Examples:
 If tmux prefix changes, update both:
 
 1. `set -g prefix ...` and `bind ... send-prefix` in `~/public-dotfiles/.tmux.conf`
-2. Every Ghostty prefix-backed `text:\x..` mapping in `~/public-dotfiles/.config/ghostty/config`
+2. Every Ghostty prefix-backed `text:\x..` mapping in `~/public-dotfiles/modules/home/terminal.nix`
 
 After changing tmux prefix:
 

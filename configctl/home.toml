@@ -5,11 +5,6 @@ mode = "link"
 
 [[entries]]
 owner = "public"
-path = ".config/ghostty"
-mode = "link"
-
-[[entries]]
-owner = "public"
 path = ".config/karabiner"
 mode = "link"
 

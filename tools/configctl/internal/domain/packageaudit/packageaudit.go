@@ -108,7 +108,7 @@ var configSupport = []ConfigSupport{
 	{Path: ".codex/config.toml", Manager: "npm", Kind: "global", Name: "@openai/codex"},
 	{Path: ".config/amethyst/amethyst.yml", Manager: "brew", Kind: "cask", Name: "amethyst"},
 	{Path: ".config/bat/config", Manager: "brew", Kind: "formula", Name: "bat"},
-	{Path: ".config/ghostty/config", Manager: "brew", Kind: "cask", Name: "ghostty"},
+	{Path: "modules/home/terminal.nix", Manager: "brew", Kind: "cask", Name: "ghostty"},
 	{Path: ".config/karabiner/karabiner.json", Manager: "brew", Kind: "cask", Name: "karabiner-elements"},
 	{Path: ".config/lazydocker/config.yml", Manager: "brew", Kind: "formula", Name: "lazydocker"},
 	{Path: ".config/lazygit/config.yml", Manager: "brew", Kind: "formula", Name: "lazygit"},
