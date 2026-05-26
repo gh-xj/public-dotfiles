@@ -123,37 +123,6 @@ return {
     },
   },
 
-  -- Per-level visual differentiation for H1–H6: extmark backgrounds for
-  -- each level, plus block-style upper/lower bars. Highlight groups
-  -- Headline1..6, CodeBlock, Dash, Quote are defined by the tokyonight
-  -- colorscheme. Block follows the README's canonical markdown setup.
-  {
-    "lukas-reineke/headlines.nvim",
-    ft = { "markdown" },
-    dependencies = { "nvim-treesitter/nvim-treesitter" },
-    opts = {
-      markdown = {
-        headline_highlights = {
-          "Headline1",
-          "Headline2",
-          "Headline3",
-          "Headline4",
-          "Headline5",
-          "Headline6",
-        },
-        bullets = { "◉", "○", "✸", "✿" },
-        codeblock_highlight = "CodeBlock",
-        dash_highlight = "Dash",
-        dash_string = "-",
-        quote_highlight = "Quote",
-        quote_string = "┃",
-        fat_headlines = true,
-        fat_headline_upper_string = "▄",
-        fat_headline_lower_string = "▀",
-      },
-    },
-  },
-
   -- List continuation only. Press <CR> on `- item` or `1. item` and the
   -- next line is opened with the right prefix; outdent on empty bullet
   -- ends the list. Replaces mkdnflow which carried this feature alongside
