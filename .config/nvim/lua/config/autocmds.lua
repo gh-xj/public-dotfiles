@@ -63,7 +63,7 @@ autocmd("FileType", {
 -- Filetype-specific format-on-save (Zed-aligned, not global).
 autocmd("BufWritePre", {
   group = augroup("xj_format_on_save", { clear = true }),
-  pattern = { "*.go", "*.json", "*.md", "*.markdown" },
+  pattern = { "*.go", "*.json" },
   callback = function()
     require("lazy").load({ plugins = { "conform.nvim" } })
     require("conform").format({ lsp_fallback = true, async = false })
