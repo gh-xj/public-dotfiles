@@ -142,6 +142,39 @@ mode = "link"
 	}
 }
 
+func TestLoadFailsOnDuplicatePathAcrossManifests(t *testing.T) {
+	root := t.TempDir()
+	homeDir := filepath.Join(root, "home")
+	publicRepo := filepath.Join(root, "public-dotfiles")
+	privateRepo := filepath.Join(root, "private-config")
+	writeFile(t, filepath.Join(publicRepo, "configctl", "home.toml"), `[[entries]]
+owner = "public"
+path = ".zshrc"
+mode = "link"
+`)
+	writeFile(t, filepath.Join(privateRepo, "configctl", "home.toml"), `[[entries]]
+owner = "private"
+path = ".zshrc"
+mode = "link"
+`)
+	writeFile(t, filepath.Join(publicRepo, ".zshrc"), "public\n")
+	writeFile(t, filepath.Join(privateRepo, ".zshrc"), "private\n")
+
+	topology, err := Load(Options{HomeDir: homeDir, PublicRepoDir: publicRepo, PrivateRepoDir: privateRepo})
+	if err == nil {
+		t.Fatal("expected duplicate topology ownership to fail")
+	}
+	var found bool
+	for _, diagnostic := range topology.Diagnostics {
+		if diagnostic.Code == "home.topology.duplicate_path" && diagnostic.Path == ".zshrc" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected duplicate path diagnostic, got %#v", topology.Diagnostics)
+	}
+}
+
 func TestApplyLinksMissingPathAndBacksUpWrongLink(t *testing.T) {
 	root := t.TempDir()
 	homeDir := filepath.Join(root, "home")

@@ -127,7 +127,67 @@ func Load(opts Options) (Topology, error) {
 		}
 		return topology.Entries[i].Path < topology.Entries[j].Path
 	})
+	ownershipDiagnostics := validateTopologyOwnership(topology.Entries)
+	topology.Diagnostics = append(topology.Diagnostics, ownershipDiagnostics...)
+	if diagnosticsHaveErrors(ownershipDiagnostics) {
+		return topology, fmt.Errorf("home topology validation failed")
+	}
 	return topology, nil
+}
+
+func validateTopologyOwnership(entries []ResolvedEntry) []report.Diagnostic {
+	byPath := map[string][]ResolvedEntry{}
+	for _, entry := range entries {
+		byPath[entry.Path] = append(byPath[entry.Path], entry)
+	}
+	var diagnostics []report.Diagnostic
+	for path, pathEntries := range byPath {
+		if len(pathEntries) < 2 || duplicatePathAllowed(pathEntries) {
+			continue
+		}
+		diagnostics = append(diagnostics, report.Diagnostic{
+			Severity: "error",
+			Code:     "home.topology.duplicate_path",
+			Message:  fmt.Sprintf("multiple home owners for %s: %s", path, describeDuplicateOwners(pathEntries)),
+			Path:     path,
+		})
+	}
+	sort.Slice(diagnostics, func(i, j int) bool {
+		return diagnostics[i].Path < diagnostics[j].Path
+	})
+	return diagnostics
+}
+
+func duplicatePathAllowed(entries []ResolvedEntry) bool {
+	if len(entries) != 2 {
+		return false
+	}
+	hasExplicitMerge := false
+	hasBase := false
+	for _, entry := range entries {
+		switch entry.Mode {
+		case ModeMerge:
+			if entry.Strategy != "" {
+				hasExplicitMerge = true
+			}
+		case ModeLink, ModeCopy:
+			hasBase = true
+		}
+	}
+	return hasExplicitMerge && hasBase
+}
+
+func describeDuplicateOwners(entries []ResolvedEntry) string {
+	descriptions := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		mode := string(entry.Mode)
+		if entry.Strategy != "" {
+			mode += "/" + entry.Strategy
+		}
+		descriptions = append(descriptions, entry.Owner+" "+mode)
+	}
+	sort.Strings(descriptions)
+	return strings.Join(descriptions, ", ")
 }
 
 func Status(opts Options) (StatusResult, error) {
