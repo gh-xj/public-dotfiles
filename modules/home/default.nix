@@ -6,6 +6,7 @@ in
 {
   imports = [
     ./agents
+    ./config-files.nix
     ./packages.nix
     ./terminal.nix
   ];
