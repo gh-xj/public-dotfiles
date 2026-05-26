@@ -81,6 +81,48 @@ return {
     end,
   },
 
+  -- In-buffer rendered markdown view, reading-first. `render_modes = true`
+  -- keeps the rendered view in ALL modes so entering insert does not
+  -- swap the whole buffer back to raw markdown. `anti_conceal.enabled =
+  -- false` keeps the cursor line rendered so moving over a heading,
+  -- table, or link does not flip that line to raw either. Combined,
+  -- the view is static like treesitter conceal — never swaps. Heading
+  -- backgrounds and CodeBlock / Dash highlight groups are defined in
+  -- config/theme.lua's apply_markdown_styles. Web-devicons supplies
+  -- the language icon for fenced code blocks.
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    ft = { "markdown" },
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+      "nvim-tree/nvim-web-devicons",
+    },
+    opts = {
+      render_modes = true,
+      anti_conceal = { enabled = false },
+      heading = {
+        sign = false,
+        icons = { "◉ ", "○ ", "✸ ", "✿ ", "✦ ", "✧ " },
+        backgrounds = {
+          "Headline1", "Headline2", "Headline3",
+          "Headline4", "Headline5", "Headline6",
+        },
+      },
+      code = {
+        sign = false,
+        style = "normal",
+        border = "thick",
+        highlight = "CodeBlock",
+      },
+      pipe_table = {
+        preset = "round",
+      },
+      dash = {
+        highlight = "Dash",
+      },
+    },
+  },
+
   -- Per-level visual differentiation for H1–H6: extmark backgrounds for
   -- each level, plus block-style upper/lower bars. Highlight groups
   -- Headline1..6, CodeBlock, Dash, Quote are defined by the tokyonight
