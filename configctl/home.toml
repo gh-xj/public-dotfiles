@@ -25,11 +25,6 @@ mode = "link"
 
 [[entries]]
 owner = "public"
-path = ".codex/rules"
-mode = "link"
-
-[[entries]]
-owner = "public"
 path = ".zlogin"
 mode = "link"
 
