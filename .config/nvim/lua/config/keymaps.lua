@@ -2,29 +2,29 @@ local map = vim.keymap.set
 
 -- ===== Navigation =====
 -- Better line movement (works with wrapped lines)
-map({ "n", "v", "x" }, "j", "gj")
-map({ "n", "v", "x" }, "k", "gk")
+map({ "n", "v", "x" }, "j", "gj", { desc = "Down by display line" })
+map({ "n", "v", "x" }, "k", "gk", { desc = "Up by display line" })
 
 -- Faster vertical movement
-map({ "n", "v", "x" }, "J", "5gj")
-map({ "n", "v", "x" }, "K", "5gk")
+map({ "n", "v", "x" }, "J", "5gj", { desc = "Down 5 display lines" })
+map({ "n", "v", "x" }, "K", "5gk", { desc = "Up 5 display lines" })
 
 -- Scrolling / centering helpers
-map("n", "t", "zt")
-map("n", "<leader><leader>", "zz")
-map({ "n", "v", "x" }, "<C-d>", "<C-d>zz")
-map({ "n", "v", "x" }, "<C-u>", "<C-u>zz")
+map("n", "t", "zt", { desc = "Scroll cursor line to top" })
+map("n", "<leader><leader>", "zz", { desc = "Center cursor line" })
+map({ "n", "v", "x" }, "<C-d>", "<C-d>zz", { desc = "Half-page down (centered)" })
+map({ "n", "v", "x" }, "<C-u>", "<C-u>zz", { desc = "Half-page up (centered)" })
 
 -- Arrow keys for scrolling + tab switching
-map({ "n", "v" }, "<Up>", "<C-y>")
-map({ "n", "v" }, "<Down>", "<C-e>")
+map({ "n", "v" }, "<Up>", "<C-y>", { desc = "Scroll viewport up one line" })
+map({ "n", "v" }, "<Down>", "<C-e>", { desc = "Scroll viewport down one line" })
 map("n", "<Left>", ":BufferLineCyclePrev<CR>", { silent = true, desc = "Previous buffer" })
 map("n", "<Right>", ":BufferLineCycleNext<CR>", { silent = true, desc = "Next buffer" })
 
 -- ===== Editing =====
-map("n", "<leader>d", '"_dd')
-map("n", "<leader>p", '"_dP')
-map("n", "<leader>l", ":nohl<CR>", { silent = true })
+map("n", "<leader>d", '"_dd', { desc = "Delete line (no yank)" })
+map("n", "<leader>p", '"_dP', { desc = "Paste over selection (keep clipboard)" })
+map("n", "<leader>l", ":nohl<CR>", { silent = true, desc = "Clear search highlight" })
 
 -- Open URL under cursor in browser. Overrides the built-in gx so we can skip
 -- weird leading characters (fullwidth punctuation, brackets) that <cfile>
@@ -76,19 +76,20 @@ local function go_to_buffer_or_new(n)
 end
 
 for i = 1, 9 do
-  map("n", "<F" .. i .. ">", function() go_to_buffer_or_new(i) end, { silent = true })
+  map("n", "<F" .. i .. ">", function() go_to_buffer_or_new(i) end,
+    { silent = true, desc = "Go to buffer " .. i .. " (or new)" })
 end
-map("n", "<F10>", ":b#<CR>", { silent = true })
+map("n", "<F10>", ":b#<CR>", { silent = true, desc = "Switch to alternate buffer" })
 
-map("n", "]b", ":bnext<CR>", { silent = true })
-map("n", "[b", ":bprevious<CR>", { silent = true })
-map("n", "]w", ":wincmd w<CR>", { silent = true })
-map("n", "[w", ":wincmd W<CR>", { silent = true })
+map("n", "]b", ":bnext<CR>", { silent = true, desc = "Next buffer" })
+map("n", "[b", ":bprevious<CR>", { silent = true, desc = "Previous buffer" })
+map("n", "]w", ":wincmd w<CR>", { silent = true, desc = "Next window" })
+map("n", "[w", ":wincmd W<CR>", { silent = true, desc = "Previous window" })
 
 -- Fast accept for external-editor workflows (Codex Ctrl+G, etc.)
-map("n", "<C-q>", ":wq<CR>", { silent = true })
-map("i", "<C-q>", "<Esc>:wq<CR>", { silent = true })
-map("v", "<C-q>", "<Esc>:wq<CR>", { silent = true })
+map("n", "<C-q>", ":wq<CR>", { silent = true, desc = "Save and quit" })
+map("i", "<C-q>", "<Esc>:wq<CR>", { silent = true, desc = "Save and quit" })
+map("v", "<C-q>", "<Esc>:wq<CR>", { silent = true, desc = "Save and quit" })
 
 -- ===== Picker (Snacks) =====
 map("n", "<C-p>",      function() Snacks.picker.files() end,                  { silent = true, desc = "Find files" })
@@ -121,27 +122,30 @@ map("n", "<leader>?",  function() Snacks.picker.keymaps() end,  { silent = true,
 vim.api.nvim_create_user_command("Format", function()
   require("lazy").load({ plugins = { "conform.nvim" } })
   require("conform").format({ lsp_fallback = true, async = false })
-end, {})
+end, { desc = "Format current buffer via conform.nvim (LSP fallback)" })
 
 map("n", "<leader>gg", function() Snacks.lazygit() end, { silent = true, desc = "Lazygit" })
 map("n", "<C-e>", "<cmd>Yazi<cr>", { silent = true, desc = "Open yazi" })
 map("n", "<leader>e", "<cmd>Yazi<cr>", { silent = true, desc = "Open yazi" })
-map("n", "<leader>yp", ":let @+=expand('%:p')<CR>:echo 'Copied: ' . expand('%:p')<CR>", { silent = true })
-map("n", "<leader>=", ":Format<CR>", { silent = true })
-map("n", "<leader>sv", ":source ~/.config/nvim/init.lua<CR>", { silent = true })
+map("n", "<leader>yp", ":let @+=expand('%:p')<CR>:echo 'Copied: ' . expand('%:p')<CR>",
+  { silent = true, desc = "Yank absolute file path" })
+map("n", "<leader>=", ":Format<CR>", { silent = true, desc = "Format buffer" })
+map("n", "<leader>sv", ":source ~/.config/nvim/init.lua<CR>",
+  { silent = true, desc = "Re-source init.lua" })
 map("n", "<leader>x", function() Snacks.bufdelete() end, { silent = true, desc = "Close buffer" })
 
 -- ===== Window management =====
-map("n", "<leader>w", "<C-w>")
-map("n", "<leader>vs", "<cmd>vsplit<cr>", { silent = true })
-map("n", "<leader>hs", "<cmd>split<cr>", { silent = true })
-map("n", "<leader>sr", "<cmd>vsplit<cr>", { silent = true })
-map("n", "<leader>sb", "<cmd>split<cr>", { silent = true })
-map("n", "<leader>tt", "<cmd>botright split<bar>terminal<cr>", { silent = true })
+map("n", "<leader>w", "<C-w>", { desc = "Window prefix (<C-w>)" })
+map("n", "<leader>vs", "<cmd>vsplit<cr>", { silent = true, desc = "Vertical split" })
+map("n", "<leader>hs", "<cmd>split<cr>", { silent = true, desc = "Horizontal split" })
+map("n", "<leader>sr", "<cmd>vsplit<cr>", { silent = true, desc = "Vertical split" })
+map("n", "<leader>sb", "<cmd>split<cr>", { silent = true, desc = "Horizontal split" })
+map("n", "<leader>tt", "<cmd>botright split<bar>terminal<cr>",
+  { silent = true, desc = "Open terminal in bottom split" })
 
 -- ===== Buffer navigation =====
-map("n", "<leader>bn", "<cmd>bnext<cr>", { silent = true })
-map("n", "<leader>bp", "<cmd>bprevious<cr>", { silent = true })
+map("n", "<leader>bn", "<cmd>bnext<cr>", { silent = true, desc = "Next buffer" })
+map("n", "<leader>bp", "<cmd>bprevious<cr>", { silent = true, desc = "Previous buffer" })
 map("n", "<leader>bd", function() Snacks.bufdelete() end, { silent = true, desc = "Close buffer" })
-map("n", "<M-l>", "<cmd>bnext<cr>", { silent = true })
-map("n", "<M-h>", "<cmd>bprevious<cr>", { silent = true })
+map("n", "<M-l>", "<cmd>bnext<cr>", { silent = true, desc = "Next buffer" })
+map("n", "<M-h>", "<cmd>bprevious<cr>", { silent = true, desc = "Previous buffer" })
