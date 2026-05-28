@@ -4,6 +4,12 @@ if [[ -n "${GHOSTTY_RESOURCES_DIR:-}" && -r "${GHOSTTY_RESOURCES_DIR}/shell-inte
     source "${GHOSTTY_RESOURCES_DIR}/shell-integration/zsh/ghostty-integration"
 fi
 
+# agents-cli: version switching for AI coding agents. Keep available in both
+# full and minimal interactive shells.
+if [[ ":$PATH:" != *":$HOME/.agents/shims:"* ]]; then
+    export PATH="$HOME/.agents/shims:$PATH"
+fi
+
 # Aliases and basic shell behavior
 # (EDITOR/VISUAL are set in .zprofile so they propagate to non-interactive shells)
 setup_aliases() {
@@ -28,6 +34,11 @@ setup_aliases() {
         fi
     }
 }
+
+if [[ "${ZSH_MINIMAL:-0}" == 1 ]]; then
+    setup_aliases
+    return 0
+fi
 
 # FZF preview command (shared by FZF_DEFAULT_OPTS and yazi wrapper)
 _FZF_PREVIEW='bash -c '\''if [[ -d {} ]]; then eza --all --color=always --icons=always --group-directories-first --no-quotes --tree --level=2 --long {}; elif [[ -f {} ]]; then eza --all --color=always --icons=always --no-quotes -l {} && echo && bat --style=numbers --color=always {} 2>/dev/null || cat {}; else echo File not found: {}; fi'\'''
@@ -275,7 +286,3 @@ if (( $+commands[zoxide] )); then
     [[ -r "$_zoxide_cache" ]] && source "$_zoxide_cache" 2>/dev/null
 fi
 unset _zoxide_cache _zoxide_bin
-
-
-# agents-cli: version switching for AI coding agents
-export PATH="$HOME/.agents/shims:$PATH"
