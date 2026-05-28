@@ -83,8 +83,7 @@ setup_plugins() {
         atinit"ZVM_INIT_MODE=sourcing" jeffreytse/zsh-vi-mode \
         Aloxaf/fzf-tab \
         atload"_zsh_autosuggest_start" zsh-users/zsh-autosuggestions \
-        hlissner/zsh-autopair \
-        MichaelAquilina/zsh-you-should-use
+        hlissner/zsh-autopair
 
     # Load atuin before syntax highlighting to avoid widget conflicts
     zinit wait'0c' lucid light-mode for \
@@ -92,14 +91,16 @@ setup_plugins() {
 
     # Load syntax highlighting last to avoid conflicts
     zinit wait'0d' lucid light-mode for \
-        atinit"zicompinit; zicdreplay" zdharma-continuum/fast-syntax-highlighting
+        zdharma-continuum/fast-syntax-highlighting
 
     # Load cached Starship prompt silently
-    if [[ ! -f ~/.cache/starship-init.zsh ]] || [[ ~/.config/starship.toml -nt ~/.cache/starship-init.zsh ]] || [[ "$(command -v starship)" -nt ~/.cache/starship-init.zsh ]]; then
+    local starship_cache="$HOME/.cache/starship-init.zsh"
+    local starship_bin="${commands[starship]:-}"
+    if [[ -n "$starship_bin" && ( ! -f "$starship_cache" || "$HOME/.config/starship.toml" -nt "$starship_cache" || "$starship_bin" -nt "$starship_cache" ) ]]; then
         mkdir -p ~/.cache
-        starship init zsh > ~/.cache/starship-init.zsh 2>/dev/null
+        "$starship_bin" init zsh >| "$starship_cache" 2>/dev/null
     fi
-    source ~/.cache/starship-init.zsh 2>/dev/null
+    [[ -r "$starship_cache" ]] && source "$starship_cache" 2>/dev/null
 
     # Reset terminal title to current directory before each prompt.
     _set_terminal_title() {
@@ -200,12 +201,16 @@ setup_utils() {
 # (PATH is fully composed in .zprofile; this file only handles interactive concerns)
 init() {
     # Homebrew completions must be on fpath before compinit
-    if [[ -d "${HOMEBREW_PREFIX:-/opt/homebrew}/share/zsh/site-functions" ]]; then
-        fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" $fpath)
+    local homebrew_prefix="${HOMEBREW_PREFIX:-}"
+    [[ -z "$homebrew_prefix" && -d /opt/homebrew/share/zsh/site-functions ]] && homebrew_prefix="/opt/homebrew"
+    [[ -z "$homebrew_prefix" && -d /usr/local/share/zsh/site-functions ]] && homebrew_prefix="/usr/local"
+    if [[ -n "$homebrew_prefix" && -d "$homebrew_prefix/share/zsh/site-functions" ]]; then
+        fpath=("$homebrew_prefix/share/zsh/site-functions" $fpath)
     fi
 
     autoload -Uz compinit
     local zcompdump_file="${ZDOTDIR:-$HOME}/.zcompdump"
+    local zcompdump_zwc="${zcompdump_file}.zwc"
     local rebuild_compdump=false
 
     if [[ ! -f "$zcompdump_file" ]]; then
@@ -224,7 +229,11 @@ init() {
 
     if [[ "$rebuild_compdump" == true ]]; then
         compinit -d "$zcompdump_file"
+        [[ -f "$zcompdump_file" ]] && zcompile "$zcompdump_file" 2>/dev/null || true
     else
+        if [[ -f "$zcompdump_file" && ( ! -f "$zcompdump_zwc" || "$zcompdump_file" -nt "$zcompdump_zwc" ) ]]; then
+            zcompile "$zcompdump_file" 2>/dev/null || true
+        fi
         compinit -C -d "$zcompdump_file"
     fi
 
@@ -256,7 +265,16 @@ fi
 # Keep interactive mode light; the shared FZF preview is too heavy here.
 export _ZO_DOCTOR=0
 export _ZO_FZF_OPTS='--height 60% --layout reverse --border top --extended --no-sort'
-eval "$(zoxide init zsh --cmd j)"
+if (( $+commands[zoxide] )); then
+    _zoxide_cache="$HOME/.cache/zoxide-init.zsh"
+    _zoxide_bin="$commands[zoxide]"
+    if [[ ! -f "$_zoxide_cache" || "$_zoxide_bin" -nt "$_zoxide_cache" ]]; then
+        mkdir -p "$HOME/.cache"
+        "$_zoxide_bin" init zsh --cmd j >| "$_zoxide_cache" 2>/dev/null
+    fi
+    [[ -r "$_zoxide_cache" ]] && source "$_zoxide_cache" 2>/dev/null
+fi
+unset _zoxide_cache _zoxide_bin
 
 
 # agents-cli: version switching for AI coding agents
