@@ -4,12 +4,6 @@ if [[ -n "${GHOSTTY_RESOURCES_DIR:-}" && -r "${GHOSTTY_RESOURCES_DIR}/shell-inte
     source "${GHOSTTY_RESOURCES_DIR}/shell-integration/zsh/ghostty-integration"
 fi
 
-# agents-cli: version switching for AI coding agents. Keep available in both
-# full and minimal interactive shells.
-if [[ ":$PATH:" != *":$HOME/.agents/shims:"* ]]; then
-    export PATH="$HOME/.agents/shims:$PATH"
-fi
-
 # Aliases and basic shell behavior
 # (EDITOR/VISUAL are set in .zprofile so they propagate to non-interactive shells)
 setup_aliases() {
@@ -35,8 +29,9 @@ setup_aliases() {
     }
 }
 
+setup_aliases
+
 if [[ "${ZSH_MINIMAL:-0}" == 1 ]]; then
-    setup_aliases
     return 0
 fi
 
@@ -60,49 +55,43 @@ setup_fzf() {
     zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 }
 
-# Install and configure Zinit plugin manager
 setup_plugins() {
-    # Auto-install Zinit if not present
-    if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
-        print -P "%F{33}Installing Zinit Plugin Manager...%f"
-        command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
-        command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
-            print -P "%F{34}Installation successful.%f" || print -P "%F{160}Clone failed.%f"
+    local zinit_file="$HOME/.local/share/zinit/zinit.git/zinit.zsh"
+    if [[ -r "$zinit_file" ]]; then
+        source "$zinit_file"
+        autoload -Uz _zinit
+        (( ${+_comps} )) && _comps[zinit]=_zinit
+
+        # Configure autosuggestions
+        typeset -g ZSH_AUTOSUGGEST_USE_ASYNC=true
+
+        # Configure zsh-vi-mode (cursor vars must be set inside zvm_config so they
+        # resolve *after* vi-mode defines $ZVM_CURSOR_* constants)
+        export ZVM_CURSOR_STYLE_ENABLED=true
+        zvm_config() {
+            ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
+            ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
+            ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
+            ZVM_VISUAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
+            ZVM_VISUAL_LINE_MODE_CURSOR=$ZVM_CURSOR_BLOCK
+            ZVM_OPPEND_MODE_CURSOR=$ZVM_CURSOR_BLINKING_UNDERLINE
+        }
+
+        # Load essential plugins
+        zinit wait'0a' lucid light-mode for \
+            atinit"ZVM_INIT_MODE=sourcing" jeffreytse/zsh-vi-mode \
+            Aloxaf/fzf-tab \
+            atload"_zsh_autosuggest_start" zsh-users/zsh-autosuggestions \
+            hlissner/zsh-autopair
+
+        # Load atuin before syntax highlighting to avoid widget conflicts
+        zinit wait'0c' lucid light-mode for \
+            atinit"export ATUIN_NOBIND='true'" atload"bindkey '^r' atuin-search" atuinsh/atuin
+
+        # Load syntax highlighting last to avoid conflicts
+        zinit wait'0d' lucid light-mode for \
+            zdharma-continuum/fast-syntax-highlighting
     fi
-
-    source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-    autoload -Uz _zinit
-    (( ${+_comps} )) && _comps[zinit]=_zinit
-
-    # Configure autosuggestions
-    typeset -g ZSH_AUTOSUGGEST_USE_ASYNC=true
-
-    # Configure zsh-vi-mode (cursor vars must be set inside zvm_config so they
-    # resolve *after* vi-mode defines $ZVM_CURSOR_* constants)
-    export ZVM_CURSOR_STYLE_ENABLED=true
-    zvm_config() {
-        ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
-        ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
-        ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
-        ZVM_VISUAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
-        ZVM_VISUAL_LINE_MODE_CURSOR=$ZVM_CURSOR_BLOCK
-        ZVM_OPPEND_MODE_CURSOR=$ZVM_CURSOR_BLINKING_UNDERLINE
-    }
-
-    # Load essential plugins
-    zinit wait'0a' lucid light-mode for \
-        atinit"ZVM_INIT_MODE=sourcing" jeffreytse/zsh-vi-mode \
-        Aloxaf/fzf-tab \
-        atload"_zsh_autosuggest_start" zsh-users/zsh-autosuggestions \
-        hlissner/zsh-autopair
-
-    # Load atuin before syntax highlighting to avoid widget conflicts
-    zinit wait'0c' lucid light-mode for \
-        atinit"export ATUIN_NOBIND='true'" atload"bindkey '^r' atuin-search" atuinsh/atuin
-
-    # Load syntax highlighting last to avoid conflicts
-    zinit wait'0d' lucid light-mode for \
-        zdharma-continuum/fast-syntax-highlighting
 
     # Load cached Starship prompt silently
     local starship_cache="$HOME/.cache/starship-init.zsh"
@@ -185,8 +174,8 @@ setup_keybindings() {
     zle -N run_lazygit_widget
     bindkey '^g' run_lazygit_widget
 
-    # Fix cursor shape on startup - set to beam cursor for insert mode
-    print -n '\e[5 q'
+    # Fix cursor shape on startup - set to beam cursor for insert mode.
+    [[ -t 1 ]] && print -n '\e[5 q'
 }
 
 # Utility functions and tools
@@ -218,6 +207,7 @@ init() {
     if [[ -n "$homebrew_prefix" && -d "$homebrew_prefix/share/zsh/site-functions" ]]; then
         fpath=("$homebrew_prefix/share/zsh/site-functions" $fpath)
     fi
+    typeset -gU fpath
 
     autoload -Uz compinit
     local zcompdump_file="${ZDOTDIR:-$HOME}/.zcompdump"
@@ -250,19 +240,24 @@ init() {
 
     setup_plugins
 
-    # Defer initialization until after vi-mode loads
-    # setup_keybindings MUST run via zvm_after_init_commands (not earlier)
-    # because zsh-vi-mode overrides keybindings during its initialization
-    zvm_after_init_commands+=(
-        'setup_aliases'
-        'setup_fzf'
-        'setup_keybindings'  # MUST be after vi-mode to prevent override conflicts
-        'setup_utils'
-    )
+    setup_fzf
+    setup_utils
 
-    # Defer bun completion until after compinit finishes (PATH set in .zprofile)
-    zinit wait'0e' lucid light-mode as'null' for \
-        atinit'[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"' zdharma-continuum/null
+    if (( $+functions[zinit] )); then
+        # Defer key bindings until after vi-mode loads because zsh-vi-mode
+        # overrides keymaps during initialization.
+        zvm_after_init_commands+=(
+            'setup_keybindings'
+        )
+    else
+        setup_keybindings
+    fi
+
+    # Defer bun completion until after compinit finishes (PATH set in .zprofile).
+    if (( $+functions[zinit] )); then
+        zinit wait'0e' lucid light-mode as'null' for \
+            atinit'[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"' zdharma-continuum/null
+    fi
 }
 
 init

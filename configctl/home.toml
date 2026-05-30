@@ -15,17 +15,7 @@ mode = "link"
 
 [[entries]]
 owner = "public"
-path = ".zlogin"
-mode = "link"
-
-[[entries]]
-owner = "public"
 path = ".zprofile"
-mode = "link"
-
-[[entries]]
-owner = "public"
-path = ".zsh"
 mode = "link"
 
 [[entries]]
