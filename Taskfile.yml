@@ -83,6 +83,16 @@ tasks:
       - task: configctl:build
       - tools/configctl/bin/configctl app terminal verify
 
+  shell:bench:
+    desc: Benchmark zsh startup paths and shell init components
+    preconditions:
+      - sh: command -v hyperfine >/dev/null 2>&1
+        msg: "hyperfine is required to benchmark shell startup"
+      - sh: command -v zsh >/dev/null 2>&1
+        msg: "zsh is required to benchmark shell startup"
+    cmds:
+      - ./scripts/shell-bench.sh {{.CLI_ARGS}}
+
   secrets:staged:
     desc: Scan staged public-dotfiles changes for secrets
     cmds:
