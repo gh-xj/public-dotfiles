@@ -35,105 +35,13 @@ setup_aliases() {
     }
 }
 
-# FZF preview command (shared by FZF_DEFAULT_OPTS and yazi wrapper)
-_FZF_PREVIEW='bash -c '\''if [[ -d {} ]]; then eza --all --color=always --icons=always --group-directories-first --no-quotes --tree --level=2 --long {}; elif [[ -f {} ]]; then eza --all --color=always --icons=always --no-quotes -l {} && echo && bat --style=numbers --color=always {} 2>/dev/null || cat {}; else echo File not found: {}; fi'\'''
-
-setup_zoxide() {
-    # Initialize zoxide last so it can install its hooks cleanly.
-    # Keep interactive mode light; the shared FZF preview is too heavy here.
-    export _ZO_DOCTOR=0
-    export _ZO_FZF_OPTS='--height 60% --layout reverse --border top --extended --no-sort'
-
-    (( $+commands[zoxide] )) || return 0
-
-    local zoxide_cache="$HOME/.cache/zoxide-init.zsh"
-    local zoxide_bin="$commands[zoxide]"
-    if [[ ! -f "$zoxide_cache" || "$zoxide_bin" -nt "$zoxide_cache" ]]; then
-        mkdir -p "$HOME/.cache"
-        "$zoxide_bin" init zsh --cmd j >| "$zoxide_cache" 2>/dev/null
-    fi
-    [[ -r "$zoxide_cache" ]] && source "$zoxide_cache" 2>/dev/null
-}
-
-setup_fast_prompt() {
-    PROMPT='%~ %# '
-    RPROMPT=''
-}
-
-setup_fast_keybindings() {
-    bindkey '^F' forward-char
-
-    run_yazi_widget() {
-        BUFFER="y"
-        zle accept-line
-    }
-    zle -N run_yazi_widget
-    bindkey '^y' run_yazi_widget
-
-    run_lazygit_widget() {
-        BUFFER="lazygit"
-        zle accept-line
-    }
-    zle -N run_lazygit_widget
-    bindkey '^g' run_lazygit_widget
-}
-
-setup_fast_utils() {
-    y() {
-        local FZF_DEFAULT_OPTS="--extended --no-sort --reverse --preview \"$_FZF_PREVIEW\" --preview-window=\"right:60%:wrap\""
-        local tmp cwd
-        tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
-        yazi "$@" --cwd-file="$tmp"
-        IFS= read -r -d '' cwd < "$tmp"
-        [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
-        rm -f -- "$tmp"
-    }
-
-    alias benchmark_shell="hyperfine --warmup 3 --runs 10 'zsh -i -c exit'"
-    alias benchmark_shell_quick="hyperfine 'zsh -i -c exit'"
-    alias benchmark_shell_detailed="hyperfine --warmup 5 --runs 20 --show-output 'zsh -i -c exit'"
-}
-
-setup_fast_autosuggestions() {
-    local autosuggest_zsh="$HOME/.local/share/zinit/plugins/zsh-users---zsh-autosuggestions/zsh-autosuggestions.zsh"
-    [[ -r "$autosuggest_zsh" ]] || return 0
-
-    typeset -g ZSH_AUTOSUGGEST_USE_ASYNC=true
-    typeset -g ZSH_AUTOSUGGEST_MANUAL_REBIND=true
-    source "$autosuggest_zsh"
-    (( $+functions[_zsh_autosuggest_start] )) && _zsh_autosuggest_start
-}
-
-setup_fast_atuin() {
-    local atuin_bin="${commands[atuin]:-}"
-    [[ -n "$atuin_bin" ]] || return 0
-
-    local atuin_cache="$HOME/.cache/atuin-init.zsh"
-    if [[ ! -f "$atuin_cache" || "$atuin_bin" -nt "$atuin_cache" ]]; then
-        mkdir -p "$HOME/.cache"
-        ATUIN_NOBIND=true "$atuin_bin" init zsh >| "$atuin_cache" 2>/dev/null
-    fi
-    [[ -r "$atuin_cache" ]] && source "$atuin_cache" 2>/dev/null
-    (( $+widgets[atuin-search] )) && bindkey '^r' atuin-search
-}
-
 if [[ "${ZSH_MINIMAL:-0}" == 1 ]]; then
     setup_aliases
     return 0
 fi
 
-if [[ "${ZSH_FAST:-0}" == 1 ]]; then
-    setup_aliases
-    setup_fast_prompt
-    setup_fast_keybindings
-    setup_fast_utils
-    if [[ "${ZSH_FAST_HISTORY:-0}" == 1 ]]; then
-        setup_fast_autosuggestions
-        setup_fast_atuin
-    fi
-    setup_zoxide
-    return 0
-fi
+# FZF preview command (shared by FZF_DEFAULT_OPTS and yazi wrapper)
+_FZF_PREVIEW='bash -c '\''if [[ -d {} ]]; then eza --all --color=always --icons=always --group-directories-first --no-quotes --tree --level=2 --long {}; elif [[ -f {} ]]; then eza --all --color=always --icons=always --no-quotes -l {} && echo && bat --style=numbers --color=always {} 2>/dev/null || cat {}; else echo File not found: {}; fi'\'''
 
 # FZF configuration and file navigation
 setup_fzf() {
@@ -364,4 +272,17 @@ if [[ -r "$HOME/.openclaw/completions/openclaw.zsh" ]]; then
     source "$HOME/.openclaw/completions/openclaw.zsh"
 fi
 
-setup_zoxide
+# Initialize zoxide last so it can install its hooks cleanly.
+# Keep interactive mode light; the shared FZF preview is too heavy here.
+export _ZO_DOCTOR=0
+export _ZO_FZF_OPTS='--height 60% --layout reverse --border top --extended --no-sort'
+if (( $+commands[zoxide] )); then
+    _zoxide_cache="$HOME/.cache/zoxide-init.zsh"
+    _zoxide_bin="$commands[zoxide]"
+    if [[ ! -f "$_zoxide_cache" || "$_zoxide_bin" -nt "$_zoxide_cache" ]]; then
+        mkdir -p "$HOME/.cache"
+        "$_zoxide_bin" init zsh --cmd j >| "$_zoxide_cache" 2>/dev/null
+    fi
+    [[ -r "$_zoxide_cache" ]] && source "$_zoxide_cache" 2>/dev/null
+fi
+unset _zoxide_cache _zoxide_bin
