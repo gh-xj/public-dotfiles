@@ -76,7 +76,7 @@ hyperfine --warmup "$warmup" --runs "$runs" "${component_cmds[@]}"
 printf '\n== package-owned plugin probe ==\n'
 zsh -i -c '
 printf "zinit=%s\n" "$+functions[zinit]"
-printf "zsh-vi-mode=%s\n" "$+functions[zvm_config]"
+printf "zsh-vi-mode=%s\n" "$+functions[zvm_select_vi_mode]"
 printf "autosuggestions=%s\n" "$+functions[_zsh_autosuggest_start]"
 printf "syntax-highlighting=%s\n" "$+functions[_zsh_highlight]"
 printf "atuin-widget=%s\n" "$+widgets[atuin-search]"

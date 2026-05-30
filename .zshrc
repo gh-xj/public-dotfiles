@@ -67,6 +67,8 @@ _source_zsh_plugin() {
     )
     [[ -n "${HOMEBREW_PREFIX:-}" ]] && roots+=("$HOMEBREW_PREFIX/share")
     roots+=("/opt/homebrew/share" "/usr/local/share")
+    # Transitional direct-source fallback for pre-Nix local plugin caches.
+    roots+=("$HOME/.local/share/zinit/plugins")
     typeset -U roots
 
     for root in "${roots[@]}"; do
@@ -120,7 +122,9 @@ setup_plugins() {
 
     _source_zsh_plugin \
         "zsh-vi-mode/zsh-vi-mode.plugin.zsh" \
-        "zsh-vi-mode/zsh-vi-mode.zsh"
+        "zsh-vi-mode/zsh-vi-mode.zsh" \
+        "jeffreytse---zsh-vi-mode/zsh-vi-mode.plugin.zsh" \
+        "jeffreytse---zsh-vi-mode/zsh-vi-mode.zsh"
 
     setup_atuin
 
