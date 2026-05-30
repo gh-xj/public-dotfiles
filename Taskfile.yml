@@ -93,6 +93,16 @@ tasks:
     cmds:
       - ./scripts/shell-bench.sh {{.CLI_ARGS}}
 
+  starship:diagnose:
+    desc: Diagnose Starship prompt scan warnings and module timings
+    preconditions:
+      - sh: command -v starship >/dev/null 2>&1
+        msg: "starship is required to diagnose prompt scans"
+      - sh: command -v zsh >/dev/null 2>&1
+        msg: "zsh is required for millisecond prompt timing"
+    cmds:
+      - ./scripts/starship-diagnose.sh {{.CLI_ARGS}}
+
   secrets:staged:
     desc: Scan staged public-dotfiles changes for secrets
     cmds:
