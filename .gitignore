@@ -9,7 +9,7 @@
 /result
 /result-*
 .config/zed/prompts/**/*.mdb/lock.mdb
-/Library/Application Support/lazygit/state.yml
+/Library/Application Support/lazygit/
 /docs/human-requests
 # nvim legacy / runtime artifacts (lazy.nvim + pack dir are in ~/.local/share/nvim)
 /.config/nvim/plugged/

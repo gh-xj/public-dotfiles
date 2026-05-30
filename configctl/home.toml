@@ -37,8 +37,3 @@ mode = "link"
 owner = "public"
 path = "Library/Application Support/com.pais.handy/settings_store.json"
 mode = "link"
-
-[[entries]]
-owner = "public"
-path = "Library/Application Support/lazygit"
-mode = "link"
