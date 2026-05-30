@@ -54,6 +54,8 @@ hyperfine --warmup "$warmup" --runs "$runs" \
   'zsh -f -i -c exit' \
   'zsh -c exit' \
   'zsh -i -c exit' \
+  'ZSH_FAST=1 zsh -i -c exit' \
+  'ZSH_FAST=1 ZSH_FAST_HISTORY=1 zsh -i -c exit' \
   'ZSH_MINIMAL=1 zsh -i -c exit' \
   'zsh -l -i -c exit'
 
