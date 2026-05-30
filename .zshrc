@@ -55,43 +55,86 @@ setup_fzf() {
     zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 }
 
-setup_plugins() {
-    local zinit_file="$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-    if [[ -r "$zinit_file" ]]; then
-        source "$zinit_file"
-        autoload -Uz _zinit
-        (( ${+_comps} )) && _comps[zinit]=_zinit
+_source_zsh_plugin() {
+    local root rel
+    local -a roots
 
-        # Configure autosuggestions
-        typeset -g ZSH_AUTOSUGGEST_USE_ASYNC=true
+    [[ -n "${XJ_ZSH_PLUGIN_ROOTS:-}" ]] && roots+=(${(s.:.)XJ_ZSH_PLUGIN_ROOTS})
+    roots+=(
+        "$HOME/.nix-profile/share"
+        "/run/current-system/sw/share"
+        "/nix/var/nix/profiles/default/share"
+    )
+    [[ -n "${HOMEBREW_PREFIX:-}" ]] && roots+=("$HOMEBREW_PREFIX/share")
+    roots+=("/opt/homebrew/share" "/usr/local/share")
+    typeset -U roots
 
-        # Configure zsh-vi-mode (cursor vars must be set inside zvm_config so they
-        # resolve *after* vi-mode defines $ZVM_CURSOR_* constants)
-        export ZVM_CURSOR_STYLE_ENABLED=true
-        zvm_config() {
-            ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
-            ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
-            ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
-            ZVM_VISUAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
-            ZVM_VISUAL_LINE_MODE_CURSOR=$ZVM_CURSOR_BLOCK
-            ZVM_OPPEND_MODE_CURSOR=$ZVM_CURSOR_BLINKING_UNDERLINE
-        }
+    for root in "${roots[@]}"; do
+        [[ -d "$root" ]] || continue
+        for rel in "$@"; do
+            if [[ -r "$root/$rel" ]]; then
+                source "$root/$rel"
+                return 0
+            fi
+        done
+    done
 
-        # Load essential plugins
-        zinit wait'0a' lucid light-mode for \
-            atinit"ZVM_INIT_MODE=sourcing" jeffreytse/zsh-vi-mode \
-            Aloxaf/fzf-tab \
-            atload"_zsh_autosuggest_start" zsh-users/zsh-autosuggestions \
-            hlissner/zsh-autopair
+    return 1
+}
 
-        # Load atuin before syntax highlighting to avoid widget conflicts
-        zinit wait'0c' lucid light-mode for \
-            atinit"export ATUIN_NOBIND='true'" atload"bindkey '^r' atuin-search" atuinsh/atuin
+setup_atuin() {
+    local atuin_bin="${commands[atuin]:-}"
+    [[ -n "$atuin_bin" ]] || return 0
 
-        # Load syntax highlighting last to avoid conflicts
-        zinit wait'0d' lucid light-mode for \
-            zdharma-continuum/fast-syntax-highlighting
+    local atuin_cache="$HOME/.cache/atuin-init.zsh"
+    if [[ ! -f "$atuin_cache" || "$atuin_bin" -nt "$atuin_cache" ]]; then
+        mkdir -p "$HOME/.cache"
+        ATUIN_NOBIND=true "$atuin_bin" init zsh >| "$atuin_cache" 2>/dev/null || return 0
     fi
+
+    [[ -r "$atuin_cache" ]] && source "$atuin_cache" 2>/dev/null
+    (( $+widgets[atuin-search] )) && bindkey '^r' atuin-search
+}
+
+setup_plugins() {
+    typeset -g _XJ_KEYBINDINGS_READY=0
+    typeset -g ZSH_AUTOSUGGEST_USE_ASYNC=true
+    export ZVM_CURSOR_STYLE_ENABLED=true
+    export ZVM_INIT_MODE=sourcing
+
+    typeset -ga zvm_after_init_commands
+    if (( ${zvm_after_init_commands[(Ie)setup_keybindings]} == 0 )); then
+        zvm_after_init_commands+=('setup_keybindings')
+    fi
+
+    # Cursor vars must be set inside zvm_config so they resolve after
+    # zsh-vi-mode defines $ZVM_CURSOR_* constants.
+    zvm_config() {
+        ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
+        ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
+        ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
+        ZVM_VISUAL_MODE_CURSOR=$ZVM_CURSOR_BLOCK
+        ZVM_VISUAL_LINE_MODE_CURSOR=$ZVM_CURSOR_BLOCK
+        ZVM_OPPEND_MODE_CURSOR=$ZVM_CURSOR_BLINKING_UNDERLINE
+    }
+
+    _source_zsh_plugin \
+        "zsh-vi-mode/zsh-vi-mode.plugin.zsh" \
+        "zsh-vi-mode/zsh-vi-mode.zsh"
+
+    setup_atuin
+
+    _source_zsh_plugin \
+        "zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+        "zsh-autosuggestions/zsh-autosuggestions.zsh"
+
+    _source_zsh_plugin \
+        "zsh/zsh-autopair/autopair.zsh"
+
+    # Load syntax highlighting last to avoid widget conflicts.
+    _source_zsh_plugin \
+        "zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
+        "zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
     # Load cached Starship prompt silently
     local starship_cache="$HOME/.cache/starship-init.zsh"
@@ -153,6 +196,9 @@ setup_plugins() {
 # NOTE: This function is called AFTER vi-mode loads (see zvm_after_init_commands below)
 # to prevent vi-mode from overriding our custom keybindings
 setup_keybindings() {
+    (( ${_XJ_KEYBINDINGS_READY:-0} )) && return 0
+    typeset -g _XJ_KEYBINDINGS_READY=1
+
     # Use forward-char so zsh-autosuggestions accepts the current suggestion.
     bindkey -M emacs '^F' forward-char
     bindkey -M viins '^F' forward-char
@@ -243,21 +289,12 @@ init() {
     setup_fzf
     setup_utils
 
-    if (( $+functions[zinit] )); then
-        # Defer key bindings until after vi-mode loads because zsh-vi-mode
-        # overrides keymaps during initialization.
-        zvm_after_init_commands+=(
-            'setup_keybindings'
-        )
-    else
+    if (( ! ${_XJ_KEYBINDINGS_READY:-0} )); then
         setup_keybindings
     fi
 
-    # Defer bun completion until after compinit finishes (PATH set in .zprofile).
-    if (( $+functions[zinit] )); then
-        zinit wait'0e' lucid light-mode as'null' for \
-            atinit'[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"' zdharma-continuum/null
-    fi
+    # Source bun completion after compinit finishes (PATH set in .zprofile).
+    [[ -s "$HOME/.bun/_bun" ]] && source "$HOME/.bun/_bun"
 }
 
 init
