@@ -7,6 +7,55 @@ import (
 	"time"
 )
 
+func TestPolicyStatusAcceptsSplitLiveAgentDirs(t *testing.T) {
+	root := t.TempDir()
+	homeDir := filepath.Join(root, "home")
+	privateRepo := filepath.Join(root, "private-config")
+	publicRepo := filepath.Join(root, "public-dotfiles")
+
+	for _, path := range []string{
+		filepath.Join(publicRepo, ".claude", "CLAUDE.md"),
+		filepath.Join(publicRepo, ".claude", "settings.json"),
+		filepath.Join(publicRepo, ".claude", "statusline-command.sh"),
+		filepath.Join(publicRepo, ".codex", "rules", "default.rules"),
+		filepath.Join(privateRepo, ".codex", "config.toml"),
+		filepath.Join(privateRepo, ".codex", "hooks.json"),
+	} {
+		writeAgentFile(t, path, "test\n", 0o644)
+	}
+	mustSymlink(t, filepath.Join(publicRepo, ".claude", "CLAUDE.md"), filepath.Join(privateRepo, ".claude", "CLAUDE.md"))
+	mustSymlink(t, filepath.Join(publicRepo, ".claude", "settings.json"), filepath.Join(privateRepo, ".claude", "settings.json"))
+	mustSymlink(t, filepath.Join(publicRepo, ".claude", "statusline-command.sh"), filepath.Join(privateRepo, ".claude", "statusline-command.sh"))
+	mustSymlink(t, filepath.Join(privateRepo, ".claude", "CLAUDE.md"), filepath.Join(privateRepo, ".codex", "AGENTS.md"))
+	mustSymlink(t, filepath.Join(publicRepo, ".codex", "rules"), filepath.Join(privateRepo, ".codex", "rules"))
+
+	for _, dir := range []string{filepath.Join(homeDir, ".claude"), filepath.Join(homeDir, ".codex")} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, child := range []string{"CLAUDE.md", "settings.json", "statusline-command.sh"} {
+		mustSymlink(t, filepath.Join(privateRepo, ".claude", child), filepath.Join(homeDir, ".claude", child))
+	}
+	for _, child := range []string{"AGENTS.md", "config.toml", "hooks.json", "rules"} {
+		mustSymlink(t, filepath.Join(privateRepo, ".codex", child), filepath.Join(homeDir, ".codex", child))
+	}
+
+	status, err := PolicyStatusResult(Options{
+		PublicRepoDir:  publicRepo,
+		PrivateRepoDir: privateRepo,
+		HomeDir:        homeDir,
+	})
+	if err != nil {
+		t.Fatalf("PolicyStatusResult returned error: %v", err)
+	}
+	for _, diagnostic := range status.Diagnostics {
+		if diagnostic.Severity == "error" {
+			t.Fatalf("unexpected error diagnostic: %#v", diagnostic)
+		}
+	}
+}
+
 func TestSkillsStatusUsesPathLookupForBareCommand(t *testing.T) {
 	root := t.TempDir()
 	privateRepo := filepath.Join(root, "private-config")
@@ -92,5 +141,15 @@ func assertFileMode(t *testing.T, path string, want os.FileMode) {
 	}
 	if got := info.Mode().Perm(); got != want {
 		t.Fatalf("%s mode = %04o, want %04o", path, got, want)
+	}
+}
+
+func mustSymlink(t *testing.T, oldname string, newname string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(newname), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(oldname, newname); err != nil {
+		t.Fatal(err)
 	}
 }

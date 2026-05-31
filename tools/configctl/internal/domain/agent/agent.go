@@ -135,16 +135,17 @@ func PolicyStatusResult(opts Options) (PolicyStatus, error) {
 		name     string
 		path     string
 		expected string
+		children []string
 	}{
-		{"claude.live", filepath.Join(resolved.HomeDir, ".claude"), filepath.Join(resolved.PrivateRepoDir, ".claude")},
-		{"codex.live", filepath.Join(resolved.HomeDir, ".codex"), filepath.Join(resolved.PrivateRepoDir, ".codex")},
-		{"claude.policy", filepath.Join(resolved.PrivateRepoDir, ".claude", "CLAUDE.md"), filepath.Join(resolved.PublicRepoDir, ".claude", "CLAUDE.md")},
-		{"codex.policy", filepath.Join(resolved.PrivateRepoDir, ".codex", "AGENTS.md"), filepath.Join(resolved.PrivateRepoDir, ".claude", "CLAUDE.md")},
-		{"codex.rules", filepath.Join(resolved.PrivateRepoDir, ".codex", "rules"), filepath.Join(resolved.PublicRepoDir, ".codex", "rules")},
+		{"claude.live", filepath.Join(resolved.HomeDir, ".claude"), filepath.Join(resolved.PrivateRepoDir, ".claude"), []string{"CLAUDE.md", "settings.json", "statusline-command.sh"}},
+		{"codex.live", filepath.Join(resolved.HomeDir, ".codex"), filepath.Join(resolved.PrivateRepoDir, ".codex"), []string{"AGENTS.md", "config.toml", "hooks.json", "rules"}},
+		{"claude.policy", filepath.Join(resolved.PrivateRepoDir, ".claude", "CLAUDE.md"), filepath.Join(resolved.PublicRepoDir, ".claude", "CLAUDE.md"), nil},
+		{"codex.policy", filepath.Join(resolved.PrivateRepoDir, ".codex", "AGENTS.md"), filepath.Join(resolved.PrivateRepoDir, ".claude", "CLAUDE.md"), nil},
+		{"codex.rules", filepath.Join(resolved.PrivateRepoDir, ".codex", "rules"), filepath.Join(resolved.PublicRepoDir, ".codex", "rules"), nil},
 	}
 	status := PolicyStatus{}
 	for _, check := range checks {
-		link := inspectLink(check.name, check.path, check.expected)
+		link := inspectLink(check.name, check.path, check.expected, check.children...)
 		status.Links = append(status.Links, link)
 		if !link.OK {
 			status.Diagnostics = append(status.Diagnostics, report.Diagnostic{
@@ -448,9 +449,9 @@ func executableExists(command string) (bool, error) {
 	return true, nil
 }
 
-func inspectLink(name string, path string, expected string) LinkStatus {
+func inspectLink(name string, path string, expected string, splitChildren ...string) LinkStatus {
 	resolved, exists, isSymlink := resolveLive(path)
-	return LinkStatus{
+	status := LinkStatus{
 		Name:           name,
 		Path:           path,
 		Expected:       expected,
@@ -459,6 +460,20 @@ func inspectLink(name string, path string, expected string) LinkStatus {
 		ResolvedTarget: resolved,
 		OK:             exists && isSymlink && samePath(resolved, expected),
 	}
+	if status.OK || !exists || isSymlink || len(splitChildren) == 0 {
+		return status
+	}
+	info, err := os.Stat(path)
+	if err != nil || !info.IsDir() {
+		return status
+	}
+	for _, child := range splitChildren {
+		if !samePath(filepath.Join(path, child), filepath.Join(expected, child)) {
+			return status
+		}
+	}
+	status.OK = true
+	return status
 }
 
 func inspectAuthFile(name string, path string) AuthFileStatus {
