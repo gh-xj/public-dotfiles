@@ -56,6 +56,64 @@ func TestPolicyStatusAcceptsSplitLiveAgentDirs(t *testing.T) {
 	}
 }
 
+func TestPolicyStatusAcceptsHomeManagerStoreAgentLinks(t *testing.T) {
+	root := t.TempDir()
+	homeDir := filepath.Join(root, "home")
+	privateRepo := filepath.Join(root, "private-config")
+	publicRepo := filepath.Join(root, "public-dotfiles")
+	storeDir := filepath.Join(root, "nix-store")
+
+	for _, file := range []struct {
+		path    string
+		content string
+	}{
+		{filepath.Join(publicRepo, ".claude", "CLAUDE.md"), "claude policy\n"},
+		{filepath.Join(publicRepo, ".claude", "settings.json"), "{}\n"},
+		{filepath.Join(publicRepo, ".claude", "statusline-command.sh"), "#!/bin/sh\n"},
+		{filepath.Join(publicRepo, ".codex", "rules", "default.rules"), "rule\n"},
+		{filepath.Join(privateRepo, ".codex", "config.toml"), "model = \"test\"\n"},
+		{filepath.Join(privateRepo, ".codex", "hooks.json"), "{}\n"},
+	} {
+		writeAgentFile(t, file.path, file.content, 0o644)
+	}
+	mustSymlink(t, filepath.Join(publicRepo, ".claude", "CLAUDE.md"), filepath.Join(privateRepo, ".claude", "CLAUDE.md"))
+	mustSymlink(t, filepath.Join(publicRepo, ".claude", "settings.json"), filepath.Join(privateRepo, ".claude", "settings.json"))
+	mustSymlink(t, filepath.Join(publicRepo, ".claude", "statusline-command.sh"), filepath.Join(privateRepo, ".claude", "statusline-command.sh"))
+	mustSymlink(t, filepath.Join(privateRepo, ".claude", "CLAUDE.md"), filepath.Join(privateRepo, ".codex", "AGENTS.md"))
+	mustSymlink(t, filepath.Join(publicRepo, ".codex", "rules"), filepath.Join(privateRepo, ".codex", "rules"))
+
+	for _, dir := range []string{filepath.Join(homeDir, ".claude"), filepath.Join(homeDir, ".codex")} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, child := range []string{"CLAUDE.md", "settings.json", "statusline-command.sh"} {
+		storePath := filepath.Join(storeDir, "hm-claude-"+child)
+		copyAgentFile(t, filepath.Join(privateRepo, ".claude", child), storePath)
+		mustSymlink(t, storePath, filepath.Join(homeDir, ".claude", child))
+	}
+	for _, child := range []string{"AGENTS.md", "hooks.json", "rules"} {
+		storePath := filepath.Join(storeDir, "hm-codex-"+child)
+		copyAgentPath(t, filepath.Join(privateRepo, ".codex", child), storePath)
+		mustSymlink(t, storePath, filepath.Join(homeDir, ".codex", child))
+	}
+	mustSymlink(t, filepath.Join(privateRepo, ".codex", "config.toml"), filepath.Join(homeDir, ".codex", "config.toml"))
+
+	status, err := PolicyStatusResult(Options{
+		PublicRepoDir:  publicRepo,
+		PrivateRepoDir: privateRepo,
+		HomeDir:        homeDir,
+	})
+	if err != nil {
+		t.Fatalf("PolicyStatusResult returned error: %v", err)
+	}
+	for _, diagnostic := range status.Diagnostics {
+		if diagnostic.Severity == "error" {
+			t.Fatalf("unexpected error diagnostic: %#v", diagnostic)
+		}
+	}
+}
+
 func TestSkillsStatusUsesPathLookupForBareCommand(t *testing.T) {
 	root := t.TempDir()
 	privateRepo := filepath.Join(root, "private-config")
@@ -152,4 +210,35 @@ func mustSymlink(t *testing.T, oldname string, newname string) {
 	if err := os.Symlink(oldname, newname); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func copyAgentPath(t *testing.T, source string, destination string) {
+	t.Helper()
+	info, err := os.Stat(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.IsDir() {
+		entries, err := os.ReadDir(source)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(destination, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		for _, entry := range entries {
+			copyAgentPath(t, filepath.Join(source, entry.Name()), filepath.Join(destination, entry.Name()))
+		}
+		return
+	}
+	copyAgentFile(t, source, destination)
+}
+
+func copyAgentFile(t *testing.T, source string, destination string) {
+	t.Helper()
+	data, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeAgentFile(t, destination, string(data), 0o644)
 }

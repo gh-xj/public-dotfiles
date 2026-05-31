@@ -1,10 +1,12 @@
 package agent
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -468,7 +470,7 @@ func inspectLink(name string, path string, expected string, splitChildren ...str
 		return status
 	}
 	for _, child := range splitChildren {
-		if !samePath(filepath.Join(path, child), filepath.Join(expected, child)) {
+		if !equivalentPath(filepath.Join(path, child), filepath.Join(expected, child)) {
 			return status
 		}
 	}
@@ -604,6 +606,81 @@ func samePath(a string, b string) bool {
 		b = evaluated
 	}
 	return filepath.Clean(a) == filepath.Clean(b)
+}
+
+func equivalentPath(a string, b string) bool {
+	return samePath(a, b) || sameContent(a, b)
+}
+
+func sameContent(a string, b string) bool {
+	if a == "" || b == "" {
+		return false
+	}
+	a = contentPath(a)
+	b = contentPath(b)
+	aInfo, err := os.Stat(a)
+	if err != nil {
+		return false
+	}
+	bInfo, err := os.Stat(b)
+	if err != nil {
+		return false
+	}
+	if aInfo.IsDir() || bInfo.IsDir() {
+		return aInfo.IsDir() && bInfo.IsDir() && sameDirectoryContent(a, b)
+	}
+	if !aInfo.Mode().IsRegular() || !bInfo.Mode().IsRegular() {
+		return false
+	}
+	aData, err := os.ReadFile(a)
+	if err != nil {
+		return false
+	}
+	bData, err := os.ReadFile(b)
+	if err != nil {
+		return false
+	}
+	return bytes.Equal(aData, bData)
+}
+
+func sameDirectoryContent(a string, b string) bool {
+	return directoryContainsSameEntries(a, b) && directoryContainsSameEntries(b, a)
+}
+
+func directoryContainsSameEntries(root string, otherRoot string) bool {
+	errStopWalk := errors.New("stop directory comparison")
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return errStopWalk
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return errStopWalk
+		}
+		if rel == "." {
+			return nil
+		}
+		otherPath := filepath.Join(otherRoot, rel)
+		if entry.IsDir() {
+			info, err := os.Stat(contentPath(otherPath))
+			if err != nil || !info.IsDir() {
+				return errStopWalk
+			}
+			return nil
+		}
+		if !sameContent(path, otherPath) {
+			return errStopWalk
+		}
+		return nil
+	})
+	return err == nil
+}
+
+func contentPath(path string) string {
+	if evaluated, err := filepath.EvalSymlinks(path); err == nil {
+		return evaluated
+	}
+	return path
 }
 
 func cleanAbs(path string) string {
