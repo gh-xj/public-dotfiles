@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"configctl/internal/adapters/process"
+	"configctl/internal/verify"
 )
 
 func TestGhosttyValidateUsesAppBundleFallback(t *testing.T) {
@@ -21,6 +22,32 @@ func TestGhosttyValidateUsesAppBundleFallback(t *testing.T) {
 		t.Fatalf("commands = %#v, want PATH command then app bundle fallback", runner.commands)
 	}
 	if runner.commands[0] != "ghostty" || runner.commands[1] != "/Applications/Ghostty.app/Contents/MacOS/ghostty" {
+		t.Fatalf("commands = %#v", runner.commands)
+	}
+}
+
+func TestKarabinerLintUsesHomebrewFallback(t *testing.T) {
+	publicRepo := t.TempDir()
+	complexModDir := filepath.Join(publicRepo, ".config", "karabiner", "assets", "complex_modifications")
+	if err := os.MkdirAll(complexModDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(complexModDir, "rules.json"), []byte(`{"rules":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	runner := &karabinerFallbackRunner{}
+	result := verify.Runner{Checks: []verify.Check{
+		karabinerLintCheck(Options{PublicRepoDir: publicRepo, Runner: runner}),
+	}}.Run(context.Background(), verify.ProfileDefault)
+
+	if !result.OK {
+		t.Fatalf("expected Karabiner fallback to pass: %#v", result.Diagnostics)
+	}
+	if len(runner.commands) != 2 {
+		t.Fatalf("commands = %#v, want PATH command then Homebrew fallback", runner.commands)
+	}
+	if runner.commands[0] != "karabiner_cli" || runner.commands[1] != "/opt/homebrew/bin/karabiner_cli" {
 		t.Fatalf("commands = %#v", runner.commands)
 	}
 }
@@ -106,6 +133,21 @@ func (r *ghosttyFallbackRunner) Run(_ context.Context, invocation process.Invoca
 		return process.Result{}, errors.New("executable file not found")
 	}
 	if invocation.Command == "/Applications/Ghostty.app/Contents/MacOS/ghostty" {
+		return process.Result{ExitCode: 0}, nil
+	}
+	return process.Result{}, errors.New("unexpected command")
+}
+
+type karabinerFallbackRunner struct {
+	commands []string
+}
+
+func (r *karabinerFallbackRunner) Run(_ context.Context, invocation process.Invocation) (process.Result, error) {
+	r.commands = append(r.commands, invocation.Command)
+	if invocation.Command == "karabiner_cli" {
+		return process.Result{}, errors.New("executable file not found")
+	}
+	if invocation.Command == "/opt/homebrew/bin/karabiner_cli" {
 		return process.Result{ExitCode: 0}, nil
 	}
 	return process.Result{}, errors.New("unexpected command")

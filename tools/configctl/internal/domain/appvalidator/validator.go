@@ -141,6 +141,12 @@ func commandCheck(id string, name string, command string, args []string, dir str
 }
 
 func karabinerLintCheck(opts Options) verify.Check {
+	candidates := []string{
+		"karabiner_cli",
+		"/opt/homebrew/bin/karabiner_cli",
+		"/usr/local/bin/karabiner_cli",
+		"/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli",
+	}
 	return verify.Check{
 		ID:       "app.karabiner.lint",
 		Name:     "Karabiner complex modifications",
@@ -156,7 +162,7 @@ func karabinerLintCheck(opts Options) verify.Check {
 			}
 			var diagnostics []report.Diagnostic
 			for _, file := range files {
-				result, err := opts.Runner.Run(ctx, process.Invocation{Command: "karabiner_cli", Args: []string{"--lint-complex-modifications", file}})
+				result, command, err := runFirstAvailable(ctx, opts.Runner, candidates, []string{"--lint-complex-modifications", file})
 				if err != nil {
 					diagnostics = append(diagnostics, report.Diagnostic{Severity: "error", Code: "app.karabiner.lint_failed", Message: err.Error(), Path: file})
 					continue
@@ -165,6 +171,9 @@ func karabinerLintCheck(opts Options) verify.Check {
 					message := strings.TrimSpace(result.Stderr)
 					if message == "" {
 						message = strings.TrimSpace(result.Stdout)
+					}
+					if message == "" {
+						message = fmt.Sprintf("%s exited %d", command, result.ExitCode)
 					}
 					diagnostics = append(diagnostics, report.Diagnostic{Severity: "error", Code: "app.karabiner.lint_failed", Message: message, Path: file})
 				}
@@ -175,6 +184,19 @@ func karabinerLintCheck(opts Options) verify.Check {
 			return verify.CheckResult{OK: true, Summary: fmt.Sprintf("Karabiner lint ok: %d file(s)", len(files))}
 		},
 	}
+}
+
+func runFirstAvailable(ctx context.Context, runner process.Runner, candidates []string, args []string) (process.Result, string, error) {
+	var missing []string
+	for _, command := range candidates {
+		result, err := runner.Run(ctx, process.Invocation{Command: command, Args: args})
+		if err != nil {
+			missing = append(missing, fmt.Sprintf("%s: %s", command, err.Error()))
+			continue
+		}
+		return result, command, nil
+	}
+	return process.Result{}, "", fmt.Errorf("%s", strings.Join(missing, "; "))
 }
 
 func karabinerTerminalInvariantCheck(opts Options) verify.Check {
