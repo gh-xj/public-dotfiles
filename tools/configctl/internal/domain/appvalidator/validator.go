@@ -45,7 +45,7 @@ func checksFor(name string, opts Options) []verify.Check {
 			commandCheck("app.lazygit.gh", "GitHub CLI binary", "gh", []string{"--version"}, "", opts),
 		}
 	case "ghostty":
-		return []verify.Check{commandCheck("app.ghostty.validate", "Ghostty config", "ghostty", []string{"+validate-config"}, "", opts)}
+		return []verify.Check{ghosttyValidateCheck(opts)}
 	case "karabiner":
 		return []verify.Check{
 			karabinerLintCheck(opts),
@@ -76,6 +76,42 @@ func checksFor(name string, opts Options) []verify.Check {
 				}
 			},
 		}}
+	}
+}
+
+func ghosttyValidateCheck(opts Options) verify.Check {
+	const id = "app.ghostty.validate"
+	const name = "Ghostty config"
+	candidates := []string{
+		"ghostty",
+		"/Applications/Ghostty.app/Contents/MacOS/ghostty",
+	}
+	return verify.Check{
+		ID:       id,
+		Name:     name,
+		Required: true,
+		Run: func(ctx context.Context) verify.CheckResult {
+			var missing []string
+			for _, command := range candidates {
+				result, err := opts.Runner.Run(ctx, process.Invocation{Command: command, Args: []string{"+validate-config"}})
+				if err != nil {
+					missing = append(missing, fmt.Sprintf("%s: %s", command, err.Error()))
+					continue
+				}
+				if result.ExitCode != 0 {
+					message := strings.TrimSpace(result.Stderr)
+					if message == "" {
+						message = strings.TrimSpace(result.Stdout)
+					}
+					if message == "" {
+						message = fmt.Sprintf("%s exited %d", command, result.ExitCode)
+					}
+					return checkFailure(id, message, command)
+				}
+				return verify.CheckResult{OK: true, Summary: name + " ok"}
+			}
+			return checkFailure(id, strings.Join(missing, "; "), strings.Join(candidates, ", "))
+		},
 	}
 }
 

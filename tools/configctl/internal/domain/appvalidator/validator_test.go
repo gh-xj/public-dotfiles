@@ -1,10 +1,29 @@
 package appvalidator
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"configctl/internal/adapters/process"
 )
+
+func TestGhosttyValidateUsesAppBundleFallback(t *testing.T) {
+	runner := &ghosttyFallbackRunner{}
+	result := Verify(context.Background(), "ghostty", Options{Runner: runner})
+
+	if !result.OK {
+		t.Fatalf("expected Ghostty fallback to pass: %#v", result.Diagnostics)
+	}
+	if len(runner.commands) != 2 {
+		t.Fatalf("commands = %#v, want PATH command then app bundle fallback", runner.commands)
+	}
+	if runner.commands[0] != "ghostty" || runner.commands[1] != "/Applications/Ghostty.app/Contents/MacOS/ghostty" {
+		t.Fatalf("commands = %#v", runner.commands)
+	}
+}
 
 func TestKarabinerTerminalInvariantAllowsChromeScopedTabRewrite(t *testing.T) {
 	path := writeKarabinerConfig(t, `{
@@ -75,4 +94,19 @@ func writeKarabinerConfig(t *testing.T, content string) string {
 		t.Fatal(err)
 	}
 	return path
+}
+
+type ghosttyFallbackRunner struct {
+	commands []string
+}
+
+func (r *ghosttyFallbackRunner) Run(_ context.Context, invocation process.Invocation) (process.Result, error) {
+	r.commands = append(r.commands, invocation.Command)
+	if invocation.Command == "ghostty" {
+		return process.Result{}, errors.New("executable file not found")
+	}
+	if invocation.Command == "/Applications/Ghostty.app/Contents/MacOS/ghostty" {
+		return process.Result{ExitCode: 0}, nil
+	}
+	return process.Result{}, errors.New("unexpected command")
 }
