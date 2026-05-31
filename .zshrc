@@ -55,6 +55,23 @@ setup_fzf() {
     zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 }
 
+_load_zsh_plugin_paths() {
+    local plugin_paths_file="${XJ_ZSH_PLUGIN_PATHS_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/xj/zsh/plugin-paths.zsh}"
+    [[ -r "$plugin_paths_file" ]] && source "$plugin_paths_file"
+}
+
+_source_zsh_file() {
+    local file
+
+    for file in "$@"; do
+        [[ -n "$file" && -r "$file" ]] || continue
+        source "$file"
+        return 0
+    done
+
+    return 1
+}
+
 _source_zsh_plugin() {
     local root rel
     local -a roots
@@ -67,8 +84,10 @@ _source_zsh_plugin() {
     )
     [[ -n "${HOMEBREW_PREFIX:-}" ]] && roots+=("$HOMEBREW_PREFIX/share")
     roots+=("/opt/homebrew/share" "/usr/local/share")
-    # Transitional direct-source fallback for pre-Nix local plugin caches.
-    roots+=("$HOME/.local/share/zinit/plugins")
+    if [[ "${XJ_ZSH_DISABLE_LEGACY_PLUGIN_CACHE:-0}" != 1 ]]; then
+        # Transitional direct-source fallback for pre-Nix local plugin caches.
+        roots+=("$HOME/.local/share/zinit/plugins")
+    fi
     typeset -U roots
 
     for root in "${roots[@]}"; do
@@ -120,7 +139,9 @@ setup_plugins() {
         ZVM_OPPEND_MODE_CURSOR=$ZVM_CURSOR_BLINKING_UNDERLINE
     }
 
-    _source_zsh_plugin \
+    _load_zsh_plugin_paths
+
+    _source_zsh_file "${XJ_ZSH_VI_MODE_PLUGIN:-}" || _source_zsh_plugin \
         "zsh-vi-mode/zsh-vi-mode.plugin.zsh" \
         "zsh-vi-mode/zsh-vi-mode.zsh" \
         "jeffreytse---zsh-vi-mode/zsh-vi-mode.plugin.zsh" \
@@ -128,15 +149,15 @@ setup_plugins() {
 
     setup_atuin
 
-    _source_zsh_plugin \
+    _source_zsh_file "${XJ_ZSH_AUTOSUGGESTIONS_PLUGIN:-}" || _source_zsh_plugin \
         "zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" \
         "zsh-autosuggestions/zsh-autosuggestions.zsh"
 
-    _source_zsh_plugin \
+    _source_zsh_file "${XJ_ZSH_AUTOPAIR_PLUGIN:-}" || _source_zsh_plugin \
         "zsh/zsh-autopair/autopair.zsh"
 
     # Load syntax highlighting last to avoid widget conflicts.
-    _source_zsh_plugin \
+    _source_zsh_file "${XJ_ZSH_SYNTAX_HIGHLIGHTING_PLUGIN:-}" || _source_zsh_plugin \
         "zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
         "zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 

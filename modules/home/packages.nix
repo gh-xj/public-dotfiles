@@ -8,11 +8,12 @@ in
 {
   options.xj.publicDotfiles.packageSets = lib.mkOption {
     type = lib.types.listOf (lib.types.enum packageSetNames);
-    default = [ "dev" "ops" "teaching" ];
-    example = [ "dev" "teaching" ];
+    default = [ "shell" "dev" "ops" "teaching" ];
+    example = [ "shell" "dev" "teaching" ];
     description = ''
       Named public package sets to install. Available sets are exported from
-      the flake as packageSets.dev, packageSets.ops, and packageSets.teaching.
+      the flake as packageSets.shell, packageSets.dev, packageSets.ops, and
+      packageSets.teaching.
     '';
   };
 

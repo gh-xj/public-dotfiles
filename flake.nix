@@ -23,6 +23,17 @@
     packageSets = import ./packages;
     lib.packageSets = self.packageSets;
 
+    packages = forAllSystems (system:
+      let
+        pkgs = pkgsFor system;
+      in
+      {
+        shellTools = pkgs.buildEnv {
+          name = "xj-public-shell-tools";
+          paths = self.packageSets.shell pkgs;
+        };
+      });
+
     homeConfigurations.example = home-manager.lib.homeManagerConfiguration {
       pkgs = pkgsFor "aarch64-darwin";
       extraSpecialArgs = { inherit inputs self; };

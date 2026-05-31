@@ -59,17 +59,18 @@ task private:init
 
 The public flake exports named package sets:
 
+- `packageSets.shell`
 - `packageSets.dev`
 - `packageSets.ops`
 - `packageSets.teaching`
 
-The default Home Manager module installs all three. A host can select a subset:
+The default Home Manager module installs all four. A host can select a subset:
 
 ```nix
 {
   xj.publicDotfiles = {
     enable = true;
-    packageSets = [ "dev" "teaching" ];
+    packageSets = [ "shell" "dev" "teaching" ];
   };
 }
 ```
@@ -81,7 +82,8 @@ Downstream flakes can also import package sets directly:
 
 {
   home.packages =
-    inputs.public.packageSets.dev pkgs
+    inputs.public.packageSets.shell pkgs
+    ++ inputs.public.packageSets.dev pkgs
     ++ inputs.public.packageSets.ops pkgs;
 }
 ```

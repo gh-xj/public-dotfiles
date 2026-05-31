@@ -21,6 +21,7 @@ tasks:
     desc: Verify public dotfile config surfaces
     cmds:
       - task: nix:build
+      - task: verify:zsh
       - task: configctl:verify
       - tools/configctl/bin/configctl --json verify --profile full >/dev/null
       - task: security:approved-gh-account
@@ -82,6 +83,14 @@ tasks:
     cmds:
       - task: configctl:build
       - tools/configctl/bin/configctl app terminal verify
+
+  verify:zsh:
+    desc: Verify zsh startup and plugin contract
+    preconditions:
+      - sh: command -v zsh >/dev/null 2>&1
+        msg: "zsh is required to verify shell startup"
+    cmds:
+      - ./scripts/verify-zsh.sh
 
   shell:bench:
     desc: Benchmark zsh startup paths and shell init components

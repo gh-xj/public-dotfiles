@@ -110,18 +110,19 @@ to copy files instead, or `--dry-run` to preview actions.
 
 The public flake exports named package sets:
 
+- `packageSets.shell`
 - `packageSets.dev`
 - `packageSets.ops`
 - `packageSets.teaching`
 
-The default public Home Manager module composes all three for
+The default public Home Manager module composes all four for
 `homeConfigurations.example`. A host can choose a subset:
 
 ```nix
 {
   xj.publicDotfiles = {
     enable = true;
-    packageSets = [ "dev" "teaching" ];
+    packageSets = [ "shell" "dev" "teaching" ];
   };
 }
 ```

@@ -8,6 +8,7 @@ in
     ./agents
     ./config-files.nix
     ./packages.nix
+    ./shell.nix
     ./terminal.nix
   ];
 
