@@ -149,6 +149,11 @@ setup_plugins() {
 
     setup_atuin
 
+    # fzf-tab must load after compinit and before plugins that wrap widgets.
+    _source_zsh_file "${XJ_ZSH_FZF_TAB_PLUGIN:-}" || _source_zsh_plugin \
+        "fzf-tab/fzf-tab.plugin.zsh" \
+        "Aloxaf---fzf-tab/fzf-tab.plugin.zsh"
+
     _source_zsh_file "${XJ_ZSH_AUTOSUGGESTIONS_PLUGIN:-}" || _source_zsh_plugin \
         "zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" \
         "zsh-autosuggestions/zsh-autosuggestions.zsh"

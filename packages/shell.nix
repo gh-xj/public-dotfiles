@@ -12,6 +12,7 @@ pkgs: [
   pkgs.zsh
   pkgs."zsh-autopair"
   pkgs."zsh-autosuggestions"
+  pkgs."zsh-fzf-tab"
   pkgs."zsh-syntax-highlighting"
   pkgs."zsh-vi-mode"
 ]

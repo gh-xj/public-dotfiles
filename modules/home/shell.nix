@@ -11,6 +11,7 @@ in
       typeset -g XJ_ZSH_VI_MODE_PLUGIN="${pkgs."zsh-vi-mode"}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
       typeset -g XJ_ZSH_AUTOSUGGESTIONS_PLUGIN="${pkgs."zsh-autosuggestions"}/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
       typeset -g XJ_ZSH_AUTOPAIR_PLUGIN="${pkgs."zsh-autopair"}/share/zsh/zsh-autopair/autopair.zsh"
+      typeset -g XJ_ZSH_FZF_TAB_PLUGIN="${pkgs."zsh-fzf-tab"}/share/fzf-tab/fzf-tab.plugin.zsh"
       typeset -g XJ_ZSH_SYNTAX_HIGHLIGHTING_PLUGIN="${pkgs."zsh-syntax-highlighting"}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
     '';
   };

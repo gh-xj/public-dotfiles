@@ -58,6 +58,12 @@ printf "zsh-vi-mode=%s\n" "$+functions[zvm_select_vi_mode]"
 printf "autosuggestions=%s\n" "$+functions[_zsh_autosuggest_start]"
 printf "syntax-highlighting=%s\n" "$+functions[_zsh_highlight]"
 printf "autopair-widget=%s\n" "$+widgets[autopair-insert]"
+printf "fzf-tab-widget=%s\n" "$+widgets[fzf-tab-complete]"
+if bindkey "^I" | grep -q "fzf-tab-complete"; then
+  printf "fzf-tab-binding=1\n"
+else
+  printf "fzf-tab-binding=0\n"
+fi
 printf "atuin-widget=%s\n" "$+widgets[atuin-search]"
 printf "starship-prompt=%s\n" "$+functions[prompt_starship_precmd]"
 '
@@ -81,5 +87,7 @@ require_probe zsh-vi-mode 1
 require_probe autosuggestions 1
 require_probe syntax-highlighting 1
 require_probe autopair-widget 1
+require_probe fzf-tab-widget 1
+require_probe fzf-tab-binding 1
 require_probe atuin-widget 1
 require_probe starship-prompt 1
