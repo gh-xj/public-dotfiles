@@ -1,29 +1,16 @@
 version: "3"
 
-includes:
-  configctl:
-    taskfile: ./tools/configctl/Taskfile.yml
-    dir: ./tools/configctl
-
 tasks:
   install:
-    desc: Install public dotfiles and private-config when available
+    desc: Apply the local public Home Manager example
     cmds:
-      - task: configctl:build
-      - tools/configctl/bin/configctl home apply {{.CLI_ARGS}}
-
-  private:init:
-    desc: Scaffold a local-only private-config overlay repo
-    cmds:
-      - ./init-private-overlay.sh
+      - nix run github:nix-community/home-manager/master -- switch --flake .#example {{.CLI_ARGS}}
 
   dotfiles:verify:
     desc: Verify public dotfile config surfaces
     cmds:
       - task: nix:build
       - task: verify:zsh
-      - task: configctl:verify
-      - tools/configctl/bin/configctl --json verify --profile full >/dev/null
       - task: security:approved-gh-account
       - task: verify:lazygit
       - task: verify:nvim
@@ -69,20 +56,21 @@ tasks:
   verify:lazygit:
     desc: Verify lazygit config and required helpers
     cmds:
-      - task: configctl:build
-      - tools/configctl/bin/configctl app lazygit verify
+      - ruby -ryaml -e 'YAML.load_file(".config/lazygit/config.yml")'
+      - command -v lazygit
+      - command -v delta
+      - command -v difft
+      - command -v gh
 
   verify:nvim:
     desc: Verify Neovim starts with this config
     cmds:
-      - task: configctl:build
-      - tools/configctl/bin/configctl app nvim verify
+      - nvim --headless '+qa'
 
   verify:terminal:
     desc: Verify terminal app workflow
     cmds:
-      - task: configctl:build
-      - tools/configctl/bin/configctl app terminal verify
+      - ./scripts/verify-terminal.sh
 
   verify:zsh:
     desc: Verify zsh startup and plugin contract
@@ -123,10 +111,9 @@ tasks:
       - gitleaks detect --source . --redact --no-banner
 
   doctor:
-    desc: Run full configctl verification
+    desc: Run public dotfiles verification
     cmds:
-      - task: configctl:build
-      - tools/configctl/bin/configctl verify --profile full
+      - task: dotfiles:verify
 
   help:
     desc: Show available tasks

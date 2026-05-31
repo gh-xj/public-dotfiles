@@ -1,8 +1,0 @@
-schema_version = "configctl.workspaces.v1"
-
-[[workspaces]]
-name = "oss"
-local = "/tmp"
-external = "/private/tmp"
-mode = "link"
-required = false

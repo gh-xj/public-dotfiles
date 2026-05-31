@@ -36,37 +36,20 @@ here.
 
 ## Bootstrap Sequence
 
-Use the same command in both states:
+Build the public Home Manager example without applying it:
+
+```bash
+nix build .#homeConfigurations.example.activationPackage
+```
+
+To apply the public baseline directly, clone the repo, edit
+`hosts/example.nix` for the target macOS account, then run:
 
 ```bash
 task install
 ```
 
-If the machine only has `public-dotfiles`, that installs the public agent
-baseline and skips the private layer. If `private-config` is added later beside
-this repo, rerun the same command and it will layer in:
+For xj's real machines, `private-config` imports this public baseline and adds:
 
 - `~/.claude/settings.local.json`
 - plugins, skills, auth, trust lists, and provider overrides
-
-If the machine should keep a private overlay but cannot access the real private
-repo, run:
-
-```bash
-task private:init
-```
-
-That scaffolds a sibling `../private-config` as a local-only git repo. The
-scaffolded repo owns only the paths listed in `configctl/home.toml`. Add
-manifest entries as you create matching source files in the local overlay.
-
-Use flags only when needed:
-
-```bash
-task install -- --public-only
-task install -- --dry-run
-```
-
-If `PRIVATE_REPO_DIR` is explicitly set, a missing path is an error. If the
-default sibling `../private-config` is absent, install continues without the
-private overlay.
