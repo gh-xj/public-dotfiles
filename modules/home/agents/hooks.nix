@@ -6,7 +6,10 @@ in
 {
   config = lib.mkIf cfg.enable {
     home.file = {
-      ".claude/hooks".source = ../../../.claude/hooks;
+      ".claude/hooks" = {
+        source = ../../../.claude/hooks;
+        force = true;
+      };
       ".claude/settings.json".source = ../../../.claude/settings.json;
       ".claude/statusline-command.sh".source = ../../../.claude/statusline-command.sh;
     };

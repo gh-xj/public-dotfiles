@@ -9,7 +9,10 @@ in
       ".claude/CLAUDE.md".source = ../../../.claude/CLAUDE.md;
       ".codex/AGENTS.md".source = ../../../.claude/CLAUDE.md;
       ".codex/config.toml".source = lib.mkDefault ../../../.codex/config.toml;
-      ".codex/rules".source = ../../../.codex/rules;
+      ".codex/rules" = {
+        source = ../../../.codex/rules;
+        force = true;
+      };
     };
   };
 }
