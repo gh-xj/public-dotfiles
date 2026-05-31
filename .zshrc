@@ -50,6 +50,16 @@ setup_fzf() {
     _fzf_compgen_path() { fd --hidden --follow --exclude ".git" . "$1"; }
     _fzf_compgen_dir() { fd --type d --hidden --follow --exclude ".git" . "$1"; }
 
+    local fzf_bin="${commands[fzf]:-}"
+    if [[ -n "$fzf_bin" ]]; then
+        local fzf_cache="$HOME/.cache/fzf-init.zsh"
+        if [[ ! -f "$fzf_cache" || "$fzf_bin" -nt "$fzf_cache" ]]; then
+            mkdir -p "$HOME/.cache"
+            "$fzf_bin" --zsh >| "$fzf_cache" 2>/dev/null || true
+        fi
+        [[ -r "$fzf_cache" ]] && source "$fzf_cache" 2>/dev/null
+    fi
+
     # Carapace completion
     export CARAPACE_BRIDGES='zsh,bash'
     zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
@@ -114,7 +124,12 @@ setup_atuin() {
     fi
 
     [[ -r "$atuin_cache" ]] && source "$atuin_cache" 2>/dev/null
-    (( $+widgets[atuin-search] )) && bindkey '^r' atuin-search
+    if (( $+widgets[atuin-search] )); then
+        bindkey '^r' atuin-search
+        bindkey -M emacs '^r' atuin-search 2>/dev/null || true
+        bindkey -M viins '^r' atuin-search 2>/dev/null || true
+        bindkey -M vicmd '^r' atuin-search 2>/dev/null || true
+    fi
 }
 
 setup_plugins() {
@@ -147,6 +162,7 @@ setup_plugins() {
         "jeffreytse---zsh-vi-mode/zsh-vi-mode.plugin.zsh" \
         "jeffreytse---zsh-vi-mode/zsh-vi-mode.zsh"
 
+    setup_fzf
     setup_atuin
 
     # fzf-tab must load after compinit and before plugins that wrap widgets.
@@ -315,8 +331,6 @@ init() {
     fi
 
     setup_plugins
-
-    setup_fzf
     setup_utils
 
     if (( ! ${_XJ_KEYBINDINGS_READY:-0} )); then
