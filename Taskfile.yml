@@ -45,7 +45,7 @@ tasks:
       - |
         tmpdir="$(mktemp -d)"
         trap 'rm -rf "$tmpdir"' EXIT
-        env XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR="$tmpdir" \
+        env XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR="$tmpdir" XJ_PUBLIC_DOTFILES_MACOS_MAJOR_OVERRIDE=13 \
           ./scripts/bootstrap-macos.sh --darwin --dry-run --host-platform x86_64-darwin --skip-build --user example --home /Users/example
 
   verify:home-files:

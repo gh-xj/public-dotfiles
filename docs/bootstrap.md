@@ -31,6 +31,31 @@ The default `--install-nix` mode uses the official macOS daemon installer. Use
 `--install-nix=determinate` when you explicitly want the Determinate CLI
 installer instead.
 
+On Intel Macs running macOS older than 14, the bootstrap pins the official Nix
+installer to Nix `2.29.4`. The current upstream x86_64-darwin Nix binary can be
+built against macOS 14 symbols and fail on Ventura with a `dyld` symbol error.
+Override the default only when you know the target supports the selected Nix:
+
+```bash
+./scripts/bootstrap-macos.sh --install-nix --nix-version 2.29.4 --apply
+```
+
+## Recover A Failed macOS Nix Install
+
+If the upstream installer failed after creating `/nix`, clean the partial Nix
+state before retrying a pinned install. Follow the official Nix uninstall flow
+for macOS: remove the Nix launchd service, remove the `/nix` fstab/synthetic
+entries, and delete the Nix Store APFS volume. The public bootstrap intentionally
+stops when it sees `/nix/store` without a usable Nix profile, because blindly
+rerunning installers against a half-created APFS volume is harder to reason
+about than a clean retry.
+
+After cleanup, rerun:
+
+```bash
+./scripts/bootstrap-macos.sh --install-nix --apply
+```
+
 ## macOS System Phase
 
 The default bootstrap path is user-level Home Manager. To also build the public

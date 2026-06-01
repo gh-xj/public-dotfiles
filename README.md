@@ -47,8 +47,10 @@ system shell files. Use `--no-migrate-nix-darwin-etc` for a strict failure
 instead.
 
 On a stock Mac without Nix, use `--install-nix --apply` if you want the script
-to run the official macOS daemon installer before Home Manager. The script also
-prints the upstream install commands when Nix is missing.
+to run the official macOS daemon installer before Home Manager. On Intel Macs
+running macOS older than 14, the bootstrap pins the official installer to Nix
+`2.29.4` because newer x86_64-darwin binaries can require macOS 14 symbols. The
+script also prints the upstream install commands when Nix is missing.
 
 `--apply` backs up unmanaged files that already exist at Home Manager-owned
 paths with a `public-dotfiles-backup-<timestamp>` extension before linking the

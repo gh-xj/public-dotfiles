@@ -12,6 +12,7 @@ home_state_version="25.11"
 mode="dry-run"
 darwin_phase=0
 nix_install_mode="never"
+nix_install_version="${XJ_PUBLIC_DOTFILES_NIX_VERSION:-auto}"
 host_platform=""
 homebrew_prefix=""
 homebrew_install_mode="auto"
@@ -41,6 +42,7 @@ Options:
   --darwin                     Also build/apply the generated nix-darwin system host
   --install-nix[=official]     Install upstream Nix with the official macOS daemon installer if nix is missing
   --install-nix=determinate    Install Determinate Nix with its CLI installer if nix is missing
+  --nix-version VERSION        Pin the official Nix installer version (default: auto)
   --no-install-homebrew        With --darwin --apply, fail instead of installing missing Homebrew
   --host-platform SYSTEM       Override detected Nix Darwin system for dry-run testing
                                (aarch64-darwin or x86_64-darwin)
@@ -142,6 +144,50 @@ validate_host_platform() {
   esac
 }
 
+macos_major_version() {
+  if [ -n "${XJ_PUBLIC_DOTFILES_MACOS_MAJOR_OVERRIDE:-}" ]; then
+    printf '%s\n' "$XJ_PUBLIC_DOTFILES_MACOS_MAJOR_OVERRIDE"
+    return
+  fi
+
+  sw_vers -productVersion | awk -F. '{ print $1 }'
+}
+
+resolve_nix_install_version() {
+  local major
+
+  [ "$nix_install_version" = "auto" ] || return 0
+
+  major="$(macos_major_version)"
+  if [ "$host_platform" = "x86_64-darwin" ] && [ "$major" -lt 14 ]; then
+    # Current upstream x86_64-darwin Nix binaries require macOS 14+.
+    nix_install_version="2.29.4"
+  else
+    nix_install_version="latest"
+  fi
+}
+
+official_nix_install_url() {
+  if [ "$nix_install_version" = "latest" ]; then
+    printf '%s\n' "https://nixos.org/nix/install"
+  else
+    printf 'https://releases.nixos.org/nix/nix-%s/install\n' "$nix_install_version"
+  fi
+}
+
+guard_partial_nix_install() {
+  [ "$nix_install_mode" != "never" ] || return 0
+  [ -d /nix/store ] || return 0
+  [ ! -r /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ] || return 0
+
+  cat >&2 <<'EOF'
+bootstrap: detected a partial Nix install at /nix/store, but no usable Nix profile.
+bootstrap: clean the failed macOS Nix volume/launchd/fstab/synthetic.conf state before retrying.
+bootstrap: see docs/bootstrap.md "Recover A Failed macOS Nix Install".
+EOF
+  exit 1
+}
+
 require_sudo_for_darwin_apply() {
   [ "$darwin_phase" -eq 1 ] || return 0
   [ "$mode" = "apply" ] || return 0
@@ -202,6 +248,14 @@ parse_args() {
         ;;
       --install-nix=determinate)
         nix_install_mode="determinate"
+        ;;
+      --nix-version)
+        shift
+        [ "$#" -gt 0 ] || die "--nix-version requires a value"
+        nix_install_version="$1"
+        ;;
+      --nix-version=*)
+        nix_install_version="${1#--nix-version=}"
         ;;
       --no-install-homebrew)
         homebrew_install_mode="never"
@@ -312,6 +366,7 @@ preflight() {
   if [ -z "$homebrew_prefix" ]; then
     homebrew_prefix="$(default_homebrew_prefix_for_system "$host_platform")"
   fi
+  resolve_nix_install_version
 
   require_cmd git
   require_cmd curl
@@ -325,6 +380,7 @@ preflight() {
   info "macOS: $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
   info "detected arch: $uname_m"
   info "Nix host platform: $host_platform"
+  info "Nix installer version: $nix_install_version"
   info "repo: $repo_root"
   info "target Home Manager user: $target_user"
   info "target home: $target_home"
@@ -365,11 +421,11 @@ install_nix_if_requested() {
 
   if [ "$nix_install_mode" = "never" ]; then
     info "nix is missing; skipping install in dry preflight"
-    cat <<'EOF'
+    cat <<EOF
 
 Install options:
   official macOS daemon installer:
-    bash <(curl -L https://nixos.org/nix/install) --daemon
+    bash <(curl -L $(official_nix_install_url)) --daemon
 
   Determinate CLI installer:
     curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
@@ -379,10 +435,12 @@ EOF
     return
   fi
 
+  guard_partial_nix_install
+
   case "$nix_install_mode" in
     official)
-      info "installing Nix with the official macOS daemon installer"
-      bash <(curl -L https://nixos.org/nix/install) --daemon
+      info "installing Nix with the official macOS daemon installer from $(official_nix_install_url)"
+      bash <(curl -L "$(official_nix_install_url)") --daemon
       ;;
     determinate)
       info "installing Determinate Nix with its CLI installer"
