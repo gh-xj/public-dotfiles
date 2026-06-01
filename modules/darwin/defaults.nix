@@ -94,6 +94,8 @@ in
             "zh-Hans-US"
           ];
           AppleLocale = "en_US";
+          "com.apple.mouse.tapBehavior" = 1;
+          "com.apple.trackpad.scrolling" = true;
         };
 
         "com.apple.driver.AppleBluetoothMultitouch.mouse".MouseButtonMode = "TwoButton";

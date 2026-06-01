@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+
 if [ "$(uname -s)" != "Darwin" ]; then
   echo "macOS baseline inspection skipped on non-Darwin host"
   exit 0
@@ -110,6 +112,22 @@ print_script_commands() {
   done
 }
 
+print_current_host_input_defaults() {
+  local defaults_file="$repo_root/config/macos/current-host-defaults.tsv"
+  local domain key type value actual
+
+  [ -f "$defaults_file" ] || return 0
+  while IFS=$'\t' read -r domain key type value; do
+    case "$domain" in
+      ""|\#*)
+        continue
+        ;;
+    esac
+    actual="$(defaults -currentHost read "$domain" "$key" 2>/dev/null || printf '<unset>')"
+    printf '%-52s %s\n' "$key" "$actual"
+  done <"$defaults_file"
+}
+
 section "Display"
 system_profiler SPDisplaysDataType | sed -n '/Displays:/,$p' | sed -n '1,140p'
 displayplacer_cmd="$(find_cmd displayplacer || true)"
@@ -130,6 +148,9 @@ print_default "ApplePressAndHoldEnabled" NSGlobalDomain ApplePressAndHoldEnabled
 print_default "mouse scaling" .GlobalPreferences com.apple.mouse.scaling
 print_default "trackpad scaling" NSGlobalDomain com.apple.trackpad.scaling
 print_default "fn state" NSGlobalDomain com.apple.keyboard.fnState
+
+section "CurrentHost Input Defaults"
+print_current_host_input_defaults
 
 section "Input Sources"
 defaults export com.apple.HIToolbox - 2>/dev/null | plutil -p - 2>/dev/null | sed -n '1,220p' || true

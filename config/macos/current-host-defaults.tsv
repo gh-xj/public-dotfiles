@@ -1,0 +1,20 @@
+# domain	key	type	value
+# Per-host input defaults observed from the source Mac. These live in ByHost
+# preferences and are not fully covered by nix-darwin system.defaults.
+NSGlobalDomain	com.apple.mouse.tapBehavior	int	1
+NSGlobalDomain	com.apple.trackpad.enableSecondaryClick	int	1
+NSGlobalDomain	com.apple.trackpad.fiveFingerPinchSwipeGesture	int	2
+NSGlobalDomain	com.apple.trackpad.fourFingerHorizSwipeGesture	int	2
+NSGlobalDomain	com.apple.trackpad.fourFingerPinchSwipeGesture	int	2
+NSGlobalDomain	com.apple.trackpad.fourFingerVertSwipeGesture	int	2
+NSGlobalDomain	com.apple.trackpad.momentumScroll	int	1
+NSGlobalDomain	com.apple.trackpad.pinchGesture	int	1
+NSGlobalDomain	com.apple.trackpad.rotateGesture	int	1
+NSGlobalDomain	com.apple.trackpad.scrollBehavior	int	2
+NSGlobalDomain	com.apple.trackpad.threeFingerDragGesture	int	1
+NSGlobalDomain	com.apple.trackpad.threeFingerHorizSwipeGesture	int	0
+NSGlobalDomain	com.apple.trackpad.threeFingerTapGesture	int	0
+NSGlobalDomain	com.apple.trackpad.threeFingerVertSwipeGesture	int	0
+NSGlobalDomain	com.apple.trackpad.twoFingerDoubleTapGesture	int	1
+NSGlobalDomain	com.apple.trackpad.twoFingerFromRightEdgeSwipeGesture	int	3
+NSGlobalDomain	com.apple.trackpad.version	int	5

@@ -28,7 +28,7 @@ open_accessibility_settings() {
 }
 
 apply_spaces() {
-  local count missing
+  local count missing osascript_output osascript_status
 
   count="$(current_spaces_count)"
   if [ "$count" -ge "$desired" ]; then
@@ -43,7 +43,8 @@ apply_spaces() {
   fi
 
   missing=$((desired - count))
-  osascript <<EOF
+  set +e
+  osascript_output="$(osascript 2>&1 <<EOF
 set missingSpaces to $missing
 tell application "Finder" to set desktopBounds to bounds of window of desktop
 set clickX to (item 3 of desktopBounds) - 40
@@ -58,6 +59,22 @@ tell application "System Events"
   end repeat
 end tell
 EOF
+)"
+  osascript_status=$?
+  set -e
+
+  if [ "$osascript_status" -ne 0 ]; then
+    if printf '%s\n' "$osascript_output" | grep -Eq -- '(-25200|not authorized|is not allowed|assistive access|Accessibility)'; then
+      open_accessibility_settings
+      printf '%s\n' "Spaces apply was blocked by macOS automation permissions." >&2
+      printf '%s\n' "Grant Accessibility to the local terminal/automation context on the target Mac, then rerun: task spaces:apply" >&2
+      printf '%s\n' "If this was run over SSH, run the task once from a local GUI terminal on the target so macOS can attach the TCC grant to the right app." >&2
+      return 2
+    fi
+
+    printf '%s\n' "$osascript_output" >&2
+    return "$osascript_status"
+  fi
 }
 
 while [ "$#" -gt 0 ]; do

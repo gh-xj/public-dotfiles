@@ -31,6 +31,7 @@ These values were read from `/Users/xj` and encoded in
 | Language/input | English plus Simplified Chinese language list; U.S. keyboard plus Simplified Chinese Shuangpin input source |
 | Mouse / trackpad speed | mouse scaling `3`, trackpad scaling `3` |
 | Trackpad | tap to click, right click, three-finger drag, light click thresholds, four-finger gestures, three-finger horizontal/vertical gestures disabled |
+| CurrentHost input defaults | ByHost trackpad gesture keys in `config/macos/current-host-defaults.tsv`, applied by `task input:apply` and by `bootstrap-macos.sh --darwin --apply` |
 | Magic Mouse | two-button mode |
 | Symbolic hotkeys | local Apple symbolic hotkey enablement and parameters copied for ids `15-31`, `52`, `60-65`, `79-82`, `118-122`, `164`, `184` |
 | Appearance | automatic light/dark switching enabled |
@@ -113,6 +114,7 @@ Raycast preferences, Raycast extensions, and Raycast script-command directories.
 | `task verify:bootstrap-darwin` | The generated nix-darwin bootstrap host still builds |
 | `task verify:display-layout` | Known display serials match the displayplacer layout policy |
 | `task verify:macos-defaults` | The current host matches the public macOS defaults baseline |
+| `task input:apply` | Apply ByHost/currentHost mouse, keyboard, and trackpad defaults |
 | `task verify:raycast` | The current host matches public-safe Raycast preferences |
 | `task verify:raycast-extensions` | Desired public Raycast Store extensions are installed |
 | `task verify:spaces` | Mission Control Spaces count matches the desired count |

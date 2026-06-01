@@ -96,6 +96,10 @@ main() {
 
   if [ "$missing" -gt 0 ]; then
     printf 'missing Raycast extensions: %s\n' "$missing" >&2
+    if [ "$open_missing" -eq 1 ]; then
+      printf 'Opened Raycast install intents. Accept installs in Raycast, then rerun: task verify:raycast-extensions\n' >&2
+      exit 0
+    fi
     exit 1
   fi
 

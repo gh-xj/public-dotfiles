@@ -111,6 +111,8 @@ assert_default com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeF
 assert_default com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerHorizSwipeGesture 0
 assert_default com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerVertSwipeGesture 0
 
+"$(cd -- "$(dirname -- "$0")" && pwd)/apply-current-host-defaults.sh" --verify
+
 assert_plist_raw com.apple.HIToolbox AppleCurrentKeyboardLayoutInputSourceID com.apple.keylayout.US
 assert_plist_raw com.apple.HIToolbox "AppleEnabledInputSources.0.KeyboardLayout Name" U.S.
 assert_plist_raw com.apple.HIToolbox "AppleEnabledInputSources.2.Bundle ID" com.apple.inputmethod.SCIM
