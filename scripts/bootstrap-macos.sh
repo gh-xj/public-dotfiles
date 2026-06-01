@@ -410,6 +410,7 @@ $darwin_package
         ({ ... }: {
           xj.publicDotfiles = {
             enable = true;
+            repoRoot = $(nix_string "$repo_root");
             packageSets = [ $(nix_list_strings "${package_sets[@]}")];
           };
 

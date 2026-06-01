@@ -1,7 +1,10 @@
 { ... }:
 
 {
-  xj.publicDotfiles.enable = true;
+  xj.publicDotfiles = {
+    enable = true;
+    repoRoot = "/Users/example/public-dotfiles";
+  };
 
   home = {
     username = "example";

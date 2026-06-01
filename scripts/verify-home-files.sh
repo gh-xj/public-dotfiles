@@ -13,8 +13,22 @@ home_files="$(readlink "$generation/home-files")"
 
 assert_file() {
   local path="$1"
-  if [ ! -e "$home_files/$path" ]; then
+  if [ ! -e "$home_files/$path" ] && [ ! -L "$home_files/$path" ]; then
     printf 'missing generated Home Manager file: %s\n' "$path" >&2
+    exit 1
+  fi
+}
+
+assert_symlink_target() {
+  local path="$1"
+  local expected="$2"
+  local actual final
+
+  assert_file "$path"
+  actual="$(readlink "$home_files/$path" 2>/dev/null || true)"
+  final="$(readlink "$actual" 2>/dev/null || printf '%s' "$actual")"
+  if [ "$final" != "$expected" ]; then
+    printf 'unexpected generated link target for %s: expected %s got %s\n' "$path" "$expected" "$final" >&2
     exit 1
   fi
 }
@@ -30,18 +44,26 @@ assert_line() {
 }
 
 assert_file ".amethyst.yml"
-assert_file ".config/amethyst/amethyst.yml"
+assert_file ".config/amethyst"
 assert_file ".config/bat/config"
 assert_file ".config/ghostty/config"
-assert_file ".config/karabiner/karabiner.json"
+assert_file ".config/karabiner"
 assert_file ".config/lazygit/config.yml"
-assert_file ".config/nvim/init.lua"
-assert_file ".config/opencode/opencode.json"
+assert_file ".config/nvim"
+assert_file ".config/opencode"
 assert_file ".config/starship.toml"
 assert_file ".config/yazi/yazi.toml"
 assert_file ".tmux.conf"
 assert_file ".zprofile"
 assert_file ".zshrc"
+
+assert_symlink_target ".config/amethyst" "/Users/example/public-dotfiles/.config/amethyst"
+assert_symlink_target ".config/karabiner" "/Users/example/public-dotfiles/.config/karabiner"
+assert_symlink_target ".config/nvim" "/Users/example/public-dotfiles/.config/nvim"
+assert_symlink_target ".config/opencode" "/Users/example/public-dotfiles/.config/opencode"
+assert_symlink_target ".amethyst.yml" "/Users/example/public-dotfiles/.config/amethyst/amethyst.yml"
+assert_symlink_target ".zprofile" "/Users/example/public-dotfiles/.zprofile"
+assert_symlink_target ".zshrc" "/Users/example/public-dotfiles/.zshrc"
 
 assert_line ".config/ghostty/config" "font-family = RecMonoDuotone Nerd Font"
 assert_line ".config/ghostty/config" "theme = light:Atom One Light,dark:One Dark Two"
