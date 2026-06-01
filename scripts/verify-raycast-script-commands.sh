@@ -105,7 +105,7 @@ while IFS=$'\t' read -r script title mode package boundary notes; do
   esac
 done <"$ledger"
 
-find "$scripts_dir" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' -o -name '*.js' \) -exec basename {} \; |
+find -L "$scripts_dir" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' -o -name '*.js' \) -exec basename {} \; |
   sort >"$tmp_actual"
 sort -o "$tmp_expected" "$tmp_expected"
 

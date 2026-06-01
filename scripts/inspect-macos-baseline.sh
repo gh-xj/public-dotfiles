@@ -119,7 +119,7 @@ print_script_commands() {
   for dir in "${dirs[@]}"; do
     [ -d "$dir" ] || continue
     printf '\n%s\n' "$dir"
-    find "$dir" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' \) -print |
+    find -L "$dir" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' \) -print |
       sort |
       while IFS= read -r script_file; do
         title="$(sed -n 's/^# @raycast.title //p' "$script_file" | head -1)"
