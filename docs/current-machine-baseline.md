@@ -113,6 +113,12 @@ path `~/public-dotfiles/.config/raycast/scripts`. The Home Manager live path
 through a generated Nix store path and should not be the durable Raycast UI
 registration target.
 
+Manual completion record: during the 2026-06-01 MacBook bootstrap experiment,
+xj manually added the stable public Script Directory in Raycast and accepted
+that per-command aliases/hotkeys are Raycast-owned runtime state. The public
+repo records the desired script files and setup path, but it does not treat
+Raycast's encrypted/app-managed hotkey state as public dotfile material.
+
 Scripts that reveal private paths, employer context, Bluetooth device IDs,
 personal workflow repos, or private CLI dependencies stay private. The current
 private script directory includes legacy VSCode/Zed workspace commands,
@@ -130,7 +136,9 @@ gate.
 Run `task raycast:runtime-check` to distinguish repo-owned script sync from
 Raycast-owned runtime state. Run `task raycast:open-script-setup` to copy the
 stable Script Directory path and open Raycast Settings for the interactive
-directory/hotkey setup.
+directory/hotkey setup. After the user confirms the commands appear in Raycast
+search, the remaining runtime-check warning about plaintext visibility is
+expected and non-blocking.
 
 Spaces creation is also outside the blocking gate. Run
 `task spaces:request-permission` to open macOS Accessibility settings for the

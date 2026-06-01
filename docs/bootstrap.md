@@ -97,6 +97,37 @@ Verify the user-level surface after Home Manager apply:
 task dotfiles:verify-user
 ```
 
+## Raycast Script Commands
+
+Home Manager syncs the public Script Command files, but Raycast still needs one
+interactive app-owned step before those commands are searchable and before
+their aliases/hotkeys can be configured.
+
+After `--apply`, run:
+
+```bash
+task raycast:open-script-setup
+```
+
+This copies the stable Script Directory path and opens Raycast Settings. In the
+Raycast UI, add this directory under `Extensions -> Script Commands`:
+
+```text
+~/public-dotfiles/.config/raycast/scripts
+```
+
+Use the repo path above, not `~/.config/raycast/scripts`, because the Home
+Manager live path points through a generated Nix store path. After adding the
+directory, configure per-command aliases and hotkeys from Raycast search with
+`Configure Command`.
+
+`task raycast:runtime-check` verifies the repo-owned files and reports this
+runtime boundary. It may still warn that Script Directory registration,
+aliases, and hotkeys are not visible in plaintext defaults. That warning is
+expected after manual setup; Raycast keeps that state in app-managed data or
+encrypted `.rayconfig` exports. Treat user confirmation that the commands
+appear in Raycast search as the acceptance signal.
+
 For the public app ledger as well:
 
 ```bash
