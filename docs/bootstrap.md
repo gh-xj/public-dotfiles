@@ -98,11 +98,11 @@ come from stock macOS plus the Nix installer. The bootstrap backs them up to
 generated system shell files. Use `--no-migrate-nix-darwin-etc` when you want
 to inspect and rename those files manually.
 
-This command still proves the public Home Manager example evaluates and builds
-without touching your home directory:
+This command still proves the host-native public Home Manager example evaluates
+and builds without touching your home directory:
 
 ```bash
-NIX_CONFIG='experimental-features = nix-command flakes' nix build github:gh-xj/public-dotfiles#homeConfigurations.example.activationPackage
+NIX_CONFIG='experimental-features = nix-command flakes' nix build "$(./scripts/home-config-attr.sh activation-package)"
 ```
 
 ## Apply With Home Manager
@@ -215,9 +215,10 @@ Pass other Home Manager flags after `--`:
 ./scripts/bootstrap-macos.sh --apply -- --show-trace
 ```
 
-The public flake also exports `homeConfigurations.example`. The checked-in host
-uses `home.username = "example"` and `home.homeDirectory = "/Users/example"` so
-it is safe to build without assuming xj's local account. Apply it directly only
+The public flake exports `homeConfigurations.example` for Apple Silicon and
+`homeConfigurations.example-x86_64` for Intel. The checked-in hosts use
+`home.username = "example"` and `home.homeDirectory = "/Users/example"` so they
+are safe to build without assuming xj's local account. Apply one directly only
 in a matching throwaway test account:
 
 ```bash

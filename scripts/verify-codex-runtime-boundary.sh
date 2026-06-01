@@ -61,7 +61,8 @@ if grep -En '(/Users/xj/|/Volumes/|private-config|xj-private-brain)' "$template"
   fail "$template contains machine-local or private path state"
 fi
 
-generation="$(nix_cmd build --no-link --print-out-paths .#homeConfigurations.example.activationPackage)"
+activation_attr="$("$repo_root/scripts/home-config-attr.sh" activation-package)"
+generation="$(nix_cmd build --no-link --print-out-paths "$activation_attr")"
 home_files="$(readlink "$generation/home-files")"
 
 for path in ".codex/AGENTS.md" ".codex/rules/default.rules"; do

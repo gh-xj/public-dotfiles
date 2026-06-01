@@ -8,7 +8,8 @@ nix_cmd() {
   nix --extra-experimental-features "nix-command flakes" "$@"
 }
 
-generation="$(nix_cmd build --no-link --print-out-paths .#homeConfigurations.example.activationPackage)"
+activation_attr="$("$repo_root/scripts/home-config-attr.sh" activation-package)"
+generation="$(nix_cmd build --no-link --print-out-paths "$activation_attr")"
 home_files="$(readlink "$generation/home-files")"
 
 assert_file() {

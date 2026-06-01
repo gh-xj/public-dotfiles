@@ -30,9 +30,11 @@ plugin_paths_file="$tmpdir/plugin-paths.zsh"
 shell_tools_path=""
 
 if command -v nix >/dev/null 2>&1; then
+  activation_attr="$("$repo_root/scripts/home-config-attr.sh" activation-package)"
+  config_attr="$("$repo_root/scripts/home-config-attr.sh" config)"
   shell_tools_path="$(nix_cmd build --no-link --print-out-paths .#shellTools)"
-  nix_cmd build --no-link .#homeConfigurations.example.activationPackage >/dev/null
-  nix_cmd eval --raw '.#homeConfigurations.example' \
+  nix_cmd build --no-link "$activation_attr" >/dev/null
+  nix_cmd eval --raw "$config_attr" \
     --apply 'x: x.config.xdg.configFile."xj/zsh/plugin-paths.zsh".text' \
     > "$plugin_paths_file"
 else

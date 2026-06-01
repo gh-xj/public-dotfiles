@@ -58,10 +58,11 @@ public baseline. Use `--no-backup` when you want Home Manager to fail on those
 conflicts instead.
 
 You can still build the public Home Manager example without touching your home
-directory:
+directory. The helper selects `example` on Apple Silicon and `example-x86_64`
+on Intel:
 
 ```bash
-NIX_CONFIG='experimental-features = nix-command flakes' nix build github:gh-xj/public-dotfiles#homeConfigurations.example.activationPackage
+NIX_CONFIG='experimental-features = nix-command flakes' nix build "$(./scripts/home-config-attr.sh activation-package)"
 ```
 
 Apply the checked-in host only from a matching test account named `example`, or
@@ -195,7 +196,7 @@ adapter. Those are not global home skill trees.
 The public repo should be enough to restore the public-safe parts of xj's
 operating environment on a clean machine.
 
-- build the example with `NIX_CONFIG='experimental-features = nix-command flakes' nix build .#homeConfigurations.example.activationPackage`
+- build the host-native example with `NIX_CONFIG='experimental-features = nix-command flakes' nix build "$(./scripts/home-config-attr.sh activation-package)"`
 - run `./scripts/bootstrap-macos.sh` first on a new macOS machine
 - use `./scripts/bootstrap-macos.sh --apply` for a real target user
 - use `./scripts/bootstrap-macos.sh --darwin --apply` when the public

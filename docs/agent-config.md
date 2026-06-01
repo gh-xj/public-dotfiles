@@ -57,7 +57,7 @@ here.
 Build the public Home Manager example without applying it:
 
 ```bash
-nix build .#homeConfigurations.example.activationPackage
+nix build "$(./scripts/home-config-attr.sh activation-package)"
 ```
 
 To apply the public baseline directly, clone the repo, edit

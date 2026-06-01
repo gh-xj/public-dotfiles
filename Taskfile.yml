@@ -10,7 +10,9 @@ tasks:
   install:
     desc: Apply the local public Home Manager example
     cmds:
-      - nix {{.NIX_FLAGS}} run github:nix-community/home-manager/master -- switch --flake .#example {{.CLI_ARGS}}
+      - |
+        config_name="$(./scripts/home-config-attr.sh name)"
+        nix {{.NIX_FLAGS}} run github:nix-community/home-manager/master -- switch --flake ".#$config_name" {{.CLI_ARGS}}
 
   dotfiles:verify:
     desc: Verify public dotfile config surfaces
@@ -171,7 +173,9 @@ tasks:
       - sh: command -v nix >/dev/null 2>&1
         msg: "nix is required to build the public dotfiles flake"
     cmds:
-      - nix {{.NIX_FLAGS}} build --no-link .#homeConfigurations.example.activationPackage
+      - |
+        activation_attr="$(./scripts/home-config-attr.sh activation-package)"
+        nix {{.NIX_FLAGS}} build --no-link "$activation_attr"
 
   verify:lazygit:
     desc: Verify lazygit config and required helpers
