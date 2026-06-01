@@ -58,7 +58,7 @@ Some state cannot be restored silently from an SSH-only bootstrap:
 | Raycast Script Command directory and command hotkeys | Raycast stores registration, aliases, and hotkeys in app-managed/encrypted runtime state | `task raycast:open-script-setup`, then user confirms commands appear in Raycast search |
 | Raycast Store extensions | Raycast owns Store install confirmation and extension runtime state | `task raycast:open-extension-installs`, then `task verify:raycast-extensions` |
 | Mission Control Spaces | creation requires Accessibility and Mission Control UI automation | `task spaces:request-permission`, then `task spaces:apply` |
-| Trackpad live reload | WindowServer may keep stale `AppleMultitouchDevice` preferences until a GUI/sudo reload or logout/login | `task input:apply`, then `task input:verify` |
+| Trackpad live reload | WindowServer may keep stale `AppleMultitouchDevice` preferences until a GUI/sudo reload or logout/login | `task input:reload-live`, then `task input:verify` |
 
 The repo should make these boundaries explicit. A bootstrap can be excellent
 without pretending macOS permission prompts and app-owned confirmation flows are

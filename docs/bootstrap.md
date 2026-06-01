@@ -164,6 +164,18 @@ Verify the full public surface after the Darwin/Homebrew phase:
 task dotfiles:verify
 ```
 
+If verification reports a live `AppleMultitouchDevice` mismatch while the
+persisted trackpad defaults are correct, run this from the target Mac or an
+interactive SSH session:
+
+```bash
+task input:reload-live
+task input:verify
+```
+
+If the live state still does not change, log out and back in before rerunning
+`task input:verify`.
+
 Pass other Home Manager flags after `--`:
 
 ```bash

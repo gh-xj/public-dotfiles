@@ -9,12 +9,15 @@ mode="verify"
 
 usage() {
   cat <<'EOF'
-Usage: scripts/apply-current-host-defaults.sh [--verify|--apply]
+Usage: scripts/apply-current-host-defaults.sh [--verify|--apply|--reload-live]
 
 Verify or apply public-safe macOS input defaults. These settings cover input
 behavior that nix-darwin's ordinary defaults do not fully converge, such as
 tap-to-click and trackpad gestures. Verification checks both persisted defaults
 and the live AppleMultitouchDevice state.
+
+--reload-live prompts for sudo when needed and asks the GUI user session to
+reload input preferences without rewriting defaults.
 EOF
 }
 
@@ -186,7 +189,8 @@ verify_live_trackpad_defaults() {
 
   if [ "$failed" -ne 0 ]; then
     printf '%s\n' "Persisted defaults may be correct, but the live AppleMultitouchDevice state has not reloaded." >&2
-    printf '%s\n' "Run a sudo-backed bootstrap/apply from the target Mac, or log out/in after applying input defaults." >&2
+    printf '%s\n' "Run: task input:reload-live" >&2
+    printf '%s\n' "If that still does not converge, log out/in after applying input defaults." >&2
     return 1
   fi
 
@@ -194,6 +198,7 @@ verify_live_trackpad_defaults() {
 }
 
 activate_input_defaults() {
+  local sudo_mode="${1:-noninteractive}"
   local activate_settings="/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings"
   local uid
 
@@ -207,6 +212,8 @@ activate_input_defaults() {
   uid="$(id -u)"
   if sudo -n true >/dev/null 2>&1; then
     sudo launchctl asuser "$uid" "$activate_settings" -u -forcePrefUpdate >/dev/null 2>&1 || true
+  elif [ "$sudo_mode" = "interactive" ]; then
+    sudo launchctl asuser "$uid" "$activate_settings" -u -forcePrefUpdate >/dev/null 2>&1 || true
   fi
 }
 
@@ -217,6 +224,9 @@ while [ "$#" -gt 0 ]; do
       ;;
     --apply)
       mode="apply"
+      ;;
+    --reload-live)
+      mode="reload-live"
       ;;
     -h|--help)
       usage
@@ -243,6 +253,12 @@ case "$mode" in
     activate_input_defaults
     verify_live_trackpad_defaults
     echo "input defaults applied"
+    ;;
+  reload-live)
+    killall cfprefsd >/dev/null 2>&1 || true
+    activate_input_defaults interactive
+    verify_live_trackpad_defaults
+    echo "live input defaults reloaded"
     ;;
   verify)
     visit_defaults currentHost "$defaults_file" verify_one

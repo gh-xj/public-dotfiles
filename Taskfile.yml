@@ -73,6 +73,11 @@ tasks:
     cmds:
       - ./scripts/apply-current-host-defaults.sh --apply
 
+  input:reload-live:
+    desc: Prompt for sudo and reload live trackpad state
+    cmds:
+      - ./scripts/apply-current-host-defaults.sh --reload-live
+
   input:verify:
     desc: Verify persisted and live mouse, keyboard, and trackpad defaults
     cmds:

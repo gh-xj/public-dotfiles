@@ -166,7 +166,8 @@ script directories are omitted unless
 | `task verify:bootstrap-darwin` | The generated nix-darwin bootstrap host still builds |
 | `task verify:display-layout` | Known display serials match the displayplacer layout policy |
 | `task verify:macos-defaults` | The current host matches the public macOS defaults baseline |
-| `task input:apply` | Apply persisted input defaults and reload live trackpad state |
+| `task input:apply` | Apply persisted input defaults and attempt a non-interactive live trackpad reload |
+| `task input:reload-live` | Prompt for sudo and ask the GUI user session to reload live trackpad state |
 | `task input:verify` | Verify persisted input defaults plus live `AppleMultitouchDevice` state |
 | `task verify:raycast` | The current host matches public-safe Raycast preferences |
 | `task verify:raycast-scripts` | Public Raycast Script Command files match the ledger and contain no obvious private strings |
