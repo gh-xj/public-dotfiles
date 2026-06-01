@@ -51,7 +51,7 @@ Project-local router for restoring and auditing the public, reusable
 | Defaults show correct but behavior differs | live state such as `ioreg`, app cache, GUI session, or TCC |
 | Display resolution differs | `config/macos/display-layouts.tsv` and `task verify:display-layout` |
 | Tap-to-click or gestures differ | `task input:verify` and live `AppleMultitouchDevice` |
-| Raycast command/settings drift | `modules/darwin/defaults.nix`, `.config/raycast/scripts`, and Raycast verifiers |
+| Raycast command/settings drift | `modules/darwin/defaults.nix`, `config/raycast/script-commands.tsv`, `.config/raycast/scripts`, and Raycast verifiers |
 | Store extension missing | `config/raycast/extensions.tsv`; open install intents, do not copy caches |
 | Spaces count differs | nonblocking `task verify:spaces`; apply needs Accessibility |
 | Package/app drift | Nix package sets, `Brewfile`/Homebrew module, or npm globals ledger |
@@ -66,6 +66,7 @@ Use the narrowest gate first, then the full gate:
 | Display policy | `task verify:display-layout` |
 | Input/trackpad defaults | `task input:verify` |
 | Raycast preferences | `task verify:raycast` |
+| Raycast script commands | `task verify:raycast-scripts` |
 | Raycast Store extensions | `task verify:raycast-extensions` |
 | Spaces | `task verify:spaces` |
 | General repo health | `task dotfiles:verify` |
@@ -86,6 +87,7 @@ URLs, headers, generated config, or token-adjacent surfaces.
 
 - Source-vs-target baseline diff is still manual; no JSON snapshot comparator
   exists yet.
-- Raycast Store extension install and Spaces creation remain interactive.
+- Raycast Store extension install, Script Command directory registration, and
+  Spaces creation remain interactive.
 - Trackpad live reload may require sudo GUI-session context or logout/login on
   some target Macs.

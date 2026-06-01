@@ -93,12 +93,30 @@ print_raycast_extensions() {
 
 print_script_commands() {
   local dir
-
-  for dir in \
-    "$HOME/.config/raycast/scripts" \
-    "$HOME/.config/xj_raycast_scripts" \
+  local ledger="$repo_root/config/raycast/script-commands.tsv"
+  local script title mode package boundary notes
+  local dirs=(
+    "$HOME/.config/raycast/scripts"
     "$HOME/.config/xj_public_raycast_scripts"
-  do
+  )
+
+  if [ -f "$ledger" ]; then
+    printf '\ndesired public commands from repo\n'
+    while IFS=$'\t' read -r script title mode package boundary notes; do
+      case "$script" in
+        ""|\#*)
+          continue
+          ;;
+      esac
+      printf '  %s - %s\n' "$script" "$title"
+    done <"$ledger"
+  fi
+
+  if [ "${XJ_PUBLIC_DOTFILES_INSPECT_PRIVATE_RAYCAST:-0}" = "1" ]; then
+    dirs+=("$HOME/.config/xj_raycast_scripts")
+  fi
+
+  for dir in "${dirs[@]}"; do
     [ -d "$dir" ] || continue
     printf '\n%s\n' "$dir"
     find "$dir" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' \) -print |
@@ -110,6 +128,11 @@ print_script_commands() {
         printf '\n'
       done
   done
+
+  if [ -d "$HOME/.config/xj_raycast_scripts" ] &&
+    [ "${XJ_PUBLIC_DOTFILES_INSPECT_PRIVATE_RAYCAST:-0}" != "1" ]; then
+    printf '\nprivate Raycast script directory omitted; set XJ_PUBLIC_DOTFILES_INSPECT_PRIVATE_RAYCAST=1 for local-only triage\n'
+  fi
 }
 
 print_current_host_input_defaults() {

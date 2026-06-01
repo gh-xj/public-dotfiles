@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 # @raycast.schemaVersion 1
-# @raycast.title Open ChatGPT
+# @raycast.title command open chat
 # @raycast.mode silent
-# @raycast.packageName Public Dotfiles
+# @raycast.currentDirectoryPath ~
+# @raycast.packageName Raycast Scripts
 
 set -euo pipefail
 

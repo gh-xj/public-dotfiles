@@ -1,0 +1,8 @@
+# script	title	mode	package	boundary	notes
+command-open-chat.sh	command open chat	silent	Raycast Scripts	public	Open the public ChatGPT app.
+command-open-chrome.sh	command open chrome	silent	Raycast Scripts	public	Open Google Chrome and create a window when Chrome has none.
+command-open-ghostty.sh	command open ghostty terminal	silent	Raycast Scripts	public	Open Ghostty with the source-Mac command title used for Raycast search/hotkeys.
+command-open-terminal.sh	command open terminal	silent	Raycast Scripts	public	Open Ghostty as the public terminal app.
+command-switch-to-input-cn.sh	switch input source to cn	silent	Raycast Scripts	public	Switch to the configured Chinese input source through the system shortcut.
+insert-current-date.sh	Insert Current Date	silent	Public Dotfiles	public	Type the current date as YYYY-MM-DD.
+insert-current-datetime.sh	Insert Current DateTime	silent	Public Dotfiles	public	Type the current date and time as YYYY-MM-DD HH:MM:SS.

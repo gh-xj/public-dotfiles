@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 # @raycast.schemaVersion 1
-# @raycast.title Switch Input to Shuangpin
+# @raycast.title switch input source to cn
 # @raycast.mode silent
-# @raycast.packageName Public Dotfiles
+# @raycast.currentDirectoryPath ~
+# @raycast.packageName Raycast Scripts
 
 set -euo pipefail
 

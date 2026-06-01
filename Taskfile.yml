@@ -20,6 +20,7 @@ tasks:
       - task: verify:display-layout
       - task: verify:macos-defaults
       - task: verify:raycast
+      - task: verify:raycast-scripts
       - task: verify:terminal
       - task: secrets:staged
       - task: secrets:full
@@ -74,6 +75,11 @@ tasks:
     desc: Verify public-safe Raycast preferences
     cmds:
       - ./scripts/verify-raycast-preferences.sh
+
+  verify:raycast-scripts:
+    desc: Verify public Raycast Script Commands
+    cmds:
+      - ./scripts/verify-raycast-script-commands.sh
 
   verify:raycast-extensions:
     desc: Check desired Raycast Store extensions

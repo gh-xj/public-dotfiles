@@ -45,6 +45,10 @@ in
         source = repoPath ".config/raycast/scripts";
         force = true;
       };
+      "xj_public_raycast_scripts" = {
+        source = repoPath ".config/raycast/scripts";
+        force = true;
+      };
       "starship.toml".source = ../../.config/starship.toml;
       "yazi" = {
         source = ../../.config/yazi;

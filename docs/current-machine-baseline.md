@@ -17,7 +17,7 @@ For the layer model used when source and target Macs disagree, see
 | macOS Dock/Finder/keyboard/mouse/trackpad defaults | nix-darwin `system.defaults` | TCC grants and login-item consent |
 | Display layout / resolution | `displayplacer` is installed, known display serials are applied and verified | Unknown display hardware is inspected but not changed |
 | GUI app install ledger | nix-darwin Homebrew module | App sessions, sync accounts, caches |
-| Raycast | App install, public-safe preferences, repo-owned script commands, and a desired Store extension ledger | Raycast account DB, extension cache, extension credentials, `raycast_env` |
+| Raycast | App install, public-safe preferences, repo-owned script commands, a public script-command ledger, and a desired Store extension ledger | Raycast account DB, extension cache, extension credentials, `raycast_env`, encrypted `.rayconfig` exports |
 | CLI packages | Nix package sets first | Per-account credentials and generated caches |
 
 ## macOS Defaults
@@ -81,15 +81,37 @@ The durable public baseline is:
 2. Apply public-safe Raycast preferences: compact mode, Vim navigation,
    dark/light bundled themes, `Command-Space` hotkey, favorite visibility,
    root search sensitivity, quicklink behavior, and onboarding state.
-3. Link public script commands at `~/.config/raycast/scripts`.
-4. Track desired public Store extensions in `config/raycast/extensions.tsv`.
-5. Keep `raycast_env`, extension credentials, account sync, and private
+3. Link public script commands at `~/.config/raycast/scripts` and the
+   compatibility path `~/.config/xj_public_raycast_scripts`.
+4. Track desired public script commands in `config/raycast/script-commands.tsv`.
+5. Track desired public Store extensions in `config/raycast/extensions.tsv`.
+6. Keep `raycast_env`, extension credentials, account sync, encrypted Raycast
+   exports, and private
    workflow scripts in `private-config`.
 
 The public script-command set currently covers opening Chrome, ChatGPT, and
-Ghostty; inserting date/datetime strings; and switching to the Shuangpin input
-source. Scripts that reveal private paths, employer context, Bluetooth device
-IDs, or personal workflow repos stay private.
+Ghostty; opening the public terminal app through Ghostty; inserting
+date/datetime strings; and switching to the Chinese input source. The Ghostty
+command keeps the source-Mac title `command open ghostty terminal` because that
+title is part of xj's Raycast search and hotkey muscle memory.
+
+Raycast script source and metadata are public-safe when they contain no private
+paths, secrets, employer context, device identifiers, or account-bound
+provider settings. Raycast command aliases and hotkeys are also not inherently
+sensitive, but Raycast stores them in app-managed Settings/Aliases/Hotkeys
+state rather than in the plain `com.raycast.macos` defaults this repo can
+write. Raycast's public manual documents two stable paths: add a Script
+Directory from Settings (<https://manual.raycast.com/script-commands>), and
+export/import encrypted `.rayconfig` files that can include Settings, Aliases,
+and Hotkeys (<https://manual.raycast.com/import-export>). Keep encrypted
+exports out of this public repo.
+
+Scripts that reveal private paths, employer context, Bluetooth device IDs,
+personal workflow repos, or private CLI dependencies stay private. The current
+private script directory includes legacy VSCode/Zed workspace commands,
+Numbers/Godspeed helpers, Feishu/Lark helpers, Bluetooth device selectors, and
+personal document automation; those should be migrated one-by-one only after
+their dependencies and paths are made public-safe.
 
 Raycast Store extensions are not copied from caches. Run
 `task verify:raycast-extensions` to list missing desired extensions, or
@@ -108,7 +130,9 @@ Run `task inspect:macos-baseline` on any Mac to print the public-safe inventory
 used for discrepancy triage. It reports display hardware and displayplacer
 state, global keyboard/mouse defaults, persisted input defaults, live trackpad
 state, input sources, Dock items, Spaces count, Raycast preferences, Raycast
-extensions, and Raycast script-command directories.
+extensions, and public Raycast script-command directories. Private Raycast
+script directories are omitted unless
+`XJ_PUBLIC_DOTFILES_INSPECT_PRIVATE_RAYCAST=1` is set for local-only triage.
 
 ## Verification
 
@@ -121,6 +145,7 @@ extensions, and Raycast script-command directories.
 | `task input:apply` | Apply persisted input defaults and reload live trackpad state |
 | `task input:verify` | Verify persisted input defaults plus live `AppleMultitouchDevice` state |
 | `task verify:raycast` | The current host matches public-safe Raycast preferences |
+| `task verify:raycast-scripts` | Public Raycast Script Command files match the ledger and contain no obvious private strings |
 | `task verify:raycast-extensions` | Desired public Raycast Store extensions are installed |
 | `task verify:spaces` | Mission Control Spaces count matches the desired count |
 | `task spaces:request-permission` | Opens Accessibility settings for Spaces automation |
