@@ -1,0 +1,3 @@
+# domain	key	type	value
+# User defaults that affect input behavior but are not ByHost/currentHost keys.
+NSGlobalDomain	com.apple.trackpad.scrolling	bool	true

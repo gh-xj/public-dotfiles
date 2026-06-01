@@ -128,6 +128,50 @@ print_current_host_input_defaults() {
   done <"$defaults_file"
 }
 
+print_user_input_defaults() {
+  local defaults_file="$repo_root/config/macos/input-user-defaults.tsv"
+  local domain key type value actual
+
+  [ -f "$defaults_file" ] || return 0
+  while IFS=$'\t' read -r domain key type value; do
+    case "$domain" in
+      ""|\#*)
+        continue
+        ;;
+    esac
+    actual="$(defaults read "$domain" "$key" 2>/dev/null || printf '<unset>')"
+    printf '%-52s %s\n' "$key" "$actual"
+  done <"$defaults_file"
+}
+
+live_trackpad_preferences() {
+  ioreg -r -c AppleMultitouchDevice -l -w0 2>/dev/null |
+    sed -n 's/.*"MultitouchPreferences" = {\(.*\)}.*/\1/p' |
+    head -1
+}
+
+print_live_trackpad_defaults() {
+  local defaults_file="$repo_root/config/macos/live-trackpad-defaults.tsv"
+  local prefs key expected actual
+
+  [ -f "$defaults_file" ] || return 0
+  prefs="$(live_trackpad_preferences)"
+  if [ -z "$prefs" ]; then
+    echo "no live AppleMultitouchDevice preferences found"
+    return 0
+  fi
+
+  while IFS=$'\t' read -r key expected; do
+    case "$key" in
+      ""|\#*)
+        continue
+        ;;
+    esac
+    actual="$(printf '%s\n' "$prefs" | sed -nE "s/.*\"$key\"=([^,}]+).*/\1/p")"
+    printf '%-52s %s\n' "$key" "${actual:-<unset>}"
+  done <"$defaults_file"
+}
+
 section "Display"
 system_profiler SPDisplaysDataType | sed -n '/Displays:/,$p' | sed -n '1,140p'
 displayplacer_cmd="$(find_cmd displayplacer || true)"
@@ -151,6 +195,12 @@ print_default "fn state" NSGlobalDomain com.apple.keyboard.fnState
 
 section "CurrentHost Input Defaults"
 print_current_host_input_defaults
+
+section "User Input Defaults"
+print_user_input_defaults
+
+section "Live Trackpad Defaults"
+print_live_trackpad_defaults
 
 section "Input Sources"
 defaults export com.apple.HIToolbox - 2>/dev/null | plutil -p - 2>/dev/null | sed -n '1,220p' || true

@@ -51,9 +51,14 @@ tasks:
       - ./scripts/apply-display-layout.sh --apply
 
   input:apply:
-    desc: Apply currentHost mouse, keyboard, and trackpad defaults
+    desc: Apply input defaults and reload live trackpad state
     cmds:
       - ./scripts/apply-current-host-defaults.sh --apply
+
+  input:verify:
+    desc: Verify persisted and live mouse, keyboard, and trackpad defaults
+    cmds:
+      - ./scripts/apply-current-host-defaults.sh --verify
 
   verify:display-layout:
     desc: Verify known display layout policy

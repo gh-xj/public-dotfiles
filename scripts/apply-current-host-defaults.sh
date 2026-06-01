@@ -3,57 +3,106 @@ set -euo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 defaults_file="$repo_root/config/macos/current-host-defaults.tsv"
+user_defaults_file="$repo_root/config/macos/input-user-defaults.tsv"
+live_trackpad_defaults_file="$repo_root/config/macos/live-trackpad-defaults.tsv"
 mode="verify"
 
 usage() {
   cat <<'EOF'
 Usage: scripts/apply-current-host-defaults.sh [--verify|--apply]
 
-Verify or apply public-safe macOS ByHost/currentHost defaults. These settings
-cover input behavior that nix-darwin's ordinary defaults do not fully converge,
-such as tap-to-click and trackpad gestures.
+Verify or apply public-safe macOS input defaults. These settings cover input
+behavior that nix-darwin's ordinary defaults do not fully converge, such as
+tap-to-click and trackpad gestures. Verification checks both persisted defaults
+and the live AppleMultitouchDevice state.
 EOF
 }
 
-read_current_host_default() {
-  local domain="$1"
-  local key="$2"
+expected_defaults_read_value() {
+  local type="$1"
+  local value="$2"
 
-  defaults -currentHost read "$domain" "$key" 2>/dev/null || printf '<unset>'
+  case "$type:$value" in
+    bool:true)
+      printf '1'
+      ;;
+    bool:false)
+      printf '0'
+      ;;
+    *)
+      printf '%s' "$value"
+      ;;
+  esac
 }
 
-write_current_host_default() {
-  local domain="$1"
-  local key="$2"
-  local type="$3"
-  local value="$4"
+read_default() {
+  local scope="$1"
+  local domain="$2"
+  local key="$3"
+
+  case "$scope" in
+    currentHost)
+      defaults -currentHost read "$domain" "$key" 2>/dev/null || printf '<unset>'
+      ;;
+    user)
+      defaults read "$domain" "$key" 2>/dev/null || printf '<unset>'
+      ;;
+    *)
+      printf 'input-defaults: unsupported scope: %s\n' "$scope" >&2
+      exit 1
+      ;;
+  esac
+}
+
+write_default() {
+  local scope="$1"
+  local domain="$2"
+  local key="$3"
+  local type="$4"
+  local value="$5"
+  local defaults_args=()
+
+  case "$scope" in
+    currentHost)
+      defaults_args=(-currentHost)
+      ;;
+    user)
+      defaults_args=()
+      ;;
+    *)
+      printf 'input-defaults: unsupported scope: %s\n' "$scope" >&2
+      exit 1
+      ;;
+  esac
 
   case "$type" in
     bool)
-      defaults -currentHost write "$domain" "$key" -bool "$value"
+      defaults "${defaults_args[@]}" write "$domain" "$key" -bool "$value"
       ;;
     int)
-      defaults -currentHost write "$domain" "$key" -int "$value"
+      defaults "${defaults_args[@]}" write "$domain" "$key" -int "$value"
       ;;
     float)
-      defaults -currentHost write "$domain" "$key" -float "$value"
+      defaults "${defaults_args[@]}" write "$domain" "$key" -float "$value"
       ;;
     string)
-      defaults -currentHost write "$domain" "$key" -string "$value"
+      defaults "${defaults_args[@]}" write "$domain" "$key" -string "$value"
       ;;
     *)
-      printf 'current-host-defaults: unsupported type for %s %s: %s\n' "$domain" "$key" "$type" >&2
+      printf 'input-defaults: unsupported type for %s %s: %s\n' "$domain" "$key" "$type" >&2
       exit 1
       ;;
   esac
 }
 
 visit_defaults() {
-  local callback="$1"
+  local scope="$1"
+  local file="$2"
+  local callback="$3"
   local domain key type value
 
-  [ -f "$defaults_file" ] || {
-    printf 'missing currentHost defaults ledger: %s\n' "$defaults_file" >&2
+  [ -f "$file" ] || {
+    printf 'missing input defaults ledger: %s\n' "$file" >&2
     exit 1
   }
 
@@ -63,31 +112,102 @@ visit_defaults() {
         continue
         ;;
     esac
-    "$callback" "$domain" "$key" "$type" "$value"
-  done <"$defaults_file"
+    "$callback" "$scope" "$domain" "$key" "$type" "$value"
+  done <"$file"
 }
 
 verify_one() {
-  local domain="$1"
-  local key="$2"
-  local type="$3"
-  local expected="$4"
+  local scope="$1"
+  local domain="$2"
+  local key="$3"
+  local type="$4"
+  local value="$5"
+  local expected
   local actual
 
-  actual="$(read_current_host_default "$domain" "$key")"
+  expected="$(expected_defaults_read_value "$type" "$value")"
+  actual="$(read_default "$scope" "$domain" "$key")"
   if [ "$actual" != "$expected" ]; then
-    printf 'currentHost default mismatch: %s %s expected %s got %s\n' "$domain" "$key" "$expected" "$actual" >&2
+    printf '%s default mismatch: %s %s expected %s got %s\n' "$scope" "$domain" "$key" "$expected" "$actual" >&2
     exit 1
   fi
 }
 
 apply_one() {
-  local domain="$1"
-  local key="$2"
-  local type="$3"
-  local value="$4"
+  local scope="$1"
+  local domain="$2"
+  local key="$3"
+  local type="$4"
+  local value="$5"
 
-  write_current_host_default "$domain" "$key" "$type" "$value"
+  write_default "$scope" "$domain" "$key" "$type" "$value"
+}
+
+live_trackpad_preferences() {
+  ioreg -r -c AppleMultitouchDevice -l -w0 2>/dev/null |
+    sed -n 's/.*"MultitouchPreferences" = {\(.*\)}.*/\1/p' |
+    head -1
+}
+
+read_live_trackpad_default() {
+  local key="$1"
+  local prefs="$2"
+
+  printf '%s\n' "$prefs" |
+    sed -nE "s/.*\"$key\"=([^,}]+).*/\1/p"
+}
+
+verify_live_trackpad_defaults() {
+  local prefs key expected actual failed=0
+
+  [ -f "$live_trackpad_defaults_file" ] || {
+    printf 'missing live trackpad defaults ledger: %s\n' "$live_trackpad_defaults_file" >&2
+    exit 1
+  }
+
+  prefs="$(live_trackpad_preferences)"
+  if [ -z "$prefs" ]; then
+    echo "live trackpad baseline skipped; no AppleMultitouchDevice preferences found"
+    return 0
+  fi
+
+  while IFS=$'\t' read -r key expected; do
+    case "$key" in
+      ""|\#*)
+        continue
+        ;;
+    esac
+    actual="$(read_live_trackpad_default "$key" "$prefs")"
+    if [ "$actual" != "$expected" ]; then
+      printf 'live trackpad mismatch: %s expected %s got %s\n' "$key" "$expected" "${actual:-<unset>}" >&2
+      failed=1
+    fi
+  done <"$live_trackpad_defaults_file"
+
+  if [ "$failed" -ne 0 ]; then
+    printf '%s\n' "Persisted defaults may be correct, but the live AppleMultitouchDevice state has not reloaded." >&2
+    printf '%s\n' "Run a sudo-backed bootstrap/apply from the target Mac, or log out/in after applying input defaults." >&2
+    return 1
+  fi
+
+  echo "live trackpad baseline verified"
+}
+
+activate_input_defaults() {
+  local activate_settings="/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings"
+  local uid
+
+  [ -x "$activate_settings" ] || return 0
+
+  "$activate_settings" -u -forcePrefUpdate >/dev/null 2>&1 || true
+  if verify_live_trackpad_defaults >/dev/null 2>&1; then
+    return 0
+  fi
+
+  uid="$(id -u)"
+  if sudo -n true >/dev/null 2>&1; then
+    sudo launchctl asuser "$uid" "$activate_settings" -u -forcePrefUpdate >/dev/null 2>&1 || true
+  fi
 }
 
 while [ "$#" -gt 0 ]; do
@@ -103,7 +223,7 @@ while [ "$#" -gt 0 ]; do
       exit 0
       ;;
     *)
-      printf 'current-host-defaults: unknown option: %s\n' "$1" >&2
+      printf 'input-defaults: unknown option: %s\n' "$1" >&2
       exit 1
       ;;
   esac
@@ -111,18 +231,23 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$(uname -s)" != "Darwin" ]; then
-  echo "currentHost defaults skipped on non-Darwin host"
+  echo "input defaults skipped on non-Darwin host"
   exit 0
 fi
 
 case "$mode" in
   apply)
-    visit_defaults apply_one
+    visit_defaults currentHost "$defaults_file" apply_one
+    visit_defaults user "$user_defaults_file" apply_one
     killall cfprefsd >/dev/null 2>&1 || true
-    echo "currentHost defaults applied"
+    activate_input_defaults
+    verify_live_trackpad_defaults
+    echo "input defaults applied"
     ;;
   verify)
-    visit_defaults verify_one
-    echo "currentHost defaults baseline verified"
+    visit_defaults currentHost "$defaults_file" verify_one
+    visit_defaults user "$user_defaults_file" verify_one
+    verify_live_trackpad_defaults
+    echo "input defaults baseline verified"
     ;;
 esac
