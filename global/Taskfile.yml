@@ -1,0 +1,67 @@
+version: "3"
+
+tasks:
+  new-human-req-doc:
+    desc: |
+      Create a human request doc in the current directory and open it in nvim.
+
+      Example:
+        task new-human-req-doc -- --name "Fix auth edge case"
+        task new-human-req-doc -- -n "Fix auth edge case"
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - |
+        set -eu
+
+        set -- {{.CLI_ARGS}}
+
+        name=""
+        while [ "$#" -gt 0 ]; do
+          case "$1" in
+            --name|-n)
+              shift
+              if [ "$#" -eq 0 ]; then
+                echo "missing value for --name"
+                exit 1
+              fi
+              name="$1"
+              ;;
+            *)
+              echo "unknown argument: $1"
+              echo 'usage: task new-human-req-doc -- --name "your title"'
+              exit 1
+              ;;
+          esac
+          shift
+        done
+
+        if [ -z "$name" ]; then
+          echo 'usage: task new-human-req-doc -- --name "your title"'
+          exit 1
+        fi
+
+        date_str="$(date +%Y-%m-%d)"
+        slug="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
+
+        if [ -z "$slug" ]; then
+          echo "name produced an empty slug"
+          exit 1
+        fi
+
+        docs_dir=".docs/human-requests"
+        file_path="$docs_dir/$date_str-$slug.md"
+
+        mkdir -p "$docs_dir"
+        if [ ! -e "$file_path" ]; then
+          printf '# %s\n' "$name" > "$file_path"
+        fi
+        if [ -n "${TMUX:-}" ]; then
+          window_name="$(printf '%s' "$name" | tr ' ' '-')"
+          tmux rename-window "$window_name"
+        fi
+        nvim "$file_path"
+
+  help:
+    desc: Show available global tasks
+    cmds:
+      - task --list

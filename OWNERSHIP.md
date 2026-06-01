@@ -24,6 +24,7 @@ What this repo does not own:
 Representative live paths:
 
 - `$HOME/.zshrc`
+- `$HOME/Taskfile.yml`
 - `$HOME/.tmux.conf`
 - `$HOME/.claude/settings.json`
 - `$HOME/.codex/config.toml`

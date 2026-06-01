@@ -48,6 +48,7 @@ Home Manager now owns these public config files on a new machine:
 | Path | Source |
 | --- | --- |
 | `~/.zprofile`, `~/.zshrc` | repo shell entrypoints |
+| `~/Taskfile.yml` | public global go-task Taskfile |
 | `~/.tmux.conf`, `~/.config/tmux/tmux.conf` | Home Manager tmux config |
 | `~/.config/ghostty/config` | Home Manager Ghostty config |
 | `~/.config/nvim` | repo Neovim config |
@@ -139,6 +140,7 @@ script directories are omitted unless
 | Gate | What it protects |
 | --- | --- |
 | `task verify:home-files` | Home Manager generation contains the public config files above |
+| `task verify:global-taskfile` | The public global go-task Taskfile is parseable and contains expected tasks |
 | `task verify:bootstrap-darwin` | The generated nix-darwin bootstrap host still builds |
 | `task verify:display-layout` | Known display serials match the displayplacer layout policy |
 | `task verify:macos-defaults` | The current host matches the public macOS defaults baseline |

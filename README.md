@@ -98,6 +98,7 @@ This repo keeps reusable and publishable configuration that affects daily
 operating comfort:
 
 - shell and terminal config
+- public global go-task Taskfile
 - editor config
 - CLI tool config
 - public-safe package and GUI app ledgers

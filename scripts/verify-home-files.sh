@@ -56,6 +56,7 @@ assert_file ".config/starship.toml"
 assert_file ".config/xj_public_raycast_scripts"
 assert_file ".config/yazi/yazi.toml"
 assert_file ".tmux.conf"
+assert_file "Taskfile.yml"
 assert_file ".zprofile"
 assert_file ".zshrc"
 
@@ -66,6 +67,7 @@ assert_symlink_target ".config/opencode" "/Users/example/public-dotfiles/.config
 assert_symlink_target ".config/raycast/scripts" "/Users/example/public-dotfiles/.config/raycast/scripts"
 assert_symlink_target ".config/xj_public_raycast_scripts" "/Users/example/public-dotfiles/.config/raycast/scripts"
 assert_symlink_target ".amethyst.yml" "/Users/example/public-dotfiles/.config/amethyst/amethyst.yml"
+assert_symlink_target "Taskfile.yml" "/Users/example/public-dotfiles/global/Taskfile.yml"
 assert_symlink_target ".zprofile" "/Users/example/public-dotfiles/.zprofile"
 assert_symlink_target ".zshrc" "/Users/example/public-dotfiles/.zshrc"
 

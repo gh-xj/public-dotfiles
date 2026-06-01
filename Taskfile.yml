@@ -30,6 +30,7 @@ tasks:
     cmds:
       - task: nix:build
       - task: verify:home-files
+      - task: verify:global-taskfile
       - task: verify:zsh
       - task: verify:npm-globals
       - task: security:approved-gh-account
@@ -45,6 +46,11 @@ tasks:
     desc: Verify Home Manager owns the expected public config files
     cmds:
       - ./scripts/verify-home-files.sh
+
+  verify:global-taskfile:
+    desc: Verify public global go-task Taskfile
+    cmds:
+      - ./scripts/verify-global-taskfile.sh
 
   display:apply:
     desc: Apply known display layout policy
