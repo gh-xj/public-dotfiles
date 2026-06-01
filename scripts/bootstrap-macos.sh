@@ -754,7 +754,7 @@ apply_current_host_defaults() {
   [ "$mode" = "apply" ] || return 0
 
   info "applying currentHost input defaults"
-  "$repo_root/scripts/apply-current-host-defaults.sh" --apply
+  "$repo_root/scripts/apply-current-host-defaults.sh" --apply --allow-live-mismatch
 }
 
 finish_message() {

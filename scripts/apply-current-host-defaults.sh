@@ -6,10 +6,11 @@ defaults_file="$repo_root/config/macos/current-host-defaults.tsv"
 user_defaults_file="$repo_root/config/macos/input-user-defaults.tsv"
 live_trackpad_defaults_file="$repo_root/config/macos/live-trackpad-defaults.tsv"
 mode="verify"
+allow_live_mismatch=0
 
 usage() {
   cat <<'EOF'
-Usage: scripts/apply-current-host-defaults.sh [--verify|--apply|--reload-live]
+Usage: scripts/apply-current-host-defaults.sh [--verify|--apply|--reload-live] [--allow-live-mismatch]
 
 Verify or apply public-safe macOS input defaults. These settings cover input
 behavior that nix-darwin's ordinary defaults do not fully converge, such as
@@ -18,6 +19,8 @@ and the live AppleMultitouchDevice state.
 
 --reload-live prompts for sudo when needed and asks the GUI user session to
 reload input preferences without rewriting defaults.
+--allow-live-mismatch is intended for bootstrap apply paths where persisted
+defaults should be written, but live trackpad reload may need logout/login.
 EOF
 }
 
@@ -228,6 +231,9 @@ while [ "$#" -gt 0 ]; do
     --reload-live)
       mode="reload-live"
       ;;
+    --allow-live-mismatch)
+      allow_live_mismatch=1
+      ;;
     -h|--help)
       usage
       exit 0
@@ -251,7 +257,10 @@ case "$mode" in
     visit_defaults user "$user_defaults_file" apply_one
     killall cfprefsd >/dev/null 2>&1 || true
     activate_input_defaults
-    verify_live_trackpad_defaults
+    if ! verify_live_trackpad_defaults; then
+      [ "$allow_live_mismatch" -eq 1 ] || exit 1
+      echo "input defaults live reload still pending; run: task input:reload-live" >&2
+    fi
     echo "input defaults applied"
     ;;
   reload-live)
