@@ -16,6 +16,7 @@ homebrew_prefix="/opt/homebrew"
 homebrew_install_mode="auto"
 package_sets=("shell" "dev" "ops")
 hm_extra_args=()
+hm_extra_arg_count=0
 
 usage() {
   cat <<'EOF'
@@ -166,6 +167,7 @@ parse_args() {
         ;;
       --)
         shift
+        hm_extra_arg_count="$#"
         hm_extra_args=("$@")
         break
         ;;
@@ -439,7 +441,11 @@ apply_home_manager() {
   have_cmd nix || die "--apply requires nix; rerun with --install-nix --apply or install nix first"
 
   info "running Home Manager switch"
-  nix_cmd run "$flake_dir#home-manager" -- switch --flake "$flake_dir#$profile_name" "${hm_extra_args[@]}"
+  if [ "$hm_extra_arg_count" -gt 0 ]; then
+    nix_cmd run "$flake_dir#home-manager" -- switch --flake "$flake_dir#$profile_name" "${hm_extra_args[@]}"
+  else
+    nix_cmd run "$flake_dir#home-manager" -- switch --flake "$flake_dir#$profile_name"
+  fi
 }
 
 apply_darwin_system() {
