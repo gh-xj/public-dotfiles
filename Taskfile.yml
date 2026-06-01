@@ -17,6 +17,7 @@ tasks:
     cmds:
       - task: dotfiles:verify-user
       - task: verify:bootstrap-darwin
+      - task: verify:display-layout
       - task: verify:macos-defaults
       - task: verify:raycast
       - task: verify:terminal
@@ -44,6 +45,16 @@ tasks:
     cmds:
       - ./scripts/verify-home-files.sh
 
+  display:apply:
+    desc: Apply known display layout policy
+    cmds:
+      - ./scripts/apply-display-layout.sh --apply
+
+  verify:display-layout:
+    desc: Verify known display layout policy
+    cmds:
+      - ./scripts/apply-display-layout.sh --verify
+
   verify:macos-defaults:
     desc: Verify this host matches the public macOS defaults baseline
     cmds:
@@ -53,6 +64,21 @@ tasks:
     desc: Verify public-safe Raycast preferences
     cmds:
       - ./scripts/verify-raycast-preferences.sh
+
+  verify:raycast-extensions:
+    desc: Check desired Raycast Store extensions
+    cmds:
+      - ./scripts/verify-raycast-extensions.sh
+
+  raycast:open-extension-installs:
+    desc: Open missing desired Raycast Store extension pages
+    cmds:
+      - ./scripts/verify-raycast-extensions.sh --open-missing
+
+  verify:spaces:
+    desc: Check the desired Mission Control Spaces count
+    cmds:
+      - ./scripts/verify-spaces.sh
 
   inspect:macos-baseline:
     desc: Print a public-safe macOS and Raycast baseline inventory

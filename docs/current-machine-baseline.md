@@ -12,9 +12,9 @@ or account-bound state stays in `private-config`.
 | --- | --- | --- |
 | Shell, terminal, editor, window manager, keyboard config | Home Manager links repo-backed files | Shell secrets, SSH, npm auth, account tokens |
 | macOS Dock/Finder/keyboard/mouse/trackpad defaults | nix-darwin `system.defaults` | TCC grants and login-item consent |
-| Display layout / resolution | `displayplacer` is installed and inspected by the harness | Per-display apply rules are hardware-specific; capture after the target display is present |
+| Display layout / resolution | `displayplacer` is installed, known display serials are applied and verified | Unknown display hardware is inspected but not changed |
 | GUI app install ledger | nix-darwin Homebrew module | App sessions, sync accounts, caches |
-| Raycast | App install, public-safe preferences, and repo-owned script-command directory | Raycast account DB, extension cache, extension credentials, `raycast_env` |
+| Raycast | App install, public-safe preferences, repo-owned script commands, and a desired Store extension ledger | Raycast account DB, extension cache, extension credentials, `raycast_env` |
 | CLI packages | Nix package sets first | Per-account credentials and generated caches |
 
 ## macOS Defaults
@@ -34,6 +34,8 @@ These values were read from `/Users/xj` and encoded in
 | Magic Mouse | two-button mode |
 | Symbolic hotkeys | local Apple symbolic hotkey enablement and parameters copied for ids `15-31`, `52`, `60-65`, `79-82`, `118-122`, `164`, `184` |
 | Appearance | automatic light/dark switching enabled |
+| Spaces | desired count is `4`; verification is available but not blocking because creation requires Mission Control UI automation and Accessibility consent |
+| Display layout | known serials: Studio Display XDR `2880x1620@120Hz`, M1 MacBook built-in `1680x1050@60Hz` |
 
 ## Repo-Backed User Config
 
@@ -76,13 +78,20 @@ The durable public baseline is:
    dark/light bundled themes, `Command-Space` hotkey, favorite visibility,
    root search sensitivity, quicklink behavior, and onboarding state.
 3. Link public script commands at `~/.config/raycast/scripts`.
-4. Keep `raycast_env`, extension credentials, account sync, and private
+4. Track desired public Store extensions in `config/raycast/extensions.tsv`.
+5. Keep `raycast_env`, extension credentials, account sync, and private
    workflow scripts in `private-config`.
 
 The public script-command set currently covers opening Chrome, ChatGPT, and
 Ghostty; inserting date/datetime strings; and switching to the Shuangpin input
 source. Scripts that reveal private paths, employer context, Bluetooth device
 IDs, or personal workflow repos stay private.
+
+Raycast Store extensions are not copied from caches. Run
+`task verify:raycast-extensions` to list missing desired extensions, or
+`task raycast:open-extension-installs` to open their Store pages. Raycast's
+documented install path is still the in-app or web Store, so this check is
+intentionally outside the blocking `dotfiles:verify` gate.
 
 ## Baseline Inspection
 
@@ -97,7 +106,10 @@ Raycast preferences, Raycast extensions, and Raycast script-command directories.
 | --- | --- |
 | `task verify:home-files` | Home Manager generation contains the public config files above |
 | `task verify:bootstrap-darwin` | The generated nix-darwin bootstrap host still builds |
+| `task verify:display-layout` | Known display serials match the displayplacer layout policy |
 | `task verify:macos-defaults` | The current host matches the public macOS defaults baseline |
 | `task verify:raycast` | The current host matches public-safe Raycast preferences |
+| `task verify:raycast-extensions` | Desired public Raycast Store extensions are installed |
+| `task verify:spaces` | Mission Control Spaces count matches the desired count |
 | `task inspect:macos-baseline` | Prints local setup state for source/target comparison |
 | `task verify:terminal` | Ghostty, Karabiner, and tmux terminal workflow invariants |

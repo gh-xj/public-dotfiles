@@ -16,6 +16,7 @@ homebrew_prefix="/opt/homebrew"
 homebrew_install_mode="auto"
 backup_extension="${XJ_PUBLIC_DOTFILES_BACKUP_EXTENSION:-public-dotfiles-backup-$(date +%Y%m%d%H%M%S)}"
 migrate_nix_darwin_etc=1
+display_layout_mode="auto"
 package_sets=("shell" "dev" "ops")
 hm_extra_args=()
 hm_extra_arg_count=0
@@ -44,6 +45,7 @@ Options:
                                (default: public-dotfiles-backup-<timestamp>)
   --no-backup                  Fail instead of backing up unmanaged Home Manager link targets
   --no-migrate-nix-darwin-etc  Fail instead of backing up first-run /etc shell rc files
+  --no-display-layout          Skip displayplacer layout policy after nix-darwin apply
   --user NAME                  macOS user for Home Manager (default: current user)
   --home PATH                  Home directory for that user (default: current HOME)
   --state-version VERSION      Home Manager stateVersion (default: 25.11)
@@ -183,6 +185,9 @@ parse_args() {
         ;;
       --no-migrate-nix-darwin-etc)
         migrate_nix_darwin_etc=0
+        ;;
+      --no-display-layout)
+        display_layout_mode="skip"
         ;;
       --user)
         shift
@@ -591,6 +596,15 @@ apply_darwin_system() {
   sudo "$darwin_rebuild" switch --flake "$flake_dir#$profile_name"
 }
 
+apply_display_layout() {
+  [ "$darwin_phase" -eq 1 ] || return 0
+  [ "$mode" = "apply" ] || return 0
+  [ "$display_layout_mode" = "auto" ] || return 0
+
+  info "applying display layout policy"
+  "$repo_root/scripts/apply-display-layout.sh" --apply
+}
+
 finish_message() {
   if [ "$mode" = "dry-run" ]; then
     if [ "$darwin_phase" -eq 1 ]; then
@@ -626,6 +640,7 @@ main() {
   apply_home_manager "$flake_dir"
   install_public_npm_globals
   apply_darwin_system "$flake_dir"
+  apply_display_layout
   finish_message
 }
 
