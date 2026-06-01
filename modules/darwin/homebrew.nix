@@ -14,6 +14,7 @@ in
       ];
 
       brews = [
+        "displayplacer"
         "gemini-cli"
         "googleworkspace-cli"
         "markdownlint-cli2"

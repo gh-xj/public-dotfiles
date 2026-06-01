@@ -41,6 +41,10 @@ in
         source = repoPath ".config/opencode";
         force = true;
       };
+      "raycast/scripts" = {
+        source = repoPath ".config/raycast/scripts";
+        force = true;
+      };
       "starship.toml".source = ../../.config/starship.toml;
       "yazi" = {
         source = ../../.config/yazi;

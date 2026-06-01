@@ -18,6 +18,7 @@ tasks:
       - task: dotfiles:verify-user
       - task: verify:bootstrap-darwin
       - task: verify:macos-defaults
+      - task: verify:raycast
       - task: verify:terminal
       - task: secrets:staged
       - task: secrets:full
@@ -47,6 +48,16 @@ tasks:
     desc: Verify this host matches the public macOS defaults baseline
     cmds:
       - ./scripts/verify-macos-defaults.sh
+
+  verify:raycast:
+    desc: Verify public-safe Raycast preferences
+    cmds:
+      - ./scripts/verify-raycast-preferences.sh
+
+  inspect:macos-baseline:
+    desc: Print a public-safe macOS and Raycast baseline inventory
+    cmds:
+      - ./scripts/inspect-macos-baseline.sh
 
   verify:npm-globals:
     desc: Verify public npm global CLIs are installed

@@ -2,6 +2,21 @@
 
 let
   cfg = config.xj.publicDotfiles.darwin;
+  homeDir = config.users.users.${config.system.primaryUser}.home;
+  usInputSource = {
+    InputSourceKind = "Keyboard Layout";
+    "KeyboardLayout ID" = 0;
+    "KeyboardLayout Name" = "U.S.";
+  };
+  scimInputSource = {
+    "Bundle ID" = "com.apple.inputmethod.SCIM";
+    InputSourceKind = "Keyboard Input Method";
+  };
+  shuangpinInputSource = {
+    "Bundle ID" = "com.apple.inputmethod.SCIM";
+    "Input Mode" = "com.apple.inputmethod.SCIM.Shuangpin";
+    InputSourceKind = "Input Mode";
+  };
 in
 {
   config = lib.mkIf cfg.enable {
@@ -27,6 +42,13 @@ in
         autohide-time-modifier = 0.5;
         expose-group-apps = true;
         mru-spaces = true;
+        persistent-apps = [
+          { app = "/Applications/Google Chrome.app"; }
+          { app = "/Applications/Ghostty.app"; }
+        ];
+        persistent-others = [
+          { folder = "${homeDir}/Downloads"; }
+        ];
         show-recents = false;
         tilesize = 71;
       };
@@ -66,7 +88,60 @@ in
       };
 
       CustomUserPreferences = {
+        NSGlobalDomain = {
+          AppleLanguages = [
+            "en-US"
+            "zh-Hans-US"
+          ];
+          AppleLocale = "en_US";
+        };
+
         "com.apple.driver.AppleBluetoothMultitouch.mouse".MouseButtonMode = "TwoButton";
+
+        "com.apple.HIToolbox" = {
+          AppleCurrentKeyboardLayoutInputSourceID = "com.apple.keylayout.US";
+          AppleEnabledInputSources = [
+            usInputSource
+            {
+              "Bundle ID" = "com.apple.CharacterPaletteIM";
+              InputSourceKind = "Non Keyboard Input Method";
+            }
+            scimInputSource
+            shuangpinInputSource
+          ];
+          AppleInputSourceHistory = [
+            usInputSource
+            shuangpinInputSource
+          ];
+          AppleSelectedInputSources = [
+            usInputSource
+          ];
+        };
+
+        "com.raycast.macos" = {
+          commandsPreferencesExpandedItemIds = [
+            "builtin_package_scriptCommands"
+            "builtin_package_windowManagement"
+            "builtin_package_default"
+            "applications"
+          ];
+          commandsPreferencesShowOnlyCustomized = true;
+          navigationCommandStyleIdentifierKey = "vim";
+          popToRootTimeout = 90;
+          quicklinks_enableAutoFillLink = false;
+          quicklinks_enableQuickSearch = false;
+          raycastCurrentThemeId = "bundled-raycast-dark";
+          raycastCurrentThemeIdDarkAppearance = "bundled-raycast-dark";
+          raycastCurrentThemeIdLightAppearance = "bundled-raycast-light";
+          raycastGlobalHotkey = "Command-49";
+          raycastPreferredWindowMode = "compact";
+          raycastShouldFollowSystemAppearance = true;
+          raycastWindowEscapeKeyBehavior = 1;
+          rootSearchSensitivity = "medium";
+          showFavoritesInCompactMode = true;
+          showGettingStartedLink = false;
+          useHyperKeyIcon = true;
+        };
 
         "com.apple.symbolichotkeys" = {
           AppleSymbolicHotKeys = {
