@@ -128,21 +128,6 @@ tasks:
     cmds:
       - ./scripts/diagnose-raycast-runtime.sh --open-setup
 
-  spaces:apply:
-    desc: Apply the desired Mission Control Spaces count
-    cmds:
-      - ./scripts/verify-spaces.sh --apply
-
-  spaces:request-permission:
-    desc: Open Accessibility settings for Spaces automation
-    cmds:
-      - ./scripts/verify-spaces.sh --request-permission
-
-  verify:spaces:
-    desc: Check the desired Mission Control Spaces count
-    cmds:
-      - ./scripts/verify-spaces.sh
-
   inspect:macos-baseline:
     desc: Print a public-safe macOS and Raycast baseline inventory
     cmds:

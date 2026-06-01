@@ -234,9 +234,6 @@ print_dock_items persistent-apps
 printf '\npersistent-others:\n'
 print_dock_items persistent-others
 
-section "Spaces"
-print_plist_default "main display spaces" com.apple.spaces "SpacesDisplayConfiguration.Management Data.Monitors.0.Spaces"
-
 section "Raycast Preferences"
 for key in \
   raycastGlobalHotkey \

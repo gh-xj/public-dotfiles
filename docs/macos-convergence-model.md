@@ -30,7 +30,6 @@ behavior, fold the result back into the repo harness.
 | User input defaults | `config/macos/input-user-defaults.tsv` | non-ByHost input keys such as trackpad scrolling | `task input:verify` |
 | Live hardware/runtime state | script verifier ledgers | active trackpad preferences, display layout | `ioreg`, `displayplacer` |
 | App runtime state | public ledgers plus manual install flows | Raycast Store extensions | `task verify:raycast-extensions` |
-| TCC and GUI automation | manual permission or local GUI action | Spaces creation, Accessibility grants | nonblocking task plus explicit error |
 
 ## Live-State Rule
 
@@ -57,7 +56,6 @@ Some state cannot be restored silently from an SSH-only bootstrap:
 | --- | --- | --- |
 | Raycast Script Command directory and command hotkeys | Raycast stores registration, aliases, and hotkeys in app-managed/encrypted runtime state | `task raycast:open-script-setup`, then user confirms commands appear in Raycast search |
 | Raycast Store extensions | Raycast owns Store install confirmation and extension runtime state | `task raycast:open-extension-installs`, then `task verify:raycast-extensions` |
-| Mission Control Spaces | creation requires Accessibility and Mission Control UI automation | `task spaces:request-permission`, then `task spaces:apply` |
 | Trackpad live reload | WindowServer may keep stale `AppleMultitouchDevice` preferences until a GUI/sudo reload or logout/login | `task input:reload-live`, then `task input:verify` |
 
 The repo should make these boundaries explicit. A bootstrap can be excellent

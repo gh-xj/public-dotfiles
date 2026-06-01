@@ -53,7 +53,6 @@ Project-local router for restoring and auditing the public, reusable
 | Tap-to-click or gestures differ | `task input:verify`, `task input:reload-live`, and live `AppleMultitouchDevice` |
 | Raycast command/settings drift | `task raycast:apply-preferences`, `modules/darwin/defaults.nix`, `config/raycast/script-commands.tsv`, `.config/raycast/scripts`, and Raycast verifiers |
 | Store extension missing | `config/raycast/extensions.tsv`; open install intents, do not copy caches |
-| Spaces count differs | nonblocking `task verify:spaces`; apply needs Accessibility |
 | Package/app drift | Nix package sets, `Brewfile`/Homebrew module, or npm globals ledger |
 
 ## Verification
@@ -70,7 +69,6 @@ Use the narrowest gate first, then the full gate:
 | Raycast script commands | `task verify:raycast-scripts` |
 | Raycast runtime/UI setup | `task raycast:runtime-check` |
 | Raycast Store extensions | `task verify:raycast-extensions` |
-| Spaces | `task verify:spaces` |
 | General repo health | `task dotfiles:verify` |
 
 Run `task secrets:staged` before committing scripts, agent config, shell config,
@@ -90,6 +88,6 @@ URLs, headers, generated config, or token-adjacent surfaces.
 - Source-vs-target baseline diff is still manual; no JSON snapshot comparator
   exists yet.
 - Raycast Store extension install, Script Command directory registration,
-  command aliases/hotkeys, and Spaces creation remain interactive.
+  and command aliases/hotkeys remain interactive.
 - Trackpad live reload may require `task input:reload-live` from an
   interactive target-Mac session, then logout/login on some target Macs.

@@ -27,7 +27,7 @@ These values were read from `/Users/xj` and encoded in
 
 | Area | Baseline |
 | --- | --- |
-| Dock | autohide on, delay `0`, animation `0.5`, recents off, tile size `71`, group windows by app, keep MRU Spaces behavior |
+| Dock | autohide on, delay `0`, animation `0.5`, recents off, tile size `71`, group windows by app, keep MRU desktop switching behavior |
 | Dock persistent items | public minimal Dock: Chrome, Ghostty, and Downloads. Local-only apps such as Feishu, WeChat, and Timing are observed but not forced unless they join the public app ledger |
 | Finder | show file extensions, column view, path bar enabled |
 | Keyboard | press-and-hold disabled, `KeyRepeat=1`, `InitialKeyRepeat=10`, function keys as standard keys |
@@ -38,7 +38,6 @@ These values were read from `/Users/xj` and encoded in
 | Magic Mouse | two-button mode |
 | Symbolic hotkeys | local Apple symbolic hotkey enablement and parameters copied for ids `15-31`, `52`, `60-65`, `79-82`, `118-122`, `164`, `184` |
 | Appearance | automatic light/dark switching enabled |
-| Spaces | desired count is `4`; verification is available but not blocking because creation requires Mission Control UI automation and Accessibility consent |
 | Display layout | known serials: Studio Display XDR `2880x1620@120Hz`, M1 MacBook built-in `1680x1050@60Hz` |
 
 ## Repo-Backed User Config
@@ -142,18 +141,13 @@ directory/hotkey setup. After the user confirms the commands appear in Raycast
 search, the remaining runtime-check warning about plaintext visibility is
 expected and non-blocking.
 
-Spaces creation is also outside the blocking gate. Run
-`task spaces:request-permission` to open macOS Accessibility settings for the
-current automation context, then `task spaces:apply` once consent is granted.
-
 ## Baseline Inspection
 
 Run `task inspect:macos-baseline` on any Mac to print the public-safe inventory
 used for discrepancy triage. It reports display hardware and displayplacer
 state, global keyboard/mouse defaults, persisted input defaults, live trackpad
-state, input sources, Dock items, Spaces count, Raycast preferences, Raycast
-extensions, and public Raycast script-command directories. Private Raycast
-script directories are omitted unless
+state, input sources, Dock items, Raycast preferences, Raycast extensions, and
+public Raycast script-command directories. Private Raycast script directories are omitted unless
 `XJ_PUBLIC_DOTFILES_INSPECT_PRIVATE_RAYCAST=1` is set for local-only triage.
 
 ## Verification
@@ -175,8 +169,5 @@ script directories are omitted unless
 | `task verify:raycast-extensions` | Desired public Raycast Store extensions are installed |
 | `task raycast:runtime-check` | Reports whether Raycast runtime setup is still interactive/app-owned |
 | `task raycast:open-script-setup` | Copies the stable public Script Directory path and opens Raycast Settings |
-| `task verify:spaces` | Mission Control Spaces count matches the desired count |
-| `task spaces:request-permission` | Opens Accessibility settings for Spaces automation |
-| `task spaces:apply` | Attempts to create missing Mission Control Spaces |
 | `task inspect:macos-baseline` | Prints local setup state for source/target comparison |
 | `task verify:terminal` | Ghostty, Karabiner, and tmux terminal workflow invariants |
