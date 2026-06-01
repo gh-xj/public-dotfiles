@@ -76,16 +76,21 @@ For a real macOS user account, prefer the generated local bootstrap host:
 ./scripts/bootstrap-macos.sh --apply
 ```
 
+By default, `--apply` passes a timestamped backup extension to Home Manager so
+unmanaged files that already exist at Home Manager-owned paths are moved aside
+instead of blocking the bootstrap. Use `--backup-extension EXT` for a custom
+extension, or `--no-backup` when you want a strict conflict failure.
+
 For the public app ledger as well:
 
 ```bash
 ./scripts/bootstrap-macos.sh --darwin --apply
 ```
 
-Pass Home Manager flags after `--`:
+Pass other Home Manager flags after `--`:
 
 ```bash
-./scripts/bootstrap-macos.sh --apply -- --backup-extension hm-backup
+./scripts/bootstrap-macos.sh --apply -- --show-trace
 ```
 
 The public flake also exports `homeConfigurations.example`. The checked-in host

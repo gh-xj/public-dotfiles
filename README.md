@@ -40,6 +40,11 @@ On a stock Mac without Nix, use `--install-nix --apply` if you want the script
 to run the official macOS daemon installer before Home Manager. The script also
 prints the upstream install commands when Nix is missing.
 
+`--apply` backs up unmanaged files that already exist at Home Manager-owned
+paths with a `public-dotfiles-backup-<timestamp>` extension before linking the
+public baseline. Use `--no-backup` when you want Home Manager to fail on those
+conflicts instead.
+
 You can still build the public Home Manager example without touching your home
 directory:
 
@@ -101,6 +106,13 @@ Canonical local Home Manager entrypoint for a real macOS user:
 
 ```bash
 ./scripts/bootstrap-macos.sh --apply
+```
+
+This backs up pre-existing unmanaged Home Manager link targets by default. For
+a strict conflict check:
+
+```bash
+./scripts/bootstrap-macos.sh --apply --no-backup
 ```
 
 For the GUI app/Homebrew ledger as well:

@@ -14,6 +14,7 @@ darwin_phase=0
 nix_install_mode="never"
 homebrew_prefix="/opt/homebrew"
 homebrew_install_mode="auto"
+backup_extension="${XJ_PUBLIC_DOTFILES_BACKUP_EXTENSION:-public-dotfiles-backup-$(date +%Y%m%d%H%M%S)}"
 package_sets=("shell" "dev" "ops")
 hm_extra_args=()
 hm_extra_arg_count=0
@@ -38,6 +39,9 @@ Options:
   --install-nix=determinate    Install Determinate Nix with its CLI installer if nix is missing
   --no-install-homebrew        With --darwin --apply, fail instead of installing missing Homebrew
   --homebrew-prefix PATH       Homebrew prefix for nix-darwin (default: /opt/homebrew)
+  --backup-extension EXT       Backup unmanaged files before linking Home Manager paths
+                               (default: public-dotfiles-backup-<timestamp>)
+  --no-backup                  Fail instead of backing up unmanaged Home Manager link targets
   --user NAME                  macOS user for Home Manager (default: current user)
   --home PATH                  Home directory for that user (default: current HOME)
   --state-version VERSION      Home Manager stateVersion (default: 25.11)
@@ -145,6 +149,19 @@ parse_args() {
       --homebrew-prefix=*)
         homebrew_prefix="${1#--homebrew-prefix=}"
         ;;
+      --backup-extension)
+        shift
+        [ "$#" -gt 0 ] || die "--backup-extension requires a value"
+        [ -n "$1" ] || die "--backup-extension cannot be empty"
+        backup_extension="$1"
+        ;;
+      --backup-extension=*)
+        backup_extension="${1#--backup-extension=}"
+        [ -n "$backup_extension" ] || die "--backup-extension cannot be empty"
+        ;;
+      --no-backup)
+        backup_extension=""
+        ;;
       --user)
         shift
         [ "$#" -gt 0 ] || die "--user requires a value"
@@ -218,6 +235,13 @@ preflight() {
   info "target Home Manager user: $target_user"
   info "target home: $target_home"
   info "package sets: ${package_sets[*]}"
+  if [ "$mode" = "apply" ]; then
+    if [ -n "$backup_extension" ]; then
+      info "Home Manager conflict backups: *.$backup_extension"
+    else
+      info "Home Manager conflict backups: disabled"
+    fi
+  fi
   if [ "$darwin_phase" -eq 1 ]; then
     info "Darwin system phase: enabled"
     info "Homebrew prefix: $homebrew_prefix"
@@ -447,8 +471,22 @@ ensure_homebrew_for_darwin() {
   info "homebrew: $(homebrew_version)"
 }
 
+hm_args_include_backup_extension() {
+  local arg
+  for arg in "$@"; do
+    case "$arg" in
+      -b|--backup-extension|--backup-extension=*)
+        return 0
+        ;;
+    esac
+  done
+  return 1
+}
+
 apply_home_manager() {
   local flake_dir="$1"
+  local hm_args_have_backup=0
+  local switch_args
 
   [ "$mode" = "apply" ] || {
     return 0
@@ -456,12 +494,19 @@ apply_home_manager() {
 
   have_cmd nix || die "--apply requires nix; rerun with --install-nix --apply or install nix first"
 
-  info "running Home Manager switch"
-  if [ "$hm_extra_arg_count" -gt 0 ]; then
-    nix_cmd run "$flake_dir#home-manager" -- switch --flake "$flake_dir#$profile_name" "${hm_extra_args[@]}"
-  else
-    nix_cmd run "$flake_dir#home-manager" -- switch --flake "$flake_dir#$profile_name"
+  switch_args=(switch --flake "$flake_dir#$profile_name")
+  if [ "$hm_extra_arg_count" -gt 0 ] && hm_args_include_backup_extension "${hm_extra_args[@]}"; then
+    hm_args_have_backup=1
   fi
+  if [ -n "$backup_extension" ] && [ "$hm_args_have_backup" -eq 0 ]; then
+    switch_args+=(--backup-extension "$backup_extension")
+  fi
+  if [ "$hm_extra_arg_count" -gt 0 ]; then
+    switch_args+=("${hm_extra_args[@]}")
+  fi
+
+  info "running Home Manager switch"
+  nix_cmd run "$flake_dir#home-manager" -- "${switch_args[@]}"
 }
 
 apply_darwin_system() {
