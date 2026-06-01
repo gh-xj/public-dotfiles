@@ -71,9 +71,19 @@ tasks:
       - ./scripts/verify-raycast-extensions.sh
 
   raycast:open-extension-installs:
-    desc: Open missing desired Raycast Store extension pages
+    desc: Open Raycast install intents for missing desired Store extensions
     cmds:
       - ./scripts/verify-raycast-extensions.sh --open-missing
+
+  spaces:apply:
+    desc: Apply the desired Mission Control Spaces count
+    cmds:
+      - ./scripts/verify-spaces.sh --apply
+
+  spaces:request-permission:
+    desc: Open Accessibility settings for Spaces automation
+    cmds:
+      - ./scripts/verify-spaces.sh --request-permission
 
   verify:spaces:
     desc: Check the desired Mission Control Spaces count

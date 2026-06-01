@@ -89,9 +89,14 @@ IDs, or personal workflow repos stay private.
 
 Raycast Store extensions are not copied from caches. Run
 `task verify:raycast-extensions` to list missing desired extensions, or
-`task raycast:open-extension-installs` to open their Store pages. Raycast's
-documented install path is still the in-app or web Store, so this check is
-intentionally outside the blocking `dotfiles:verify` gate.
+`task raycast:open-extension-installs` to open Raycast install intents for
+missing extensions. Raycast's documented install path is still the in-app or web
+Store, so this check is intentionally outside the blocking `dotfiles:verify`
+gate.
+
+Spaces creation is also outside the blocking gate. Run
+`task spaces:request-permission` to open macOS Accessibility settings for the
+current automation context, then `task spaces:apply` once consent is granted.
 
 ## Baseline Inspection
 
@@ -111,5 +116,7 @@ Raycast preferences, Raycast extensions, and Raycast script-command directories.
 | `task verify:raycast` | The current host matches public-safe Raycast preferences |
 | `task verify:raycast-extensions` | Desired public Raycast Store extensions are installed |
 | `task verify:spaces` | Mission Control Spaces count matches the desired count |
+| `task spaces:request-permission` | Opens Accessibility settings for Spaces automation |
+| `task spaces:apply` | Attempts to create missing Mission Control Spaces |
 | `task inspect:macos-baseline` | Prints local setup state for source/target comparison |
 | `task verify:terminal` | Ghostty, Karabiner, and tmux terminal workflow invariants |

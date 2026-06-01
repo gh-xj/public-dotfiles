@@ -9,7 +9,8 @@ usage() {
   cat <<'EOF'
 Usage: scripts/verify-raycast-extensions.sh [--open-missing]
 
-Check the public desired Raycast Store extension ledger. Store extensions are
+Check the public desired Raycast Store extension ledger. With --open-missing,
+open Raycast install intents for missing extensions. Store extensions are
 installed through Raycast, so this verifier is intentionally not part of the
 blocking dotfiles gate.
 EOF
@@ -51,8 +52,17 @@ installed_extensions() {
     sort -u
 }
 
+raycast_deeplink() {
+  local url="$1"
+  local path
+
+  path="${url#https://www.raycast.com/}"
+  path="${path%%\?*}"
+  printf 'raycast://extensions/%s?source=webstore\n' "$path"
+}
+
 main() {
-  local installed missing=0 name title url
+  local installed missing=0 name title url deeplink
   parse_args "$@"
 
   [ "$(uname -s)" = "Darwin" ] || {
@@ -77,7 +87,9 @@ main() {
       missing=$((missing + 1))
       printf 'missing Raycast extension: %s (%s) %s\n' "$title" "$name" "$url" >&2
       if [ "$open_missing" -eq 1 ]; then
-        open "$url"
+        deeplink="$(raycast_deeplink "$url")"
+        printf 'opening Raycast install intent: %s\n' "$deeplink" >&2
+        open "$deeplink"
       fi
     fi
   done <"$extensions_file"
