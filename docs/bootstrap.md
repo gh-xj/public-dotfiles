@@ -65,6 +65,12 @@ For remote runs, use an interactive SSH session or pre-authorize sudo on the
 target machine before `--darwin --apply`; non-interactive SSH without cached
 sudo credentials fails before the long build/apply phase.
 
+On first nix-darwin activation, existing `/etc/bashrc` and `/etc/zshrc` often
+come from stock macOS plus the Nix installer. The bootstrap backs them up to
+`.before-nix-darwin` before `darwin-rebuild switch` so nix-darwin can own the
+generated system shell files. Use `--no-migrate-nix-darwin-etc` when you want
+to inspect and rename those files manually.
+
 This command still proves the public Home Manager example evaluates and builds
 without touching your home directory:
 

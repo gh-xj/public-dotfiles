@@ -40,6 +40,10 @@ because nix-darwin's Homebrew module manages Homebrew packages but does not
 install Homebrew itself.
 When running over SSH, use an interactive session or pre-authorize sudo on the
 target machine before invoking the command.
+On first nix-darwin activation, the script backs up existing `/etc/bashrc` and
+`/etc/zshrc` to `.before-nix-darwin` so nix-darwin can own those generated
+system shell files. Use `--no-migrate-nix-darwin-etc` for a strict failure
+instead.
 
 On a stock Mac without Nix, use `--install-nix --apply` if you want the script
 to run the official macOS daemon installer before Home Manager. The script also

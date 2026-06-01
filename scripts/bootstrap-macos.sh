@@ -15,6 +15,7 @@ nix_install_mode="never"
 homebrew_prefix="/opt/homebrew"
 homebrew_install_mode="auto"
 backup_extension="${XJ_PUBLIC_DOTFILES_BACKUP_EXTENSION:-public-dotfiles-backup-$(date +%Y%m%d%H%M%S)}"
+migrate_nix_darwin_etc=1
 package_sets=("shell" "dev" "ops")
 hm_extra_args=()
 hm_extra_arg_count=0
@@ -42,6 +43,7 @@ Options:
   --backup-extension EXT       Backup unmanaged files before linking Home Manager paths
                                (default: public-dotfiles-backup-<timestamp>)
   --no-backup                  Fail instead of backing up unmanaged Home Manager link targets
+  --no-migrate-nix-darwin-etc  Fail instead of backing up first-run /etc shell rc files
   --user NAME                  macOS user for Home Manager (default: current user)
   --home PATH                  Home directory for that user (default: current HOME)
   --state-version VERSION      Home Manager stateVersion (default: 25.11)
@@ -178,6 +180,9 @@ parse_args() {
         ;;
       --no-backup)
         backup_extension=""
+        ;;
+      --no-migrate-nix-darwin-etc)
+        migrate_nix_darwin_etc=0
         ;;
       --user)
         shift
@@ -488,6 +493,33 @@ ensure_homebrew_for_darwin() {
   info "homebrew: $(homebrew_version)"
 }
 
+prepare_nix_darwin_etc() {
+  local file backup target
+
+  [ "$darwin_phase" -eq 1 ] || return 0
+  [ "$mode" = "apply" ] || return 0
+  [ "$migrate_nix_darwin_etc" -eq 1 ] || return 0
+
+  for file in /etc/bashrc /etc/zshrc; do
+    [ -e "$file" ] || [ -L "$file" ] || continue
+
+    target="$(readlink "$file" 2>/dev/null || true)"
+    case "$target" in
+      /etc/static/*)
+        continue
+        ;;
+    esac
+
+    backup="$file.before-nix-darwin"
+    if [ -e "$backup" ] || [ -L "$backup" ]; then
+      die "$file blocks nix-darwin activation, but $backup already exists; inspect those files and move one manually"
+    fi
+
+    info "backing up $file to $backup for nix-darwin ownership"
+    sudo mv "$file" "$backup"
+  done
+}
+
 hm_args_include_backup_extension() {
   local arg
   for arg in "$@"; do
@@ -567,6 +599,7 @@ main() {
   preflight
   require_sudo_for_darwin_apply
   install_nix_if_requested
+  prepare_nix_darwin_etc
   flake_dir="$(write_bootstrap_flake)"
   build_activation "$flake_dir"
   build_darwin_system "$flake_dir"
