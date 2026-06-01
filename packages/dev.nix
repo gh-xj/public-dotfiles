@@ -5,6 +5,7 @@ pkgs: [
   pkgs.go
   pkgs."go-task"
   pkgs.lazygit
+  pkgs.marksman
   pkgs.neovim
   pkgs.nodejs
   pkgs.prettier

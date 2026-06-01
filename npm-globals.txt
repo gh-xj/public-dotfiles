@@ -1,2 +1,5 @@
 # Public npm CLIs that are not available from the current Nix package set.
+@google/gemini-cli@0.44.1
+@googleworkspace/cli@0.22.5
 ccusage@20.0.6
+markdownlint-cli2@0.22.1

@@ -22,17 +22,35 @@ while IFS= read -r spec || [ -n "$spec" ]; do
   fi
 
   case "$package" in
-    ccusage)
-      command -v ccusage >/dev/null 2>&1 || {
-        printf 'missing npm global command: ccusage\n' >&2
-        exit 1
-      }
-      ;;
-    *)
-      printf 'no verifier mapping for npm global package: %s\n' "$package" >&2
+  @google/gemini-cli)
+    command -v gemini >/dev/null 2>&1 || {
+      printf 'missing npm global command: gemini\n' >&2
       exit 1
-      ;;
+    }
+    ;;
+  @googleworkspace/cli)
+    command -v gws >/dev/null 2>&1 || {
+      printf 'missing npm global command: gws\n' >&2
+      exit 1
+    }
+    ;;
+  ccusage)
+    command -v ccusage >/dev/null 2>&1 || {
+      printf 'missing npm global command: ccusage\n' >&2
+      exit 1
+    }
+    ;;
+  markdownlint-cli2)
+    command -v markdownlint-cli2 >/dev/null 2>&1 || {
+      printf 'missing npm global command: markdownlint-cli2\n' >&2
+      exit 1
+    }
+    ;;
+  *)
+    printf 'no verifier mapping for npm global package: %s\n' "$package" >&2
+    exit 1
+    ;;
   esac
-done < "$ledger"
+done <"$ledger"
 
 echo "npm global baseline verified"

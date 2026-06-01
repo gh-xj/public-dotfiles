@@ -63,10 +63,10 @@ Home Manager now owns these public config files on a new machine:
 | Source | Baseline |
 | --- | --- |
 | Nix shell set | `atuin`, `bat`, `btop`, `eza`, `fd`, `fzf`, `git`, `glow`, `hyperfine`, `jq`, `ripgrep`, `starship`, `tealdeer`, `trash`, `yazi`, `zoxide`, zsh plugins |
-| Nix dev set | `go`, `go-task`, `lazygit`, `neovim`, `nodejs`, `prettier`, `rust`, `shfmt`, `tmux`, `uv`, `delta`, `difftastic` |
+| Nix dev set | `go`, `go-task`, `lazygit`, `marksman`, `neovim`, `nodejs`, `prettier`, `rust`, `shfmt`, `tmux`, `uv`, `delta`, `difftastic` |
 | Nix ops set | `claude-code`, `codex`, `gh`, `gitleaks` |
-| npm globals | narrow public ledger in `npm-globals.txt`; currently `ccusage@20.0.6` |
-| Homebrew brews | `displayplacer`, `gemini-cli`, `googleworkspace-cli`, `markdownlint-cli2`, `marksman`, `mole`, `pngpaste` |
+| npm globals | narrow public ledger in `npm-globals.txt`; currently `@google/gemini-cli`, `@googleworkspace/cli`, `ccusage`, `markdownlint-cli2` |
+| Homebrew brews | `displayplacer`, `mole`, `pngpaste` |
 | Homebrew casks | Ghostty, Chrome, Karabiner, Amethyst, Raycast, OrbStack, ChatGPT, Codex app, Setapp, TypeWhisper, Mimestream, 1Password, CleanShot, Tailscale, public font set |
 
 ## Raycast Current State
