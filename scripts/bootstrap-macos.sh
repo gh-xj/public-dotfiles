@@ -567,6 +567,15 @@ apply_home_manager() {
   nix_cmd run "$flake_dir#home-manager" -- "${switch_args[@]}"
 }
 
+install_public_npm_globals() {
+  [ "$mode" = "apply" ] || return 0
+
+  if [ -f "$repo_root/npm-globals.txt" ]; then
+    info "installing public npm globals"
+    HOME="$target_home" XDG_DATA_HOME="${XDG_DATA_HOME:-$target_home/.local/share}" "$repo_root/scripts/install-npm-globals.sh"
+  fi
+}
+
 apply_darwin_system() {
   local flake_dir="$1"
   local darwin_rebuild
@@ -614,6 +623,7 @@ main() {
   build_darwin_system "$flake_dir"
   ensure_homebrew_for_darwin
   apply_home_manager "$flake_dir"
+  install_public_npm_globals
   apply_darwin_system "$flake_dir"
   finish_message
 }

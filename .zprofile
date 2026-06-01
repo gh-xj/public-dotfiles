@@ -5,8 +5,10 @@ setup_environment() {
     export VISUAL='nvim'
     export GIT_EDITOR='nvim'
     export XDG_CONFIG_HOME="$HOME/.config"
+    export XDG_DATA_HOME="$HOME/.local/share"
     export GOPATH="$HOME/go"
     export BUN_INSTALL="$HOME/.bun"
+    export NPM_CONFIG_PREFIX="${NPM_CONFIG_PREFIX:-$XDG_DATA_HOME/npm-global}"
     export HOMEBREW_AUTO_UPDATE_SECS=604800
 
     # Initialize Homebrew (sets HOMEBREW_PREFIX, PATH, MANPATH, INFOPATH)
@@ -24,7 +26,7 @@ setup_environment() {
     fi
 
     # Dev tool bins (.local/bin is prepended in .zshenv)
-    export PATH="$HOME/go/bin:$HOME/.cargo/bin:$BUN_INSTALL/bin:$PATH"
+    export PATH="$HOME/go/bin:$HOME/.cargo/bin:$NPM_CONFIG_PREFIX/bin:$BUN_INSTALL/bin:$PATH"
 
     # Remove duplicates (covers all PATH additions across zsh init files).
     # -g required so the tied-unique attribute sticks to the global PATH

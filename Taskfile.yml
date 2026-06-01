@@ -16,6 +16,8 @@ tasks:
     desc: Verify public dotfile config surfaces
     cmds:
       - task: dotfiles:verify-user
+      - task: verify:bootstrap-darwin
+      - task: verify:macos-defaults
       - task: verify:terminal
       - task: secrets:staged
       - task: secrets:full
@@ -24,10 +26,32 @@ tasks:
     desc: Verify user-level public dotfile config surfaces
     cmds:
       - task: nix:build
+      - task: verify:home-files
       - task: verify:zsh
+      - task: verify:npm-globals
       - task: security:approved-gh-account
       - task: verify:lazygit
       - task: verify:nvim
+
+  verify:bootstrap-darwin:
+    desc: Verify the generated nix-darwin bootstrap host builds
+    cmds:
+      - ./scripts/bootstrap-macos.sh --darwin --dry-run --user example --home /Users/example
+
+  verify:home-files:
+    desc: Verify Home Manager owns the expected public config files
+    cmds:
+      - ./scripts/verify-home-files.sh
+
+  verify:macos-defaults:
+    desc: Verify this host matches the public macOS defaults baseline
+    cmds:
+      - ./scripts/verify-macos-defaults.sh
+
+  verify:npm-globals:
+    desc: Verify public npm global CLIs are installed
+    cmds:
+      - ./scripts/verify-npm-globals.sh
 
   security:approved-gh-account:
     desc: Reject unapproved GitHub CLI auth
