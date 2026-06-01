@@ -31,6 +31,36 @@ The default `--install-nix` mode uses the official macOS daemon installer. Use
 `--install-nix=determinate` when you explicitly want the Determinate CLI
 installer instead.
 
+## macOS System Phase
+
+The default bootstrap path is user-level Home Manager. To also build the public
+nix-darwin host and apply the Homebrew GUI/app ledger, opt in explicitly:
+
+```bash
+./scripts/bootstrap-macos.sh --darwin --apply
+```
+
+`--darwin` is safe in dry-run mode:
+
+```bash
+./scripts/bootstrap-macos.sh --darwin
+```
+
+It builds the generated Home Manager activation package and generated
+nix-darwin system when Nix is available, but does not run `home-manager switch`,
+install Homebrew, or call `darwin-rebuild switch`.
+
+`--darwin --apply` uses `sudo` for `darwin-rebuild switch`. If Homebrew is
+missing from `/opt/homebrew/bin/brew`, the script first runs Homebrew's official
+installer:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+nix-darwin then manages the public Homebrew taps, formulae, fonts, and GUI
+casks declared by `public-dotfiles`.
+
 This command still proves the public Home Manager example evaluates and builds
 without touching your home directory:
 
@@ -44,6 +74,12 @@ For a real macOS user account, prefer the generated local bootstrap host:
 
 ```bash
 ./scripts/bootstrap-macos.sh --apply
+```
+
+For the public app ledger as well:
+
+```bash
+./scripts/bootstrap-macos.sh --darwin --apply
 ```
 
 Pass Home Manager flags after `--`:

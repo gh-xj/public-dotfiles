@@ -24,6 +24,18 @@ baseline:
 ./scripts/bootstrap-macos.sh --apply
 ```
 
+To include the macOS system phase that applies the public nix-darwin/Homebrew
+app ledger, opt in explicitly:
+
+```bash
+./scripts/bootstrap-macos.sh --darwin --apply
+```
+
+`--darwin --apply` uses `sudo` for `darwin-rebuild switch`. If Homebrew is
+missing from `/opt/homebrew`, it runs the official Homebrew installer first
+because nix-darwin's Homebrew module manages Homebrew packages but does not
+install Homebrew itself.
+
 On a stock Mac without Nix, use `--install-nix --apply` if you want the script
 to run the official macOS daemon installer before Home Manager. The script also
 prints the upstream install commands when Nix is missing.
@@ -91,6 +103,12 @@ Canonical local Home Manager entrypoint for a real macOS user:
 ./scripts/bootstrap-macos.sh --apply
 ```
 
+For the GUI app/Homebrew ledger as well:
+
+```bash
+./scripts/bootstrap-macos.sh --darwin --apply
+```
+
 `task install` remains a maintainer shortcut for the checked-in `.#example`
 configuration. Use it only from a clone whose `hosts/example.nix` matches the
 target macOS account. A private host may import this repo, but that private
@@ -146,6 +164,8 @@ operating environment on a clean machine.
 - build the example with `nix build .#homeConfigurations.example.activationPackage`
 - run `./scripts/bootstrap-macos.sh` first on a new macOS machine
 - use `./scripts/bootstrap-macos.sh --apply` for a real target user
+- use `./scripts/bootstrap-macos.sh --darwin --apply` when the public
+  nix-darwin/Homebrew app ledger should be applied too
 - edit `hosts/example.nix` only when intentionally testing the checked-in example host
 - run `task install` only after the local example host matches that user
 - use `private-config` only when the machine needs sensitive, account-bound,
