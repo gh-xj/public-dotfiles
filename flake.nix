@@ -11,7 +11,14 @@
   let
     systems = [ "aarch64-darwin" ];
     forAllSystems = nixpkgs.lib.genAttrs systems;
-    pkgsFor = system: nixpkgs.legacyPackages.${system};
+    allowedUnfreePackages = [
+      "claude-code"
+    ];
+    pkgsFor = system: import nixpkgs {
+      inherit system;
+      config.allowUnfreePredicate = pkg:
+        builtins.elem (nixpkgs.lib.getName pkg) allowedUnfreePackages;
+    };
   in
   {
     homeModules.default = import ./modules/home;

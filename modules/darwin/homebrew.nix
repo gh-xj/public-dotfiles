@@ -9,22 +9,23 @@ in
       enable = lib.mkDefault true;
       user = lib.mkDefault config.system.primaryUser;
 
-      taps = [ ];
+      taps = [
+        "typewhisper/tap"
+      ];
 
       brews = [
+        "gemini-cli"
         "googleworkspace-cli"
         "markdownlint-cli2"
         "marksman"
+        "mole"
         "pngpaste"
       ];
 
       casks = [
         "font-symbols-only-nerd-font"
-        "font-recursive"
         "font-recursive-code"
-        "handy"
         "ghostty"
-        "arc"
         "google-chrome"
         "karabiner-elements"
         "amethyst"
@@ -32,6 +33,9 @@ in
         "orbstack"
         "chatgpt"
         "codex-app"
+        "setapp"
+        "typewhisper"
+        "mimestream"
         "1password"
         "1password-cli"
         "cleanshot"

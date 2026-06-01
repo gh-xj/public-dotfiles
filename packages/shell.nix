@@ -1,16 +1,20 @@
 pkgs: [
   pkgs.atuin
   pkgs.bat
+  pkgs.btop
   pkgs.coreutils
   pkgs.eza
   pkgs.fd
   pkgs.fzf
   pkgs.git
   pkgs."git-lfs"
+  pkgs.glow
+  pkgs.hyperfine
   pkgs.jq
   pkgs.ripgrep
   pkgs.starship
   pkgs.tealdeer
+  pkgs.trash-cli
   pkgs.yazi
   pkgs.yq
   pkgs.zoxide

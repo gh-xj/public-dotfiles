@@ -9,6 +9,7 @@ pkgs: [
   pkgs.nodejs
   pkgs.prettier
   pkgs.rustc
+  pkgs.shfmt
   pkgs.tmux
   pkgs.uv
 ]

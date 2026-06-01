@@ -386,12 +386,21 @@ $darwin_inputs
   };
 
   outputs = $outputs_args:
+  let
+    pkgs = import nixpkgs {
+      system = "aarch64-darwin";
+      config.allowUnfreePredicate = pkg:
+        builtins.elem (nixpkgs.lib.getName pkg) [
+          "claude-code"
+        ];
+    };
+  in
   {
     packages.aarch64-darwin.home-manager = home-manager.packages.aarch64-darwin.home-manager;
 $darwin_package
 
     homeConfigurations.$profile_name = home-manager.lib.homeManagerConfiguration {
-      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+      inherit pkgs;
       extraSpecialArgs = {
         inherit inputs;
         self = public;
