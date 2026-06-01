@@ -169,6 +169,7 @@ script directories are omitted unless
 | `task input:apply` | Apply persisted input defaults and attempt a non-interactive live trackpad reload |
 | `task input:reload-live` | Prompt for sudo and ask the GUI user session to reload live trackpad state |
 | `task input:verify` | Verify persisted input defaults plus live `AppleMultitouchDevice` state |
+| `task raycast:apply-preferences` | Reapply public-safe Raycast defaults when app preferences drift |
 | `task verify:raycast` | The current host matches public-safe Raycast preferences |
 | `task verify:raycast-scripts` | Public Raycast Script Command files match the ledger and contain no obvious private strings |
 | `task verify:raycast-extensions` | Desired public Raycast Store extensions are installed |

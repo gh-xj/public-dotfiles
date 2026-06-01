@@ -51,7 +51,7 @@ Project-local router for restoring and auditing the public, reusable
 | Defaults show correct but behavior differs | live state such as `ioreg`, app cache, GUI session, or TCC |
 | Display resolution differs | `config/macos/display-layouts.tsv` and `task verify:display-layout` |
 | Tap-to-click or gestures differ | `task input:verify`, `task input:reload-live`, and live `AppleMultitouchDevice` |
-| Raycast command/settings drift | `modules/darwin/defaults.nix`, `config/raycast/script-commands.tsv`, `.config/raycast/scripts`, and Raycast verifiers |
+| Raycast command/settings drift | `task raycast:apply-preferences`, `modules/darwin/defaults.nix`, `config/raycast/script-commands.tsv`, `.config/raycast/scripts`, and Raycast verifiers |
 | Store extension missing | `config/raycast/extensions.tsv`; open install intents, do not copy caches |
 | Spaces count differs | nonblocking `task verify:spaces`; apply needs Accessibility |
 | Package/app drift | Nix package sets, `Brewfile`/Homebrew module, or npm globals ledger |
@@ -66,7 +66,7 @@ Use the narrowest gate first, then the full gate:
 | Display policy | `task verify:display-layout` |
 | Input/trackpad defaults | `task input:verify` |
 | Live trackpad reload | `task input:reload-live` |
-| Raycast preferences | `task verify:raycast` |
+| Raycast preferences | `task raycast:apply-preferences`, then `task verify:raycast` |
 | Raycast script commands | `task verify:raycast-scripts` |
 | Raycast runtime/UI setup | `task raycast:runtime-check` |
 | Raycast Store extensions | `task verify:raycast-extensions` |

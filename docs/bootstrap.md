@@ -201,6 +201,14 @@ task input:verify
 If the live state still does not change, log out and back in before rerunning
 `task input:verify`.
 
+If verification reports a Raycast preference mismatch, reapply the public-safe
+Raycast defaults without rerunning the full Darwin phase:
+
+```bash
+task raycast:apply-preferences
+task verify:raycast
+```
+
 Pass other Home Manager flags after `--`:
 
 ```bash

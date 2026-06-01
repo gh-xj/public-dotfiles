@@ -1,14 +1,52 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+mode="verify"
+domain="com.raycast.macos"
+expanded_item_ids=(
+  "builtin_package_scriptCommands"
+  "builtin_package_windowManagement"
+  "builtin_package_default"
+  "applications"
+)
+
+usage() {
+  cat <<'EOF'
+Usage: verify-raycast-preferences.sh [--verify|--apply]
+
+Verify or apply the public-safe Raycast defaults baseline.
+EOF
+}
+
 if [ "$(uname -s)" != "Darwin" ]; then
   echo "Raycast preferences verification skipped on non-Darwin host"
   exit 0
 fi
 
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --verify)
+      mode="verify"
+      ;;
+    --apply)
+      mode="apply"
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage >&2
+      printf 'raycast-preferences: unknown option: %s\n' "$1" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
 extract_pref() {
   local key="$1"
-  defaults export com.raycast.macos - 2>/dev/null | plutil -extract "$key" raw -o - - 2>/dev/null || printf '<unset>'
+  defaults export "$domain" - 2>/dev/null | plutil -extract "$key" raw -o - - 2>/dev/null || printf '<unset>'
 }
 
 assert_pref() {
@@ -23,25 +61,79 @@ assert_pref() {
   fi
 }
 
-assert_pref raycastGlobalHotkey Command-49
-assert_pref raycastPreferredWindowMode compact
-assert_pref raycastShouldFollowSystemAppearance true
-assert_pref raycastCurrentThemeId bundled-raycast-dark
-assert_pref raycastCurrentThemeIdDarkAppearance bundled-raycast-dark
-assert_pref raycastCurrentThemeIdLightAppearance bundled-raycast-light
-assert_pref navigationCommandStyleIdentifierKey vim
-assert_pref showFavoritesInCompactMode true
-assert_pref commandsPreferencesShowOnlyCustomized true
-assert_pref commandsPreferencesExpandedItemIds.0 builtin_package_scriptCommands
-assert_pref commandsPreferencesExpandedItemIds.1 builtin_package_windowManagement
-assert_pref commandsPreferencesExpandedItemIds.2 builtin_package_default
-assert_pref commandsPreferencesExpandedItemIds.3 applications
-assert_pref rootSearchSensitivity medium
-assert_pref popToRootTimeout 90
-assert_pref raycastWindowEscapeKeyBehavior 1
-assert_pref quicklinks_enableAutoFillLink false
-assert_pref quicklinks_enableQuickSearch false
-assert_pref useHyperKeyIcon true
-assert_pref showGettingStartedLink false
+verify_pref() {
+  local key="$1"
+  local _type="$2"
+  local value="$3"
 
-echo "Raycast preference baseline verified"
+  assert_pref "$key" "$value"
+}
+
+write_pref() {
+  local key="$1"
+  local type="$2"
+  local value="$3"
+
+  case "$type" in
+    bool)
+      defaults write "$domain" "$key" -bool "$value"
+      ;;
+    int)
+      defaults write "$domain" "$key" -int "$value"
+      ;;
+    string)
+      defaults write "$domain" "$key" -string "$value"
+      ;;
+    *)
+      printf 'raycast-preferences: unsupported type for %s: %s\n' "$key" "$type" >&2
+      exit 1
+      ;;
+  esac
+}
+
+visit_scalar_prefs() {
+  local callback="$1"
+
+  "$callback" raycastGlobalHotkey string Command-49
+  "$callback" raycastPreferredWindowMode string compact
+  "$callback" raycastShouldFollowSystemAppearance bool true
+  "$callback" raycastCurrentThemeId string bundled-raycast-dark
+  "$callback" raycastCurrentThemeIdDarkAppearance string bundled-raycast-dark
+  "$callback" raycastCurrentThemeIdLightAppearance string bundled-raycast-light
+  "$callback" navigationCommandStyleIdentifierKey string vim
+  "$callback" showFavoritesInCompactMode bool true
+  "$callback" commandsPreferencesShowOnlyCustomized bool true
+  "$callback" rootSearchSensitivity string medium
+  "$callback" popToRootTimeout int 90
+  "$callback" raycastWindowEscapeKeyBehavior int 1
+  "$callback" quicklinks_enableAutoFillLink bool false
+  "$callback" quicklinks_enableQuickSearch bool false
+  "$callback" useHyperKeyIcon bool true
+  "$callback" showGettingStartedLink bool false
+}
+
+verify_array_prefs() {
+  local idx
+
+  for idx in "${!expanded_item_ids[@]}"; do
+    assert_pref "commandsPreferencesExpandedItemIds.$idx" "${expanded_item_ids[$idx]}"
+  done
+}
+
+apply_array_prefs() {
+  defaults write "$domain" commandsPreferencesExpandedItemIds -array "${expanded_item_ids[@]}"
+}
+
+case "$mode" in
+  verify)
+    visit_scalar_prefs verify_pref
+    verify_array_prefs
+    echo "Raycast preference baseline verified"
+    ;;
+  apply)
+    visit_scalar_prefs write_pref
+    apply_array_prefs
+    killall cfprefsd >/dev/null 2>&1 || true
+    echo "Raycast preference baseline applied"
+    ;;
+esac

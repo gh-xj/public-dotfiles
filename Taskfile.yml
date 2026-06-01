@@ -98,6 +98,11 @@ tasks:
     cmds:
       - ./scripts/verify-raycast-preferences.sh
 
+  raycast:apply-preferences:
+    desc: Apply public-safe Raycast preferences
+    cmds:
+      - ./scripts/verify-raycast-preferences.sh --apply
+
   verify:raycast-scripts:
     desc: Verify public Raycast Script Commands
     cmds:
