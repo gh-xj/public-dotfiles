@@ -4,6 +4,10 @@ set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+nix_cmd() {
+  nix --extra-experimental-features "nix-command flakes" "$@"
+}
+
 run_first_available() {
   local found=0
   local -a candidates args
@@ -122,7 +126,7 @@ verify_tmux() {
   }
   trap cleanup EXIT
 
-  generation="$(nix build --no-link --print-out-paths .#homeConfigurations.example.activationPackage)"
+  generation="$(nix_cmd build --no-link --print-out-paths .#homeConfigurations.example.activationPackage)"
   home_files="$(readlink "$generation/home-files")"
   tmux_config="$home_files/.config/tmux/tmux.conf"
 

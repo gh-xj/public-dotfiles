@@ -11,6 +11,10 @@ need_cmd() {
   }
 }
 
+nix_cmd() {
+  nix --extra-experimental-features "nix-command flakes" "$@"
+}
+
 need_cmd zsh
 
 zsh -n "$repo_root/.zshrc"
@@ -26,9 +30,9 @@ plugin_paths_file="$tmpdir/plugin-paths.zsh"
 shell_tools_path=""
 
 if command -v nix >/dev/null 2>&1; then
-  shell_tools_path="$(nix build --no-link --print-out-paths .#shellTools)"
-  nix build --no-link .#homeConfigurations.example.activationPackage >/dev/null
-  nix eval --raw '.#homeConfigurations.example' \
+  shell_tools_path="$(nix_cmd build --no-link --print-out-paths .#shellTools)"
+  nix_cmd build --no-link .#homeConfigurations.example.activationPackage >/dev/null
+  nix_cmd eval --raw '.#homeConfigurations.example' \
     --apply 'x: x.config.xdg.configFile."xj/zsh/plugin-paths.zsh".text' \
     > "$plugin_paths_file"
 else

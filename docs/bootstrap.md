@@ -65,7 +65,7 @@ This command still proves the public Home Manager example evaluates and builds
 without touching your home directory:
 
 ```bash
-nix build github:gh-xj/public-dotfiles#homeConfigurations.example.activationPackage
+nix --extra-experimental-features 'nix-command flakes' build github:gh-xj/public-dotfiles#homeConfigurations.example.activationPackage
 ```
 
 ## Apply With Home Manager
@@ -94,13 +94,13 @@ it is safe to build without assuming xj's local account. Apply it directly only
 in a matching throwaway test account:
 
 ```bash
-nix run github:nix-community/home-manager/master -- switch --flake github:gh-xj/public-dotfiles#example
+nix --extra-experimental-features 'nix-command flakes' run github:nix-community/home-manager/master -- switch --flake github:gh-xj/public-dotfiles#example
 ```
 
 For local maintainer testing of the checked-in example host:
 
 ```bash
-nix run github:nix-community/home-manager/master -- switch --flake .#example
+nix --extra-experimental-features 'nix-command flakes' run github:nix-community/home-manager/master -- switch --flake .#example
 ```
 
 ## Package Set Selection

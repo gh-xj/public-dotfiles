@@ -65,6 +65,10 @@ have_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
+nix_cmd() {
+  nix --extra-experimental-features "nix-command flakes" "$@"
+}
+
 require_cmd() {
   have_cmd "$1" || die "missing required command: $1"
 }
@@ -367,7 +371,7 @@ build_activation() {
   fi
 
   info "building Home Manager activation package"
-  nix build --no-link "$flake_dir#homeConfigurations.$profile_name.activationPackage"
+  nix_cmd build --no-link "$flake_dir#homeConfigurations.$profile_name.activationPackage"
 }
 
 build_darwin_system() {
@@ -381,7 +385,7 @@ build_darwin_system() {
   fi
 
   info "building nix-darwin system"
-  nix build --no-link "$flake_dir#darwinConfigurations.$profile_name.system"
+  nix_cmd build --no-link "$flake_dir#darwinConfigurations.$profile_name.system"
 }
 
 homebrew_command() {
@@ -435,7 +439,7 @@ apply_home_manager() {
   have_cmd nix || die "--apply requires nix; rerun with --install-nix --apply or install nix first"
 
   info "running Home Manager switch"
-  nix run "$flake_dir#home-manager" -- switch --flake "$flake_dir#$profile_name" "${hm_extra_args[@]}"
+  nix_cmd run "$flake_dir#home-manager" -- switch --flake "$flake_dir#$profile_name" "${hm_extra_args[@]}"
 }
 
 apply_darwin_system() {
@@ -447,7 +451,7 @@ apply_darwin_system() {
 
   have_cmd nix || die "--darwin --apply requires nix; rerun with --install-nix --darwin --apply or install nix first"
 
-  darwin_rebuild="$(nix build --no-link --print-out-paths "$flake_dir#darwin-rebuild")/bin/darwin-rebuild"
+  darwin_rebuild="$(nix_cmd build --no-link --print-out-paths "$flake_dir#darwin-rebuild")/bin/darwin-rebuild"
   info "running nix-darwin switch with sudo"
   sudo "$darwin_rebuild" switch --flake "$flake_dir#$profile_name"
 }
