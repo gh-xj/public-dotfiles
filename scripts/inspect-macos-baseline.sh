@@ -22,6 +22,28 @@ defaults_raw() {
   defaults read "$domain" "$key" 2>/dev/null | tr '\n' ' ' | sed -E 's/[[:space:]]+$//' || printf '<unset>'
 }
 
+find_cmd() {
+  local name="$1"
+  local candidate
+
+  if command -v "$name" >/dev/null 2>&1; then
+    command -v "$name"
+    return 0
+  fi
+
+  for candidate in \
+    "/opt/homebrew/bin/$name" \
+    "/usr/local/bin/$name"
+  do
+    if [ -x "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 print_default() {
   local label="$1"
   local domain="$2"
@@ -90,9 +112,10 @@ print_script_commands() {
 
 section "Display"
 system_profiler SPDisplaysDataType | sed -n '/Displays:/,$p' | sed -n '1,140p'
-if command -v displayplacer >/dev/null 2>&1; then
+displayplacer_cmd="$(find_cmd displayplacer || true)"
+if [ -n "$displayplacer_cmd" ]; then
   printf '\n# displayplacer\n'
-  displayplacer list | sed -n '1,120p'
+  "$displayplacer_cmd" list | sed -n '1,120p'
 else
   printf '\n# displayplacer\nnot installed\n'
 fi
@@ -118,7 +141,7 @@ printf '\npersistent-others:\n'
 print_dock_items persistent-others
 
 section "Spaces"
-print_default "main display spaces" com.apple.spaces "SpacesDisplayConfiguration.Management Data.Monitors.0.Spaces"
+print_plist_default "main display spaces" com.apple.spaces "SpacesDisplayConfiguration.Management Data.Monitors.0.Spaces"
 
 section "Raycast Preferences"
 for key in \
