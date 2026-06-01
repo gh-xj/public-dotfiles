@@ -6,6 +6,7 @@
 .install-backups/
 .configctl/runs/
 .task/
+.work/
 .claude/settings.local.json
 /result
 /result-*
