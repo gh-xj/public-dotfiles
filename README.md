@@ -179,6 +179,10 @@ as `settings.local.json`, plugin registry state, skills trees, sessions, auth,
 and per-project trust or provider overrides. A short reference lives in
 `docs/agent-config.md`.
 
+Project-local public skills that operate this repo may live under
+`.claude/skills/`, with `.agents/skills/` used only as a Codex discovery
+adapter. Those are not global home skill trees.
+
 ## Onboarding notes
 
 The public repo should be enough to restore the public-safe parts of xj's

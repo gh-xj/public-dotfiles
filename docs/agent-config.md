@@ -13,6 +13,12 @@ Codex.
 - `~/.codex/config.toml`
 - `~/.codex/rules/default.rules`
 
+Project-local public skills may live in this repo when they operate this repo
+itself. The canonical source for those skills is `.claude/skills/`, with
+`.agents/skills/` reserved for Codex discovery adapters when needed. These are
+not global home skill trees and are not linked into `~/.claude/skills` or
+`~/.codex/skills` by the public Home Manager module.
+
 ## What stays private
 
 Keep these in `private-config` or as live runtime state:

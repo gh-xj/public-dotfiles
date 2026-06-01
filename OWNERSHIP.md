@@ -10,6 +10,7 @@ What this repo owns:
 - terminal and editor defaults that are meant to be reused across machines
 - public-safe CLI, GUI app, and package ledgers that shape daily ergonomics
 - public-safe Claude/Codex policy, hooks, and baseline defaults
+- public-safe project-local skills that operate this repo's bootstrap harness
 - other public, durable config that does not depend on private account state
 
 What this repo does not own:
