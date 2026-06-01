@@ -67,6 +67,7 @@ Use the narrowest gate first, then the full gate:
 | Input/trackpad defaults | `task input:verify` |
 | Raycast preferences | `task verify:raycast` |
 | Raycast script commands | `task verify:raycast-scripts` |
+| Raycast runtime/UI setup | `task raycast:runtime-check` |
 | Raycast Store extensions | `task verify:raycast-extensions` |
 | Spaces | `task verify:spaces` |
 | General repo health | `task dotfiles:verify` |
@@ -87,7 +88,7 @@ URLs, headers, generated config, or token-adjacent surfaces.
 
 - Source-vs-target baseline diff is still manual; no JSON snapshot comparator
   exists yet.
-- Raycast Store extension install, Script Command directory registration, and
-  Spaces creation remain interactive.
+- Raycast Store extension install, Script Command directory registration,
+  command aliases/hotkeys, and Spaces creation remain interactive.
 - Trackpad live reload may require sudo GUI-session context or logout/login on
   some target Macs.

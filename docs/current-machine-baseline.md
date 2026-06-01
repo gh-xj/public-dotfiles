@@ -107,6 +107,12 @@ export/import encrypted `.rayconfig` files that can include Settings, Aliases,
 and Hotkeys (<https://manual.raycast.com/import-export>). Keep encrypted
 exports out of this public repo.
 
+When adding the public Script Command directory in Raycast, use the stable repo
+path `~/public-dotfiles/.config/raycast/scripts`. The Home Manager live path
+`~/.config/raycast/scripts` is convenient for shell access, but it points
+through a generated Nix store path and should not be the durable Raycast UI
+registration target.
+
 Scripts that reveal private paths, employer context, Bluetooth device IDs,
 personal workflow repos, or private CLI dependencies stay private. The current
 private script directory includes legacy VSCode/Zed workspace commands,
@@ -120,6 +126,11 @@ Raycast Store extensions are not copied from caches. Run
 missing extensions. Raycast's documented install path is still the in-app or web
 Store, so this check is intentionally outside the blocking `dotfiles:verify`
 gate.
+
+Run `task raycast:runtime-check` to distinguish repo-owned script sync from
+Raycast-owned runtime state. Run `task raycast:open-script-setup` to copy the
+stable Script Directory path and open Raycast Settings for the interactive
+directory/hotkey setup.
 
 Spaces creation is also outside the blocking gate. Run
 `task spaces:request-permission` to open macOS Accessibility settings for the
@@ -149,6 +160,8 @@ script directories are omitted unless
 | `task verify:raycast` | The current host matches public-safe Raycast preferences |
 | `task verify:raycast-scripts` | Public Raycast Script Command files match the ledger and contain no obvious private strings |
 | `task verify:raycast-extensions` | Desired public Raycast Store extensions are installed |
+| `task raycast:runtime-check` | Reports whether Raycast runtime setup is still interactive/app-owned |
+| `task raycast:open-script-setup` | Copies the stable public Script Directory path and opens Raycast Settings |
 | `task verify:spaces` | Mission Control Spaces count matches the desired count |
 | `task spaces:request-permission` | Opens Accessibility settings for Spaces automation |
 | `task spaces:apply` | Attempts to create missing Mission Control Spaces |
