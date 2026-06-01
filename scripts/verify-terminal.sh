@@ -115,14 +115,19 @@ RUBY
 
 verify_tmux() {
   local socket="public-dotfiles-verify-terminal-$$"
+  local generation home_files tmux_config
 
   cleanup() {
     tmux -L "public-dotfiles-verify-terminal-$$" kill-server >/dev/null 2>&1 || true
   }
   trap cleanup EXIT
 
+  generation="$(nix build --no-link --print-out-paths .#homeConfigurations.example.activationPackage)"
+  home_files="$(readlink "$generation/home-files")"
+  tmux_config="$home_files/.config/tmux/tmux.conf"
+
   tmux -L "$socket" -f /dev/null new-session -d -s verify-terminal 'sleep 60'
-  tmux -L "$socket" source-file "$repo_root/.tmux.conf"
+  tmux -L "$socket" source-file "$tmux_config"
 
   local key
   for key in M-b M-d M-D M-f M-w M-z; do

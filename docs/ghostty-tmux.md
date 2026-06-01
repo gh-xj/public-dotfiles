@@ -4,11 +4,16 @@ This setup treats tmux as the primary terminal workspace layer and Ghostty as a 
 
 ## Source of truth
 
-- tmux config: `~/public-dotfiles/.tmux.conf`
+- tmux custom config source: `~/public-dotfiles/.tmux.conf`
+- tmux Home Manager module and plugin declarations: `~/public-dotfiles/modules/home/terminal.nix`
+- live tmux config: Home Manager renders `~/.config/tmux/tmux.conf`
+- compatibility bridge: Home Manager renders `~/.tmux.conf` to source the live tmux config
 - Ghostty config source: `~/public-dotfiles/modules/home/terminal.nix`
 - Live Ghostty config: Home Manager renders `~/.config/ghostty/config`
 
 Do not create a second standalone Ghostty config file outside Home Manager.
+Do not install TPM-managed tmux plugins by hand; public tmux plugins are
+declared in Nix.
 
 ## Coupling rules
 

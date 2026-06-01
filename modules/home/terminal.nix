@@ -2,6 +2,22 @@
 
 let
   cfg = config.xj.publicDotfiles;
+  easyjumpTmux = pkgs.tmuxPlugins.mkTmuxPlugin {
+    pluginName = "easyjump";
+    path = "easyjump.tmux";
+    rtpFilePath = "easyjump.tmux";
+    version = "unstable-2024-06-22";
+    src = pkgs.fetchFromGitHub {
+      owner = "roy2220";
+      repo = "easyjump.tmux";
+      rev = "538479e519698ed44f0cb432736b2274ce5a3e6c";
+      hash = "sha256-rckm5DICFYkvfIIy8U3XOXDmGssX/r7npl7Pgpx/bdk=";
+    };
+    postInstall = ''
+      substituteInPlace "$target/easyjump.tmux" \
+        --replace-fail '#!/usr/bin/env python3' '#!${pkgs.python3}/bin/python3'
+    '';
+  };
 in
 {
   config = lib.mkIf cfg.enable {
@@ -15,6 +31,22 @@ in
       mouse = true;
       prefix = "C-s";
       terminal = "tmux-256color";
+      plugins = [
+        pkgs.tmuxPlugins.fzf-tmux-url
+        {
+          plugin = easyjumpTmux;
+          extraConfig = ''
+            set -g @easyjump-key-binding "J"
+          '';
+        }
+        pkgs.tmuxPlugins.session-wizard
+        {
+          plugin = pkgs.tmuxPlugins.tmux-fzf;
+          extraConfig = ''
+            TMUX_FZF_LAUNCH_KEY="F"
+          '';
+        }
+      ];
       extraConfig = builtins.readFile ../../.tmux.conf;
     };
 
