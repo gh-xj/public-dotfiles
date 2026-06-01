@@ -9,7 +9,7 @@
 
   outputs = inputs@{ self, nixpkgs, home-manager, ... }:
   let
-    systems = [ "aarch64-darwin" ];
+    systems = [ "aarch64-darwin" "x86_64-darwin" ];
     forAllSystems = nixpkgs.lib.genAttrs systems;
     allowedUnfreePackages = [
       "claude-code"
@@ -18,6 +18,14 @@
       inherit system;
       config.allowUnfreePredicate = pkg:
         builtins.elem (nixpkgs.lib.getName pkg) allowedUnfreePackages;
+    };
+    mkExampleHome = system: home-manager.lib.homeManagerConfiguration {
+      pkgs = pkgsFor system;
+      extraSpecialArgs = { inherit inputs self; };
+      modules = [
+        self.homeModules.default
+        ./hosts/example.nix
+      ];
     };
   in
   {
@@ -41,17 +49,14 @@
         };
       });
 
-    homeConfigurations.example = home-manager.lib.homeManagerConfiguration {
-      pkgs = pkgsFor "aarch64-darwin";
-      extraSpecialArgs = { inherit inputs self; };
-      modules = [
-        self.homeModules.default
-        ./hosts/example.nix
-      ];
+    homeConfigurations = {
+      example = mkExampleHome "aarch64-darwin";
+      example-x86_64 = mkExampleHome "x86_64-darwin";
     };
 
-    checks = forAllSystems (_system: {
-      example-home = self.homeConfigurations.example.activationPackage;
-    });
+    checks = {
+      aarch64-darwin.example-home = self.homeConfigurations.example.activationPackage;
+      x86_64-darwin.example-home = self.homeConfigurations.example-x86_64.activationPackage;
+    };
   };
 }

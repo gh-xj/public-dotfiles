@@ -39,9 +39,14 @@ tasks:
       - task: verify:nvim
 
   verify:bootstrap-darwin:
-    desc: Verify the generated nix-darwin bootstrap host builds
+    desc: Verify generated nix-darwin bootstrap hosts for native and Intel targets
     cmds:
       - ./scripts/bootstrap-macos.sh --darwin --dry-run --user example --home /Users/example
+      - |
+        tmpdir="$(mktemp -d)"
+        trap 'rm -rf "$tmpdir"' EXIT
+        env XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR="$tmpdir" \
+          ./scripts/bootstrap-macos.sh --darwin --dry-run --host-platform x86_64-darwin --skip-build --user example --home /Users/example
 
   verify:home-files:
     desc: Verify Home Manager owns the expected public config files

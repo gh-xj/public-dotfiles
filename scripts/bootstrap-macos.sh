@@ -12,11 +12,13 @@ home_state_version="25.11"
 mode="dry-run"
 darwin_phase=0
 nix_install_mode="never"
-homebrew_prefix="/opt/homebrew"
+host_platform=""
+homebrew_prefix=""
 homebrew_install_mode="auto"
 backup_extension="${XJ_PUBLIC_DOTFILES_BACKUP_EXTENSION:-public-dotfiles-backup-$(date +%Y%m%d%H%M%S)}"
 migrate_nix_darwin_etc=1
 display_layout_mode="auto"
+skip_build=0
 package_sets=("shell" "dev" "ops")
 hm_extra_args=()
 hm_extra_arg_count=0
@@ -40,12 +42,16 @@ Options:
   --install-nix[=official]     Install upstream Nix with the official macOS daemon installer if nix is missing
   --install-nix=determinate    Install Determinate Nix with its CLI installer if nix is missing
   --no-install-homebrew        With --darwin --apply, fail instead of installing missing Homebrew
-  --homebrew-prefix PATH       Homebrew prefix for nix-darwin (default: /opt/homebrew)
+  --host-platform SYSTEM       Override detected Nix Darwin system for dry-run testing
+                               (aarch64-darwin or x86_64-darwin)
+  --homebrew-prefix PATH       Homebrew prefix for nix-darwin
+                               (default: /opt/homebrew on Apple Silicon, /usr/local on Intel)
   --backup-extension EXT       Backup unmanaged files before linking Home Manager paths
                                (default: public-dotfiles-backup-<timestamp>)
   --no-backup                  Fail instead of backing up unmanaged Home Manager link targets
   --no-migrate-nix-darwin-etc  Fail instead of backing up first-run /etc shell rc files
   --no-display-layout          Skip displayplacer layout policy after nix-darwin apply
+  --skip-build                 Generate and inspect bootstrap config without Nix builds
   --user NAME                  macOS user for Home Manager (default: current user)
   --home PATH                  Home directory for that user (default: current HOME)
   --state-version VERSION      Home Manager stateVersion (default: 25.11)
@@ -96,6 +102,44 @@ enable_nix_flake_features() {
 
 require_cmd() {
   have_cmd "$1" || die "missing required command: $1"
+}
+
+darwin_system_from_uname() {
+  case "$1" in
+    arm64)
+      printf '%s\n' "aarch64-darwin"
+      ;;
+    x86_64)
+      printf '%s\n' "x86_64-darwin"
+      ;;
+    *)
+      die "this bootstrap supports arm64 and x86_64 macOS only; found $1"
+      ;;
+  esac
+}
+
+default_homebrew_prefix_for_system() {
+  case "$1" in
+    aarch64-darwin)
+      printf '%s\n' "/opt/homebrew"
+      ;;
+    x86_64-darwin)
+      printf '%s\n' "/usr/local"
+      ;;
+    *)
+      die "unsupported Darwin host platform: $1"
+      ;;
+  esac
+}
+
+validate_host_platform() {
+  case "$1" in
+    aarch64-darwin|x86_64-darwin)
+      ;;
+    *)
+      die "unsupported --host-platform: $1"
+      ;;
+  esac
 }
 
 require_sudo_for_darwin_apply() {
@@ -162,6 +206,14 @@ parse_args() {
       --no-install-homebrew)
         homebrew_install_mode="never"
         ;;
+      --host-platform)
+        shift
+        [ "$#" -gt 0 ] || die "--host-platform requires a value"
+        host_platform="$1"
+        ;;
+      --host-platform=*)
+        host_platform="${1#--host-platform=}"
+        ;;
       --homebrew-prefix)
         shift
         [ "$#" -gt 0 ] || die "--homebrew-prefix requires a value"
@@ -188,6 +240,9 @@ parse_args() {
         ;;
       --no-display-layout)
         display_layout_mode="skip"
+        ;;
+      --skip-build)
+        skip_build=1
         ;;
       --user)
         shift
@@ -240,12 +295,23 @@ parse_args() {
 }
 
 preflight() {
-  local uname_s uname_m
+  local detected_platform uname_s uname_m
   uname_s="$(uname -s)"
   uname_m="$(uname -m)"
 
   [ "$uname_s" = "Darwin" ] || die "this bootstrap currently supports macOS only; found $uname_s"
-  [ "$uname_m" = "arm64" ] || die "this flake currently exports aarch64-darwin only; found $uname_m"
+  detected_platform="$(darwin_system_from_uname "$uname_m")"
+  if [ -z "$host_platform" ]; then
+    host_platform="$detected_platform"
+  else
+    validate_host_platform "$host_platform"
+    if [ "$host_platform" != "$detected_platform" ] && [ "$mode" != "dry-run" ]; then
+      die "--host-platform can only differ from the detected platform in dry-run mode"
+    fi
+  fi
+  if [ -z "$homebrew_prefix" ]; then
+    homebrew_prefix="$(default_homebrew_prefix_for_system "$host_platform")"
+  fi
 
   require_cmd git
   require_cmd curl
@@ -257,7 +323,8 @@ preflight() {
   [ "${#package_sets[@]}" -gt 0 ] || die "at least one package set is required"
 
   info "macOS: $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
-  info "arch: $uname_m"
+  info "detected arch: $uname_m"
+  info "Nix host platform: $host_platform"
   info "repo: $repo_root"
   info "target Home Manager user: $target_user"
   info "target home: $target_home"
@@ -345,7 +412,7 @@ write_bootstrap_flake() {
     outputs_args="inputs@{ public, nixpkgs, home-manager, nix-darwin, ... }"
     darwin_inputs='    nix-darwin.url = "github:nix-darwin/nix-darwin/master";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";'
-    darwin_package='    packages.aarch64-darwin.darwin-rebuild = nix-darwin.packages.aarch64-darwin.darwin-rebuild;'
+    darwin_package="    packages.$host_platform.darwin-rebuild = nix-darwin.packages.$host_platform.darwin-rebuild;"
     darwin_configuration=$(cat <<EOF
     darwinConfigurations.$profile_name = nix-darwin.lib.darwinSystem {
       specialArgs = {
@@ -363,7 +430,7 @@ write_bootstrap_flake() {
           };
 
           users.users.$(nix_string "$target_user").home = $(nix_string "$target_home");
-          nixpkgs.hostPlatform = "aarch64-darwin";
+          nixpkgs.hostPlatform = $(nix_string "$host_platform");
 
           # Bootstrap owns app/system convergence, not the Nix daemon itself.
           nix.enable = false;
@@ -393,7 +460,7 @@ $darwin_inputs
   outputs = $outputs_args:
   let
     pkgs = import nixpkgs {
-      system = "aarch64-darwin";
+      system = $(nix_string "$host_platform");
       config.allowUnfreePredicate = pkg:
         builtins.elem (nixpkgs.lib.getName pkg) [
           "claude-code"
@@ -401,7 +468,7 @@ $darwin_inputs
     };
   in
   {
-    packages.aarch64-darwin.home-manager = home-manager.packages.aarch64-darwin.home-manager;
+    packages.$host_platform.home-manager = home-manager.packages.$host_platform.home-manager;
 $darwin_package
 
     homeConfigurations.$profile_name = home-manager.lib.homeManagerConfiguration {
@@ -448,6 +515,10 @@ build_activation() {
     info "skipping Home Manager build because nix is not installed"
     return
   fi
+  if [ "$skip_build" -eq 1 ]; then
+    info "skipping Home Manager build because --skip-build was requested"
+    return
+  fi
 
   info "building Home Manager activation package"
   nix_cmd build --no-link "$flake_dir#homeConfigurations.$profile_name.activationPackage"
@@ -460,6 +531,10 @@ build_darwin_system() {
 
   if ! have_cmd nix; then
     info "skipping nix-darwin build because nix is not installed"
+    return
+  fi
+  if [ "$skip_build" -eq 1 ]; then
+    info "skipping nix-darwin build because --skip-build was requested"
     return
   fi
 

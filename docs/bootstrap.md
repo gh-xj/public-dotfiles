@@ -50,8 +50,10 @@ It builds the generated Home Manager activation package and generated
 nix-darwin system when Nix is available, but does not run `home-manager switch`,
 install Homebrew, or call `darwin-rebuild switch`.
 
-`--darwin --apply` uses `sudo` for `darwin-rebuild switch`. If Homebrew is
-missing from `/opt/homebrew/bin/brew`, the script first runs Homebrew's official
+The bootstrap supports both Apple Silicon and Intel Macs. `--darwin --apply`
+uses `sudo` for `darwin-rebuild switch`. If Homebrew is missing from the
+platform default prefix (`/opt/homebrew/bin/brew` on Apple Silicon,
+`/usr/local/bin/brew` on Intel), the script first runs Homebrew's official
 installer:
 
 ```bash
