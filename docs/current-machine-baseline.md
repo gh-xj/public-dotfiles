@@ -6,6 +6,9 @@ This document captures the public-safe setup observed on xj's current Mac and
 the restore surface that `public-dotfiles` should own for a new Mac. Sensitive
 or account-bound state stays in `private-config`.
 
+For the layer model used when source and target Macs disagree, see
+`docs/macos-convergence-model.md`.
+
 ## Ownership Boundary
 
 | Surface | Public baseline | Private / manual boundary |
@@ -103,8 +106,9 @@ current automation context, then `task spaces:apply` once consent is granted.
 
 Run `task inspect:macos-baseline` on any Mac to print the public-safe inventory
 used for discrepancy triage. It reports display hardware and displayplacer
-state, global keyboard/mouse defaults, input sources, Dock items, Spaces count,
-Raycast preferences, Raycast extensions, and Raycast script-command directories.
+state, global keyboard/mouse defaults, persisted input defaults, live trackpad
+state, input sources, Dock items, Spaces count, Raycast preferences, Raycast
+extensions, and Raycast script-command directories.
 
 ## Verification
 

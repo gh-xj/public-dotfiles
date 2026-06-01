@@ -15,6 +15,19 @@ machine-local runtime, session, cache, and personal archive state in
 Use the `config-manager` skill for app configuration work. Edit source files in
 this repo, not the live symlinks under `$HOME`.
 
+## Bootstrap Discrepancy Loop
+
+When a new-machine bootstrap discrepancy is reported, do not treat a one-off
+target-machine fix as complete. Compare the source Mac and target Mac, identify
+the owning layer, encode the desired state in this repo, add or strengthen the
+verification surface, then rerun the bootstrap or narrow apply command.
+
+For macOS settings, verify the layer that actually controls behavior. Plain
+`defaults read` is not enough when the behavior is backed by ByHost preferences,
+GUI-session state, app runtime caches, TCC grants, display hardware, or live
+IOKit state. Prefer live-state checks where available, such as `displayplacer`
+for displays and `ioreg AppleMultitouchDevice` for trackpad behavior.
+
 ## GitHub CLI Account Boundary
 
 - GitHub CLI auth for `github.com` is allowed only for approved local accounts.
