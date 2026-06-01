@@ -9,17 +9,62 @@ in
       enable = lib.mkDefault true;
       user = lib.mkDefault config.system.primaryUser;
 
+      taps = [
+        "homebrew/autoupdate"
+        "daipeihust/tap"
+      ];
+
       brews = [
+        "nvm"
+        "bluetoothconnector"
+        "cliclick"
+        "daipeihust/tap/im-select"
         "googleworkspace-cli"
         "hl"
         "markdownlint-cli2"
         "marksman"
         "pngpaste"
+        "watchman"
       ];
 
       casks = [
+        "font-fira-code-nerd-font"
+        "font-hack-nerd-font"
+        "font-symbols-only-nerd-font"
+        "font-recursive"
+        "font-recursive-code"
+        "font-pt-mono"
         "gcloud-cli"
         "handy"
+        "ghostty"
+        "arc"
+        "google-chrome"
+        "firefox"
+        "karabiner-elements"
+        "amethyst"
+        "raycast"
+        "slack"
+        "slack-cli"
+        "zoom"
+        "discord"
+        "fantastical"
+        "mimestream"
+        "obsidian"
+        "telegram"
+        "orbstack"
+        "bruno"
+        "ngrok"
+        "github"
+        "chatgpt"
+        "codex-app"
+        "bitwarden"
+        "1password"
+        "1password-cli"
+        "little-snitch"
+        "calibre"
+        "cleanshot"
+        "tailscale-app"
+        "tencent-lemon"
       ];
 
       onActivation = {
