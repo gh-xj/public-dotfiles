@@ -35,6 +35,8 @@ app ledger, opt in explicitly:
 missing from `/opt/homebrew`, it runs the official Homebrew installer first
 because nix-darwin's Homebrew module manages Homebrew packages but does not
 install Homebrew itself.
+When running over SSH, use an interactive session or pre-authorize sudo on the
+target machine before invoking the command.
 
 On a stock Mac without Nix, use `--install-nix --apply` if you want the script
 to run the official macOS daemon installer before Home Manager. The script also

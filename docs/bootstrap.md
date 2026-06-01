@@ -61,6 +61,10 @@ installer:
 nix-darwin then manages the public Homebrew taps, formulae, fonts, and GUI
 casks declared by `public-dotfiles`.
 
+For remote runs, use an interactive SSH session or pre-authorize sudo on the
+target machine before `--darwin --apply`; non-interactive SSH without cached
+sudo credentials fails before the long build/apply phase.
+
 This command still proves the public Home Manager example evaluates and builds
 without touching your home directory:
 

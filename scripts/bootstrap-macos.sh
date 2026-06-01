@@ -94,6 +94,23 @@ require_cmd() {
   have_cmd "$1" || die "missing required command: $1"
 }
 
+require_sudo_for_darwin_apply() {
+  [ "$darwin_phase" -eq 1 ] || return 0
+  [ "$mode" = "apply" ] || return 0
+
+  if sudo -n true >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [ -t 0 ]; then
+    info "requesting sudo credentials for nix-darwin apply"
+    sudo -v || die "--darwin --apply requires sudo"
+    return 0
+  fi
+
+  die "--darwin --apply requires sudo credentials; rerun from an interactive terminal/SSH session or pre-authorize sudo on the target machine"
+}
+
 csv_to_array() {
   local csv="$1"
   local old_ifs="$IFS"
@@ -540,6 +557,7 @@ main() {
   enable_nix_flake_features
   cd "$repo_root"
   preflight
+  require_sudo_for_darwin_apply
   install_nix_if_requested
   flake_dir="$(write_bootstrap_flake)"
   build_activation "$flake_dir"
