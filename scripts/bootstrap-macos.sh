@@ -499,7 +499,7 @@ apply_home_manager() {
     hm_args_have_backup=1
   fi
   if [ -n "$backup_extension" ] && [ "$hm_args_have_backup" -eq 0 ]; then
-    switch_args+=(--backup-extension "$backup_extension")
+    switch_args+=(-b "$backup_extension")
   fi
   if [ "$hm_extra_arg_count" -gt 0 ]; then
     switch_args+=("${hm_extra_args[@]}")
