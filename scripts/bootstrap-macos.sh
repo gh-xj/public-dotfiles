@@ -70,6 +70,22 @@ nix_cmd() {
   nix --extra-experimental-features "nix-command flakes" "$@"
 }
 
+enable_nix_flake_features() {
+  local features_config="experimental-features = nix-command flakes"
+
+  case "${NIX_CONFIG:-}" in
+    *nix-command*flakes*|*flakes*nix-command*)
+      return
+      ;;
+    "")
+      export NIX_CONFIG="$features_config"
+      ;;
+    *)
+      export NIX_CONFIG="${NIX_CONFIG}"$'\n'"$features_config"
+      ;;
+  esac
+}
+
 require_cmd() {
   have_cmd "$1" || die "missing required command: $1"
 }
@@ -476,6 +492,7 @@ main() {
   local flake_dir
 
   parse_args "$@"
+  enable_nix_flake_features
   cd "$repo_root"
   preflight
   install_nix_if_requested

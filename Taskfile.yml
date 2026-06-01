@@ -3,6 +3,9 @@ version: "3"
 vars:
   NIX_FLAGS: --extra-experimental-features 'nix-command flakes'
 
+env:
+  NIX_CONFIG: experimental-features = nix-command flakes
+
 tasks:
   install:
     desc: Apply the local public Home Manager example

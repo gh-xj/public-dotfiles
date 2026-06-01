@@ -44,14 +44,14 @@ You can still build the public Home Manager example without touching your home
 directory:
 
 ```bash
-nix --extra-experimental-features 'nix-command flakes' build github:gh-xj/public-dotfiles#homeConfigurations.example.activationPackage
+NIX_CONFIG='experimental-features = nix-command flakes' nix build github:gh-xj/public-dotfiles#homeConfigurations.example.activationPackage
 ```
 
 Apply the checked-in host only from a matching test account named `example`, or
 after cloning and editing `hosts/example.nix` for your own macOS user:
 
 ```bash
-nix --extra-experimental-features 'nix-command flakes' run github:nix-community/home-manager/master -- switch --flake .#example
+NIX_CONFIG='experimental-features = nix-command flakes' nix run github:nix-community/home-manager/master -- switch --flake .#example
 ```
 
 See [docs/bootstrap.md](docs/bootstrap.md) for the direct public bootstrap path
@@ -163,7 +163,7 @@ and per-project trust or provider overrides. A short reference lives in
 The public repo should be enough to restore the public-safe parts of xj's
 operating environment on a clean machine.
 
-- build the example with `nix --extra-experimental-features 'nix-command flakes' build .#homeConfigurations.example.activationPackage`
+- build the example with `NIX_CONFIG='experimental-features = nix-command flakes' nix build .#homeConfigurations.example.activationPackage`
 - run `./scripts/bootstrap-macos.sh` first on a new macOS machine
 - use `./scripts/bootstrap-macos.sh --apply` for a real target user
 - use `./scripts/bootstrap-macos.sh --darwin --apply` when the public
