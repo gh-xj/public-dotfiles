@@ -172,12 +172,15 @@ This repo now publishes the reusable Claude/Codex baseline:
 - `~/.claude/hooks/`
 - `~/.claude/statusline-command.sh`
 - `~/.codex/AGENTS.md`
-- `~/.codex/config.toml`
 - `~/.codex/rules/default.rules`
+- `.codex/config.toml` as the public Codex template
 
 The private repo continues to own agent runtime and account-local material such
 as `settings.local.json`, plugin registry state, skills trees, sessions, auth,
-and per-project trust or provider overrides. A short reference lives in
+and per-project trust or provider overrides. The public bootstrap seeds
+`~/.codex/config.toml` only when it is missing or still an old read-only public
+Home Manager symlink; after that, the live file stays writable for Codex TUI
+trust, marketplace, hook, and runtime updates. A short reference lives in
 `docs/agent-config.md`.
 
 Project-local public skills that operate this repo may live under

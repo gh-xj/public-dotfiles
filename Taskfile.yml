@@ -31,6 +31,7 @@ tasks:
       - task: nix:build
       - task: verify:home-files
       - task: verify:global-taskfile
+      - task: verify:codex-runtime-boundary
       - task: verify:zsh
       - task: verify:npm-globals
       - task: security:approved-gh-account
@@ -51,6 +52,11 @@ tasks:
     desc: Verify public global go-task Taskfile
     cmds:
       - ./scripts/verify-global-taskfile.sh
+
+  verify:codex-runtime-boundary:
+    desc: Verify public Codex config stays template-only and live-mutable
+    cmds:
+      - ./scripts/verify-codex-runtime-boundary.sh
 
   display:apply:
     desc: Apply known display layout policy
