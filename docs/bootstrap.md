@@ -85,10 +85,22 @@ unmanaged files that already exist at Home Manager-owned paths are moved aside
 instead of blocking the bootstrap. Use `--backup-extension EXT` for a custom
 extension, or `--no-backup` when you want a strict conflict failure.
 
+Verify the user-level surface after Home Manager apply:
+
+```bash
+task dotfiles:verify-user
+```
+
 For the public app ledger as well:
 
 ```bash
 ./scripts/bootstrap-macos.sh --darwin --apply
+```
+
+Verify the full public surface after the Darwin/Homebrew phase:
+
+```bash
+task dotfiles:verify
 ```
 
 Pass other Home Manager flags after `--`:

@@ -15,14 +15,19 @@ tasks:
   dotfiles:verify:
     desc: Verify public dotfile config surfaces
     cmds:
+      - task: dotfiles:verify-user
+      - task: verify:terminal
+      - task: secrets:staged
+      - task: secrets:full
+
+  dotfiles:verify-user:
+    desc: Verify user-level public dotfile config surfaces
+    cmds:
       - task: nix:build
       - task: verify:zsh
       - task: security:approved-gh-account
       - task: verify:lazygit
       - task: verify:nvim
-      - task: verify:terminal
-      - task: secrets:staged
-      - task: secrets:full
 
   security:approved-gh-account:
     desc: Reject unapproved GitHub CLI auth

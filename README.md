@@ -31,6 +31,9 @@ app ledger, opt in explicitly:
 ./scripts/bootstrap-macos.sh --darwin --apply
 ```
 
+After the user-level apply, run `task dotfiles:verify-user`. After the Darwin
+phase has installed the public GUI/app ledger, run `task dotfiles:verify`.
+
 `--darwin --apply` uses `sudo` for `darwin-rebuild switch`. If Homebrew is
 missing from `/opt/homebrew`, it runs the official Homebrew installer first
 because nix-darwin's Homebrew module manages Homebrew packages but does not

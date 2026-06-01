@@ -541,12 +541,20 @@ apply_darwin_system() {
 }
 
 finish_message() {
-  [ "$mode" = "dry-run" ] || return 0
+  if [ "$mode" = "dry-run" ]; then
+    if [ "$darwin_phase" -eq 1 ]; then
+      info "dry run complete; rerun with --darwin --apply for Home Manager plus nix-darwin/Homebrew"
+    else
+      info "dry run complete; rerun with --apply to switch this user"
+    fi
+    return 0
+  fi
 
   if [ "$darwin_phase" -eq 1 ]; then
-    info "dry run complete; rerun with --darwin --apply for Home Manager plus nix-darwin/Homebrew"
+    info "apply complete; run: task dotfiles:verify"
   else
-    info "dry run complete; rerun with --apply to switch this user"
+    info "Home Manager apply complete; run: task dotfiles:verify-user"
+    info "rerun with --darwin --apply for the Homebrew GUI/app ledger and full verification"
   fi
 }
 
