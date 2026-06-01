@@ -1,10 +1,11 @@
-# Student Bootstrap
+# Public Bootstrap
 
-`public-dotfiles` is a public-safe macOS baseline for shell, editor, terminal,
-CLI, and agent policy. It can be built directly as a Home Manager example,
-or imported by a private flake. It deliberately excludes credentials, app
-sessions, private provider endpoints, project trust lists, and machine-local
-runtime state.
+`public-dotfiles` is the public-safe split of xj's macOS configuration. It owns
+the non-sensitive shell, editor, terminal, CLI, GUI app, package, and agent
+defaults needed to restore a comfortable operating environment. It can be
+applied directly with Home Manager or imported by a private flake. It
+deliberately excludes credentials, app sessions, private provider endpoints,
+company/private settings, project trust lists, and machine-local runtime state.
 
 ## Fastest Read-Only Check
 
@@ -17,10 +18,10 @@ nix build github:gh-xj/public-dotfiles#homeConfigurations.example.activationPack
 
 ## Apply With Home Manager
 
-The public flake exports `homeConfigurations.example`. It is intentionally a
-teaching fixture, with `home.username = "example"` and
-`home.homeDirectory = "/Users/example"`. Apply it directly only in a matching
-throwaway test account:
+The public flake exports `homeConfigurations.example`. The checked-in host uses
+`home.username = "example"` and `home.homeDirectory = "/Users/example"` so it
+is safe to build without assuming xj's local account. Apply it directly only in
+a matching throwaway test account:
 
 ```bash
 nix run github:nix-community/home-manager/master -- switch --flake github:gh-xj/public-dotfiles#example

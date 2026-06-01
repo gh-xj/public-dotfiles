@@ -2,9 +2,15 @@
 
 ## Scope
 
-This repository owns the public, reusable dotfile baseline. Keep private
-machine state, credentials, account-local provider settings, sessions, caches,
-and personal archives in `private-config`.
+This repository owns the public-safe version of xj's dotfile setup. It should
+be capable enough to restore the non-sensitive parts of xj's comfortable
+operating environment, including opinionated app, shell, editor, terminal, CLI,
+and agent defaults. Do not treat this repo as a teaching/demo layer or as a
+minimal baseline.
+
+Keep only sensitive, account-bound, company/private, secret-adjacent,
+machine-local runtime, session, cache, and personal archive state in
+`private-config`.
 
 Use the `config-manager` skill for app configuration work. Edit source files in
 this repo, not the live symlinks under `$HOME`.

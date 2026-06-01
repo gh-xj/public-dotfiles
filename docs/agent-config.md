@@ -49,7 +49,8 @@ To apply the public baseline directly, clone the repo, edit
 task install
 ```
 
-For xj's real machines, `private-config` imports this public baseline and adds:
+For private machines, `private-config` imports this public baseline and adds
+only private overlay state:
 
 - `~/.claude/settings.local.json`
 - plugins, skills, auth, trust lists, and provider overrides
