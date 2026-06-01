@@ -121,16 +121,18 @@ The public flake exports named package sets:
 - `packageSets.shell`
 - `packageSets.dev`
 - `packageSets.ops`
-- `packageSets.teaching`
 
 The default public Home Manager module composes all package sets for
-`homeConfigurations.example`. A host can choose a subset:
+`homeConfigurations.example`. The sets are intentionally hard-cut to tools
+that are either daily reach-for commands or direct dependencies of this repo's
+shell, editor, terminal, agent, and verification surfaces. A host can choose a
+subset:
 
 ```nix
 {
   xj.publicDotfiles = {
     enable = true;
-    packageSets = [ "shell" "dev" "teaching" ];
+    packageSets = [ "shell" "dev" ];
   };
 }
 ```

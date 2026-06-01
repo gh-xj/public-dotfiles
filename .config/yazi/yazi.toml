@@ -40,39 +40,25 @@ open = [
 ]
 reveal = [
 	{ run = 'open -R "$1"', desc = "Reveal", for = "macos" },
-	{ run = '''exiftool "$1"; echo "Press enter to exit"; read _''', block = true, desc = "Show EXIF", for = "unix" },
-]
-extract = [
-	{ run = 'ya pub extract --list "$@"', desc = "Extract here", for = "unix" },
-]
-play = [
-	{ run = 'mpv --force-window "$@"', orphan = true, for = "unix" },
-	{ run = '''mediainfo "$1"; echo "Press enter to exit"; read _''', block = true, desc = "Show media info", for = "unix" },
-]
-sqlite = [
-	{ run = 'lazysql "$1"', block = true, desc = "Open with lazysql" },
-]
-view-log = [
-	{ run = 'hl "$@"', block = true, desc = "View with hl", for = "unix" },
 ]
 
 [open]
 rules = [
 	{ url = "bulk-rename.txt", use = "bulk-rename" },
 	{ url = "*.md", use = [ "edit", "nvim", "reveal" ] },
-	{ url = "*.log", use = [ "view-log", "edit", "reveal" ] },
-	{ url = "*.log.*", use = [ "view-log", "edit", "reveal" ] },
-	{ url = "*.jsonl", use = [ "view-log", "edit", "reveal" ] },
-	{ url = "*.ndjson", use = [ "view-log", "edit", "reveal" ] },
-	{ url = "*.db", use = [ "sqlite", "edit", "reveal" ] },
-	{ url = "*.sqlite", use = [ "sqlite", "edit", "reveal" ] },
-	{ url = "*.sqlite3", use = [ "sqlite", "edit", "reveal" ] },
-	{ mime = "application/vnd.sqlite3", use = [ "sqlite", "edit", "reveal" ] },
+	{ url = "*.log", use = [ "edit", "reveal" ] },
+	{ url = "*.log.*", use = [ "edit", "reveal" ] },
+	{ url = "*.jsonl", use = [ "edit", "reveal" ] },
+	{ url = "*.ndjson", use = [ "edit", "reveal" ] },
+	{ url = "*.db", use = [ "edit", "reveal" ] },
+	{ url = "*.sqlite", use = [ "edit", "reveal" ] },
+	{ url = "*.sqlite3", use = [ "edit", "reveal" ] },
+	{ mime = "application/vnd.sqlite3", use = [ "edit", "reveal" ] },
 	{ url = "*/", use = [ "edit", "open", "reveal" ] },
 	{ mime = "text/*", use = [ "edit", "reveal" ] },
 	{ mime = "image/*", use = [ "open", "reveal" ] },
-	{ mime = "{audio,video}/*", use = [ "play", "reveal" ] },
-	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", use = [ "extract", "reveal" ] },
+	{ mime = "{audio,video}/*", use = [ "open", "reveal" ] },
+	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", use = [ "open", "reveal" ] },
 	{ mime = "application/{json,ndjson}", use = [ "edit", "reveal" ] },
 	{ mime = "*/javascript", use = [ "edit", "reveal" ] },
 	{ mime = "inode/empty", use = [ "edit", "reveal" ] },
@@ -92,18 +78,6 @@ suppress_preload = false
 
 prepend_previewers = [
   { url = "*/", run = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes --follow-symlinks --level=2 "$1"' },
-  { mime = "application/*zip", run = "ouch" },
-  { mime = "application/x-tar", run = "ouch" },
-  { mime = "application/x-bzip2", run = "ouch" },
-  { mime = "application/x-7z-compressed", run = "ouch" },
-  { mime = "application/x-rar", run = "ouch" },
-  { mime = "application/x-xz", run = "ouch" },
-  { url = "*.csv", run = "rich-preview" },
-  { url = "*.md", run = 'piper -- ~/.config/yazi/scripts/glow-preview.sh "$1" "$w"' },
-  { url = "*.log", run = 'piper -- hl --color=always --paging=never "$1"' },
-  { url = "*.log.*", run = 'piper -- hl --color=always --paging=never "$1"' },
-  { url = "*.jsonl", run = 'piper -- hl --color=always --paging=never "$1"' },
-  { url = "*.ndjson", run = 'piper -- hl --color=always --paging=never "$1"' },
 ]
 
 [input]

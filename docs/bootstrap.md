@@ -110,15 +110,16 @@ The public flake exports named package sets:
 - `packageSets.shell`
 - `packageSets.dev`
 - `packageSets.ops`
-- `packageSets.teaching`
 
-The default Home Manager module installs all four. A host can select a subset:
+The default Home Manager module installs all three. The default package lists
+are deliberately small: shell/editor/git/tmux/yazi, current dev workflow, and
+repo verification helpers. A host can select a subset:
 
 ```nix
 {
   xj.publicDotfiles = {
     enable = true;
-    packageSets = [ "shell" "dev" "teaching" ];
+    packageSets = [ "shell" "dev" ];
   };
 }
 ```

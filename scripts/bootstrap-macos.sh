@@ -14,7 +14,7 @@ darwin_phase=0
 nix_install_mode="never"
 homebrew_prefix="/opt/homebrew"
 homebrew_install_mode="auto"
-package_sets=("shell" "dev" "ops" "teaching")
+package_sets=("shell" "dev" "ops")
 hm_extra_args=()
 
 usage() {
@@ -40,7 +40,7 @@ Options:
   --user NAME                  macOS user for Home Manager (default: current user)
   --home PATH                  Home directory for that user (default: current HOME)
   --state-version VERSION      Home Manager stateVersion (default: 25.11)
-  --package-sets LIST          Comma-separated package sets (default: shell,dev,ops,teaching)
+  --package-sets LIST          Comma-separated package sets (default: shell,dev,ops)
   -h, --help                   Show this help
 
 Examples:

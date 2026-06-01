@@ -15,10 +15,6 @@ in
         source = ../../.config/bat;
         force = true;
       };
-      "lazydocker" = {
-        source = ../../.config/lazydocker;
-        force = true;
-      };
       "lazygit" = {
         source = ../../.config/lazygit;
         force = true;

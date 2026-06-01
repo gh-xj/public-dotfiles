@@ -1,33 +1,14 @@
 pkgs: [
-  pkgs.act
   pkgs.cargo
-  pkgs.cloc
-  pkgs.cmake
   pkgs.delta
   pkgs.difftastic
   pkgs.go
   pkgs."go-task"
-  pkgs."golangci-lint"
-  pkgs.golines
-  pkgs.helix
   pkgs.lazygit
-  pkgs."markdownlint-cli"
-  pkgs.marksman
-  pkgs.mdcat
   pkgs.neovim
   pkgs.nodejs
-  pkgs.pandoc
   pkgs.prettier
-  pkgs.pyenv
-  pkgs.pyright
-  pkgs.rich-cli
   pkgs.rustc
-  pkgs.sccache
-  pkgs.texlivePackages.latexindent
   pkgs.tmux
-  pkgs.typescript
-  pkgs."typescript-language-server"
   pkgs.uv
-  pkgs."vscode-langservers-extracted"
-  pkgs."bash-language-server"
 ]

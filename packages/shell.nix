@@ -1,40 +1,16 @@
 pkgs: [
   pkgs.atuin
-  pkgs.bashInteractive
-  pkgs."bash-completion"
   pkgs.bat
-  pkgs.carapace
-  pkgs.chafa
   pkgs.coreutils
-  pkgs.duf
-  pkgs.duti
   pkgs.eza
-  pkgs.exiftool
-  pkgs.fastfetch
   pkgs.fd
-  pkgs.file
   pkgs.fzf
   pkgs.git
-  pkgs."git-extras"
   pkgs."git-lfs"
-  pkgs."git-open"
-  pkgs.glances
-  pkgs.glow
-  pkgs.hyperfine
   pkgs.jq
-  pkgs.miller
-  pkgs.mosh
-  pkgs.navi
-  pkgs.ouch
   pkgs.ripgrep
-  pkgs.shfmt
   pkgs.starship
-  pkgs."switchaudio-osx"
   pkgs.tealdeer
-  pkgs."trash-cli"
-  pkgs.tree
-  pkgs.w3m
-  pkgs.wget
   pkgs.yazi
   pkgs.yq
   pkgs.zoxide

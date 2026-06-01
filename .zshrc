@@ -14,9 +14,7 @@ setup_aliases() {
     # Modern CLI tools
     alias ls='eza --group-directories-first --git --icons'
     alias tree='eza --tree --level=3 --icons'
-    alias ld='lazydocker'
     alias lg='lazygit'
-    alias s='fastfetch'
     alias k='kubectl'
     alias b='nvim .'
 
@@ -60,8 +58,6 @@ setup_fzf() {
         [[ -r "$fzf_cache" ]] && source "$fzf_cache" 2>/dev/null
     fi
 
-    # Carapace completion
-    export CARAPACE_BRIDGES='zsh,bash'
     zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 }
 
@@ -283,10 +279,6 @@ setup_utils() {
         rm -f -- "$tmp"
     }
 
-    # Shell startup benchmarks
-    alias benchmark_shell="hyperfine --warmup 3 --runs 10 'zsh -i -c exit'"
-    alias benchmark_shell_quick="hyperfine 'zsh -i -c exit'"
-    alias benchmark_shell_detailed="hyperfine --warmup 5 --runs 20 --show-output 'zsh -i -c exit'"
 }
 
 # Main initialization

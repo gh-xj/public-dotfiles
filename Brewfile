@@ -1,7 +1,6 @@
-# Homebrew packages retained for this public baseline.
+# Homebrew package tracking lives in modules/darwin/homebrew.nix.
 #
-# CLI formulae migrated to Nix home.packages:
-# difftastic, gh, git-delta, gitleaks, lazygit.
+# Formulae and CLI packages with good Nix coverage belong in packages/*.nix.
 #
-# Remaining Homebrew formulae and casks are declared in
-# modules/darwin/homebrew.nix.
+# This file stays as a compatibility breadcrumb for older Brewfile-oriented
+# tooling; do not add package declarations here.

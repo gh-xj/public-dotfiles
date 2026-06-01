@@ -1,20 +1,4 @@
 pkgs: [
-  pkgs._7zz
-  pkgs.blueutil
-  pkgs.docker
-  pkgs."docker-compose"
-  pkgs.ffmpeg
   pkgs.gh
-  pkgs.gifsicle
-  pkgs.glab
   pkgs.gitleaks
-  pkgs.graphviz
-  pkgs.imagemagick
-  pkgs.jpegoptim
-  pkgs.lazydocker
-  pkgs.lazysql
-  pkgs.m-cli
-  pkgs.poppler
-  pkgs.portaudio
-  pkgs."whisper-cpp"
 ]

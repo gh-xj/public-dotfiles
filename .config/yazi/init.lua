@@ -16,9 +16,6 @@ end, 500, Header.LEFT)
 -- require("relative-motions"):setup({ show_numbers = "absolute", show_motion = true })
 require("relative-motions"):setup({ show_numbers = "absolute", show_motion = true, enter_mode = "first" })
 
--- [llanosrocas/githead.yazi: Git status header for yazi inspired by powerlevel10k](https://github.com/llanosrocas/githead.yazi)
--- require("githead"):setup({})
-
 require("toggle-view")
 
 require("xj-fzf")

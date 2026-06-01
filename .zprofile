@@ -9,11 +9,6 @@ setup_environment() {
     export BUN_INSTALL="$HOME/.bun"
     export HOMEBREW_AUTO_UPDATE_SECS=604800
 
-    # sccache: host-local Rust compiler cache. Override before shell init when
-    # using an external volume.
-    export SCCACHE_DIR="${SCCACHE_DIR:-$HOME/.cache/sccache}"
-    export SCCACHE_CACHE_SIZE="20G"
-
     # Initialize Homebrew (sets HOMEBREW_PREFIX, PATH, MANPATH, INFOPATH)
     # Cached to avoid ~30ms subprocess per login shell
     local _brew_cache="$HOME/.cache/brew-shellenv.zsh"
