@@ -9,7 +9,27 @@ and machine-local runtime state stay out of this repo.
 
 ## Quick Start
 
-Build the public Home Manager example without touching your home directory:
+From a fresh macOS clone, run the stock bootstrap entrypoint first:
+
+```bash
+./scripts/bootstrap-macos.sh
+```
+
+The default mode is a non-mutating preflight. It checks the machine, generates a
+local Home Manager host under `~/.local/state/public-dotfiles/bootstrap/`, and
+builds the activation package if Nix is already installed. To apply the public
+baseline:
+
+```bash
+./scripts/bootstrap-macos.sh --apply
+```
+
+On a stock Mac without Nix, use `--install-nix --apply` if you want the script
+to run the official macOS daemon installer before Home Manager. The script also
+prints the upstream install commands when Nix is missing.
+
+You can still build the public Home Manager example without touching your home
+directory:
 
 ```bash
 nix build github:gh-xj/public-dotfiles#homeConfigurations.example.activationPackage
@@ -65,16 +85,16 @@ runtime-owned local state, not here.
 
 ## Install
 
-Canonical local Home Manager entrypoint:
+Canonical local Home Manager entrypoint for a real macOS user:
 
 ```bash
-task install
+./scripts/bootstrap-macos.sh --apply
 ```
 
-`task install` runs Home Manager against the local `.#example` configuration.
-Use it only from a clone whose `hosts/example.nix` matches the target macOS
-account. A private host may import this repo, but that private overlay should
-only add sensitive, account-bound, or runtime-adjacent state.
+`task install` remains a maintainer shortcut for the checked-in `.#example`
+configuration. Use it only from a clone whose `hosts/example.nix` matches the
+target macOS account. A private host may import this repo, but that private
+overlay should only add sensitive, account-bound, or runtime-adjacent state.
 
 ## Nix Package Sets
 
@@ -124,7 +144,9 @@ The public repo should be enough to restore the public-safe parts of xj's
 operating environment on a clean machine.
 
 - build the example with `nix build .#homeConfigurations.example.activationPackage`
-- edit `hosts/example.nix` for the target macOS user before applying it
+- run `./scripts/bootstrap-macos.sh` first on a new macOS machine
+- use `./scripts/bootstrap-macos.sh --apply` for a real target user
+- edit `hosts/example.nix` only when intentionally testing the checked-in example host
 - run `task install` only after the local example host matches that user
 - use `private-config` only when the machine needs sensitive, account-bound,
   company/private, secret-adjacent, or runtime-adjacent overlays

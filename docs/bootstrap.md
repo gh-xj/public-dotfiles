@@ -9,7 +9,29 @@ company/private settings, project trust lists, and machine-local runtime state.
 
 ## Fastest Read-Only Check
 
-This command proves the public Home Manager example evaluates and builds
+From a fresh macOS clone, the first command should be:
+
+```bash
+./scripts/bootstrap-macos.sh
+```
+
+The default mode is a non-mutating preflight. It checks the machine, generates a
+local Home Manager host under `~/.local/state/public-dotfiles/bootstrap/`, and
+builds the activation package when Nix is already available.
+
+On a stock Mac without Nix, the script reports the missing dependency and prints
+both upstream install commands. To let it install Nix and then apply Home
+Manager, run:
+
+```bash
+./scripts/bootstrap-macos.sh --install-nix --apply
+```
+
+The default `--install-nix` mode uses the official macOS daemon installer. Use
+`--install-nix=determinate` when you explicitly want the Determinate CLI
+installer instead.
+
+This command still proves the public Home Manager example evaluates and builds
 without touching your home directory:
 
 ```bash
@@ -18,17 +40,28 @@ nix build github:gh-xj/public-dotfiles#homeConfigurations.example.activationPack
 
 ## Apply With Home Manager
 
-The public flake exports `homeConfigurations.example`. The checked-in host uses
-`home.username = "example"` and `home.homeDirectory = "/Users/example"` so it
-is safe to build without assuming xj's local account. Apply it directly only in
-a matching throwaway test account:
+For a real macOS user account, prefer the generated local bootstrap host:
+
+```bash
+./scripts/bootstrap-macos.sh --apply
+```
+
+Pass Home Manager flags after `--`:
+
+```bash
+./scripts/bootstrap-macos.sh --apply -- --backup-extension hm-backup
+```
+
+The public flake also exports `homeConfigurations.example`. The checked-in host
+uses `home.username = "example"` and `home.homeDirectory = "/Users/example"` so
+it is safe to build without assuming xj's local account. Apply it directly only
+in a matching throwaway test account:
 
 ```bash
 nix run github:nix-community/home-manager/master -- switch --flake github:gh-xj/public-dotfiles#example
 ```
 
-For a real user account, fork or clone the repo, edit `hosts/example.nix` to
-match your macOS username and home directory, then switch from the local clone:
+For local maintainer testing of the checked-in example host:
 
 ```bash
 nix run github:nix-community/home-manager/master -- switch --flake .#example
