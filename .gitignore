@@ -6,6 +6,7 @@
 .install-backups/
 .configctl/runs/
 .task/
+.claude/settings.local.json
 /result
 /result-*
 .config/zed/prompts/**/*.mdb/lock.mdb
