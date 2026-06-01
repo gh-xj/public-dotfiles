@@ -34,7 +34,7 @@ These values were read from `/Users/xj` and encoded in
 | Language/input | English plus Simplified Chinese language list; U.S. keyboard plus Simplified Chinese Shuangpin input source |
 | Mouse / trackpad speed | mouse scaling `3`, trackpad scaling `3` |
 | Trackpad | tap to click, right click, three-finger drag, light click thresholds, four-finger gestures, three-finger horizontal/vertical gestures disabled |
-| Input defaults | ByHost keys in `config/macos/current-host-defaults.tsv`, user input keys in `config/macos/input-user-defaults.tsv`, and live trackpad expectations in `config/macos/live-trackpad-defaults.tsv` |
+| Input defaults | ByHost keys in `config/macos/current-host-defaults.tsv`, user input keys in `config/macos/input-user-defaults.tsv`, including the global tap-to-click key, and live trackpad expectations in `config/macos/live-trackpad-defaults.tsv` |
 | Magic Mouse | two-button mode |
 | Symbolic hotkeys | local Apple symbolic hotkey enablement and parameters copied for ids `15-31`, `52`, `60-65`, `79-82`, `118-122`, `164`, `184` |
 | Appearance | automatic light/dark switching enabled |
