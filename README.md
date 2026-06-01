@@ -39,6 +39,9 @@ uses `sudo` for `darwin-rebuild switch`. If Homebrew is missing from the
 platform default prefix (`/opt/homebrew` on Apple Silicon, `/usr/local` on
 Intel), it runs the official Homebrew installer first because nix-darwin's
 Homebrew module manages Homebrew packages but does not install Homebrew itself.
+The generated bootstrap host passes the detected macOS major version into the
+Homebrew ledger so casks that require newer macOS releases are skipped on older
+targets.
 When running over SSH, use an interactive session or pre-authorize sudo on the
 target machine before invoking the command.
 On first nix-darwin activation, the script backs up existing `/etc/bashrc` and

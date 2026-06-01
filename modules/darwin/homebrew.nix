@@ -2,6 +2,7 @@
 
 let
   cfg = config.xj.publicDotfiles.darwin;
+  supportsMacOSAtLeast = major: cfg.macosMajor == null || cfg.macosMajor >= major;
 in
 {
   config = lib.mkIf cfg.enable {
@@ -9,7 +10,7 @@ in
       enable = lib.mkDefault true;
       user = lib.mkDefault config.system.primaryUser;
 
-      taps = [
+      taps = lib.optionals (supportsMacOSAtLeast 15) [
         "typewhisper/tap"
       ];
 
@@ -27,16 +28,20 @@ in
         "karabiner-elements"
         "amethyst"
         "raycast"
-        "orbstack"
-        "chatgpt"
         "codex-app"
         "setapp"
-        "typewhisper"
         "mimestream"
         "1password"
         "1password-cli"
         "cleanshot"
         "tailscale-app"
+      ]
+      ++ lib.optionals (supportsMacOSAtLeast 14) [
+        "orbstack"
+        "chatgpt"
+      ]
+      ++ lib.optionals (supportsMacOSAtLeast 15) [
+        "typewhisper"
       ];
 
       onActivation = {

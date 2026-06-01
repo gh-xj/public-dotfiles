@@ -86,7 +86,9 @@ installer:
 ```
 
 nix-darwin then manages the public Homebrew taps, formulae, fonts, and GUI
-casks declared by `public-dotfiles`.
+casks declared by `public-dotfiles`. The generated bootstrap host records the
+detected macOS major version so Homebrew skips public casks whose current
+releases require a newer macOS.
 
 For remote runs, use an interactive SSH session or pre-authorize sudo on the
 target machine before `--darwin --apply`; non-interactive SSH without cached

@@ -15,6 +15,7 @@ nix_install_mode="never"
 nix_install_version="${XJ_PUBLIC_DOTFILES_NIX_VERSION:-auto}"
 host_platform=""
 homebrew_prefix=""
+macos_major=""
 homebrew_install_mode="auto"
 backup_extension="${XJ_PUBLIC_DOTFILES_BACKUP_EXTENSION:-public-dotfiles-backup-$(date +%Y%m%d%H%M%S)}"
 migrate_nix_darwin_etc=1
@@ -158,7 +159,7 @@ resolve_nix_install_version() {
 
   [ "$nix_install_version" = "auto" ] || return 0
 
-  major="$(macos_major_version)"
+  major="${macos_major:-$(macos_major_version)}"
   if [ "$host_platform" = "x86_64-darwin" ] && [ "$major" -lt 14 ]; then
     # Current upstream x86_64-darwin Nix binaries require macOS 14+.
     nix_install_version="2.29.4"
@@ -366,6 +367,12 @@ preflight() {
   if [ -z "$homebrew_prefix" ]; then
     homebrew_prefix="$(default_homebrew_prefix_for_system "$host_platform")"
   fi
+  macos_major="$(macos_major_version)"
+  case "$macos_major" in
+    ""|*[!0-9]*)
+      die "invalid macOS major version: $macos_major"
+      ;;
+  esac
   resolve_nix_install_version
 
   require_cmd git
@@ -394,6 +401,7 @@ preflight() {
   fi
   if [ "$darwin_phase" -eq 1 ]; then
     info "Darwin system phase: enabled"
+    info "Darwin Homebrew macOS major: $macos_major"
     info "Homebrew prefix: $homebrew_prefix"
   fi
 }
@@ -480,7 +488,10 @@ write_bootstrap_flake() {
       modules = [
         public.darwinModules.default
         ({ lib, ... }: {
-          xj.publicDotfiles.darwin.enable = true;
+          xj.publicDotfiles.darwin = {
+            enable = true;
+            macosMajor = $macos_major;
+          };
 
           system = {
             primaryUser = $(nix_string "$target_user");
