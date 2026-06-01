@@ -6,6 +6,10 @@ ledger="$repo_root/npm-globals.txt"
 
 [ -f "$ledger" ] || exit 0
 
+xdg_data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
+npm_prefix="${NPM_CONFIG_PREFIX:-$xdg_data_home/npm-global}"
+export PATH="$npm_prefix/bin:$PATH"
+
 while IFS= read -r spec || [ -n "$spec" ]; do
   spec="${spec%%#*}"
   spec="${spec#"${spec%%[![:space:]]*}"}"
