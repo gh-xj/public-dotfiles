@@ -117,7 +117,6 @@ assert_plist_raw com.apple.HIToolbox AppleCurrentKeyboardLayoutInputSourceID com
 assert_plist_raw com.apple.HIToolbox "AppleEnabledInputSources.0.KeyboardLayout Name" U.S.
 assert_plist_raw com.apple.HIToolbox "AppleEnabledInputSources.2.Bundle ID" com.apple.inputmethod.SCIM
 assert_plist_raw com.apple.HIToolbox "AppleEnabledInputSources.3.Input Mode" com.apple.inputmethod.SCIM.Shuangpin
-assert_plist_raw com.apple.HIToolbox "AppleSelectedInputSources.0.KeyboardLayout Name" U.S.
 
 for id in 15 16 17 18 19 20 21 22 23 24 25 26 28 29 30 31 52 64 65 164 184; do
   assert_hotkey "$id" false

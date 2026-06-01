@@ -115,9 +115,6 @@ in
             usInputSource
             shuangpinInputSource
           ];
-          AppleSelectedInputSources = [
-            usInputSource
-          ];
         };
 
         "com.raycast.macos" = {

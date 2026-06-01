@@ -31,7 +31,7 @@ These values were read from `/Users/xj` and encoded in
 | Dock persistent items | public minimal Dock: Chrome, Ghostty, and Downloads. Local-only apps such as Feishu, WeChat, and Timing are observed but not forced unless they join the public app ledger |
 | Finder | show file extensions, column view, path bar enabled |
 | Keyboard | press-and-hold disabled, `KeyRepeat=1`, `InitialKeyRepeat=10`, function keys as standard keys |
-| Language/input | English plus Simplified Chinese language list; U.S. keyboard plus Simplified Chinese Shuangpin input source |
+| Language/input | English plus Simplified Chinese language list; U.S. keyboard plus Simplified Chinese Shuangpin input source; current selected input source is runtime state |
 | Mouse / trackpad speed | mouse scaling `3`, trackpad scaling `3` |
 | Trackpad | tap to click, right click, three-finger drag, light click thresholds, four-finger gestures, three-finger horizontal/vertical gestures disabled |
 | Input defaults | ByHost keys in `config/macos/current-host-defaults.tsv`, user input keys in `config/macos/input-user-defaults.tsv`, including the global tap-to-click key, and live trackpad expectations in `config/macos/live-trackpad-defaults.tsv` |
