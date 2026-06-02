@@ -185,11 +185,15 @@ For the public app ledger as well:
 ./scripts/bootstrap-macos.sh --darwin --apply
 ```
 
-Verify the full public surface after the Darwin/Homebrew phase:
+Converge live/app-owned state and verify the full public surface after the
+Darwin/Homebrew phase:
 
 ```bash
-task dotfiles:verify
+task dotfiles:converge
 ```
+
+`task dotfiles:converge` reloads live input preferences, reapplies public-safe
+Raycast preferences, then runs `task dotfiles:verify`.
 
 If verification reports a live `AppleMultitouchDevice` mismatch while the
 persisted trackpad defaults are correct, run this from the target Mac or an
@@ -202,6 +206,14 @@ task input:verify
 
 If the live state still does not change, log out and back in before rerunning
 `task input:verify`.
+
+If `task input:verify` passes but tap-to-click still feels disabled, first
+confirm whether you are touching the physical target Mac or a remote-control
+client; remote control tools use the client Mac's click behavior. Then compare
+the `live trackpad device:` line with the device being tested. For stubborn GUI
+state, sleep/wake, disconnect/reconnect an external trackpad, or toggle the
+Trackpad setting once in System Settings and capture a before/after defaults
+delta before adding new public keys.
 
 If verification reports a Raycast preference mismatch, reapply the public-safe
 Raycast defaults without rerunning the full Darwin phase:

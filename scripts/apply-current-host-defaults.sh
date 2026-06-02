@@ -155,6 +155,17 @@ live_trackpad_preferences() {
     head -1
 }
 
+live_trackpad_device_summary() {
+  local ioreg_output product transport built_in
+
+  ioreg_output="$(ioreg -r -c AppleMultitouchDevice -l -w0 2>/dev/null || true)"
+  product="$(printf '%s\n' "$ioreg_output" | sed -n 's/.*"Product" = "\(.*\)".*/\1/p' | head -1)"
+  transport="$(printf '%s\n' "$ioreg_output" | sed -n 's/.*"Transport" = "\(.*\)".*/\1/p' | head -1)"
+  built_in="$(printf '%s\n' "$ioreg_output" | sed -n 's/.*"MT Built-In" = \(.*\)/\1/p' | head -1)"
+
+  printf 'product=%s transport=%s built_in=%s' "${product:-unknown}" "${transport:-unknown}" "${built_in:-unknown}"
+}
+
 read_live_trackpad_default() {
   local key="$1"
   local prefs="$2"
@@ -197,6 +208,7 @@ verify_live_trackpad_defaults() {
     return 1
   fi
 
+  printf 'live trackpad device: %s\n' "$(live_trackpad_device_summary)"
   echo "live trackpad baseline verified"
 }
 

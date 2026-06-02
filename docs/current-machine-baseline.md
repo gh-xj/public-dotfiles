@@ -154,6 +154,7 @@ public Raycast script-command directories. Private Raycast script directories ar
 
 | Gate | What it protects |
 | --- | --- |
+| `task dotfiles:converge` | Applies live/app-owned convergence helpers, then runs full `task dotfiles:verify` |
 | `task verify:home-files` | Home Manager generation contains the public config files above |
 | `task verify:global-taskfile` | The public global go-task Taskfile is parseable and contains expected tasks |
 | `task verify:codex-runtime-boundary` | Public Codex template stays safe and Home Manager does not own mutable `~/.codex/config.toml` |

@@ -27,6 +27,13 @@ tasks:
       - task: secrets:staged
       - task: secrets:full
 
+  dotfiles:converge:
+    desc: Apply app/live-state convergence helpers, then run full verification
+    cmds:
+      - task: input:reload-live
+      - task: raycast:apply-preferences
+      - task: dotfiles:verify
+
   dotfiles:verify-user:
     desc: Verify user-level public dotfile config surfaces
     cmds:
