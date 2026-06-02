@@ -24,7 +24,31 @@ tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
 home_dir="$tmpdir/home"
-mkdir -p "$home_dir/.cache" "$home_dir/.config"
+mkdir -p "$home_dir/.cache" "$home_dir/.config" "$home_dir/.ssh/includes"
+
+cat > "$home_dir/.ssh/config" <<'EOF'
+Include ~/.ssh/includes/*.conf
+
+Host *
+  AddKeysToAgent yes
+
+Host unit-main main-alias 10.0.0.10
+  HostName main.example.test
+
+Host wildcard-*
+  HostName ignored.example.test
+EOF
+
+cat > "$home_dir/.ssh/includes/extra.conf" <<'EOF'
+Host unit-include
+  HostName include.example.test
+EOF
+
+cat > "$home_dir/.ssh/known_hosts" <<'EOF'
+known-host.example ssh-ed25519 AAA
+[known-port-host]:2222 ssh-ed25519 BBB
+|1|hashed|entry ssh-ed25519 CCC
+EOF
 
 plugin_paths_file="$tmpdir/plugin-paths.zsh"
 shell_tools_path=""
@@ -82,6 +106,33 @@ if bindkey "^I" | grep -q "fzf-tab-complete"; then
 else
   printf "fzf-tab-binding=0\n"
 fi
+if zstyle -L | grep -q "_xj_ssh_completion_hosts_style"; then
+  printf "ssh-host-style=1\n"
+else
+  printf "ssh-host-style=0\n"
+fi
+reply=()
+_xj_ssh_completion_hosts_style
+if print -lr -- "${reply[@]}" | grep -qx "unit-main"; then
+  printf "ssh-config-host=1\n"
+else
+  printf "ssh-config-host=0\n"
+fi
+if print -lr -- "${reply[@]}" | grep -qx "unit-include"; then
+  printf "ssh-include-host=1\n"
+else
+  printf "ssh-include-host=0\n"
+fi
+if print -lr -- "${reply[@]}" | grep -qx "known-host.example"; then
+  printf "ssh-known-host=1\n"
+else
+  printf "ssh-known-host=0\n"
+fi
+if print -lr -- "${reply[@]}" | grep -qx "wildcard-\\*"; then
+  printf "ssh-wildcard-filtered=0\n"
+else
+  printf "ssh-wildcard-filtered=1\n"
+fi
 printf "atuin-widget=%s\n" "$+widgets[atuin-search]"
 if bindkey -M viins "^R" | grep -q "atuin-search"; then
   printf "atuin-ctrl-r-binding=1\n"
@@ -116,6 +167,11 @@ require_probe fzf-ctrl-t-binding 1
 require_probe fzf-alt-c-binding 1
 require_probe fzf-tab-widget 1
 require_probe fzf-tab-binding 1
+require_probe ssh-host-style 1
+require_probe ssh-config-host 1
+require_probe ssh-include-host 1
+require_probe ssh-known-host 1
+require_probe ssh-wildcard-filtered 1
 require_probe atuin-widget 1
 require_probe atuin-ctrl-r-binding 1
 require_probe starship-prompt 1

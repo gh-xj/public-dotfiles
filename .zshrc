@@ -59,6 +59,138 @@ setup_fzf() {
     fi
 
     zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
+    zstyle -e ':completion:*:(ssh|scp|sftp|ssh-copy-id|rsync):*:hosts' hosts '_xj_ssh_completion_hosts_style'
+}
+
+_xj_should_complete_literal_ssh_host() {
+    emulate -L zsh
+
+    local host="$1"
+
+    [[ -n "$host" ]] || return 1
+    case "$host" in
+        (\!*|\|*|*[\*\?\[\]]*)
+            return 1
+            ;;
+    esac
+
+    return 0
+}
+
+_xj_should_complete_default_ssh_host() {
+    emulate -L zsh
+
+    local host="$1"
+
+    _xj_should_complete_literal_ssh_host "$host" || return 1
+    [[ "$host" == _* ]] && return 1
+    return 0
+}
+
+_xj_collect_ssh_config_hosts_from_file() {
+    emulate -L zsh
+
+    local file="$1"
+    local resolved key rest token include_pattern raw_line
+    local -a tokens include_matches lines
+    integer idx
+
+    [[ -r "$file" ]] || return 0
+    resolved="${file:A}"
+    [[ -n "${seen_files[$resolved]:-}" ]] && return 0
+    seen_files[$resolved]=1
+
+    lines=("${(@f)$(<"$resolved")}")
+    idx=1
+    while (( idx <= ${#lines} )); do
+        raw_line="${lines[idx]%%\#*}"
+        IFS=$'=\t ' read -r key rest <<< "$raw_line"
+
+        case "${key:l}" in
+            (host)
+                tokens=(${(z)rest})
+                for token in "${tokens[@]}"; do
+                    _xj_should_complete_literal_ssh_host "$token" || continue
+                    hosts+=("$token")
+                done
+                ;;
+            (include)
+                tokens=(${(z)rest})
+                for token in "${tokens[@]}"; do
+                    include_pattern="$token"
+                    if [[ "$include_pattern" != /* && "$include_pattern" != ~* ]]; then
+                        include_pattern="${resolved:h}/$include_pattern"
+                    fi
+                    include_matches=(${~include_pattern}(N))
+                    for file in "${include_matches[@]}"; do
+                        _xj_collect_ssh_config_hosts_from_file "$file"
+                    done
+                done
+                ;;
+        esac
+
+        (( ++idx ))
+    done
+}
+
+_xj_collect_ssh_known_hosts() {
+    emulate -L zsh
+
+    local known_host_file line raw_host host
+    local -a known_host_files
+
+    known_host_files=(/etc/ssh/ssh_known_hosts ~/.ssh/known_hosts)
+    for known_host_file in "${known_host_files[@]}"; do
+        [[ -r "$known_host_file" ]] || continue
+
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            raw_host="${line%%[ |#]*}"
+            [[ -n "$raw_host" ]] || continue
+
+            for host in ${(s:,:)raw_host}; do
+                if [[ "$host" == \[*\]:* ]]; then
+                    host="${host#\[}"
+                    host="${host%%\]:*}"
+                fi
+                _xj_should_complete_default_ssh_host "$host" || continue
+                hosts+=("$host")
+            done
+        done < "$known_host_file"
+    done
+}
+
+_xj_collect_etc_hosts() {
+    emulate -L zsh
+
+    local hosts_file_line host
+    local -a fields
+
+    [[ -r /etc/hosts ]] || return 0
+
+    while IFS= read -r hosts_file_line || [[ -n "$hosts_file_line" ]]; do
+        hosts_file_line="${hosts_file_line%%\#*}"
+        fields=(${(z)hosts_file_line})
+        (( ${#fields} >= 2 )) || continue
+
+        for host in "${fields[2,-1]}"; do
+            _xj_should_complete_default_ssh_host "$host" || continue
+            hosts+=("$host")
+        done
+    done < /etc/hosts
+}
+
+_xj_ssh_completion_hosts_style() {
+    emulate -L zsh
+
+    local config_file="${XJ_SSH_CONFIG_FILE:-$HOME/.ssh/config}"
+    local -Ua hosts=()
+    local -A seen_files=()
+
+    _xj_collect_ssh_config_hosts_from_file "$config_file"
+    _xj_collect_ssh_known_hosts
+    _xj_collect_etc_hosts
+
+    reply=("${hosts[@]}")
 }
 
 _load_zsh_plugin_paths() {
