@@ -25,6 +25,73 @@ boundaries.
 
 ## Regression Cases
 
+### Tap-To-Click Still Broken After Verify
+
+Prior failure: `task input:verify` passed because persisted defaults matched,
+but physical tap-to-click on the target Mac still did not behave like the source
+Mac.
+
+Expected corrected behavior:
+
+- Inspect `NSGlobalDomain com.apple.mouse.tapBehavior`.
+- Inspect currentHost trackpad keys.
+- Inspect live `AppleMultitouchDevice` state.
+- Run `task input:reload-live` or `task dotfiles:converge` before proposing a
+  new baseline change.
+- If the remote-control client is being used, confirm the physical target Mac
+  behavior before changing repo policy.
+
+Verification:
+
+- `task input:verify`
+- On the target Mac when available: `task input:reload-live && task input:verify`
+
+### Selected Input Source Drift
+
+Prior failure: the currently selected input source changed during use and could
+be mistaken for public baseline drift.
+
+Expected corrected behavior:
+
+- Do not compare `AppleSelectedInputSources` as a public baseline.
+- Keep enabled public-safe input sources in scope.
+- Treat the current selected source as runtime state.
+
+Verification:
+
+- `task verify:macos-defaults`
+
+### Missing npm Global CLI
+
+Prior failure: a target Mac missed an npm-distributed CLI such as `gemini`, and
+the package could be incorrectly routed to Homebrew cleanup.
+
+Expected corrected behavior:
+
+- Check the npm globals ledger and installer.
+- Run `./scripts/install-npm-globals.sh`.
+- Verify with `task verify:npm-globals`.
+- Do not add npm-distributed CLIs to the Homebrew ledger.
+
+Verification:
+
+- `task verify:npm-globals`
+
+### Raycast Preference Drift
+
+Prior failure: Raycast was installed, but preferences such as customized-command
+visibility drifted on the target Mac.
+
+Expected corrected behavior:
+
+- Run `task raycast:apply-preferences`.
+- Verify with `task verify:raycast`.
+- Do not copy Raycast caches or account/session state into the public repo.
+
+Verification:
+
+- `task raycast:apply-preferences && task verify:raycast`
+
 ### Worker Mac Intel Ventura Darwin Apply
 
 Prior failure: The worker Mac bootstrap surfaced several config-harness gaps:

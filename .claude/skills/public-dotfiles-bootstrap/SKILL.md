@@ -38,11 +38,14 @@ Project-local router for restoring and auditing the public, reusable
    - `task inspect:macos-baseline`
    - target equivalent over SSH when available
    - a narrow live-state command for the affected layer
-5. Classify the owning layer using `docs/macos-convergence-model.md`.
-6. Encode desired public-safe state in repo source, not in live symlinks.
-7. Add or strengthen a verifier that fails on the observed drift.
-8. Apply narrowly, then run `task dotfiles:verify`.
-9. Commit and push according to `AGENTS.md`.
+5. Check `references/known-failures.md` for an existing symptom pattern.
+6. Classify the owning layer using `docs/macos-convergence-model.md`.
+7. Encode desired public-safe state in repo source, not in live symlinks.
+8. Add or strengthen a verifier that fails on the observed drift.
+9. Apply narrowly, then run `task dotfiles:verify`.
+10. Record durable skill lessons in `MAINTENANCE.md` when the workflow itself
+    changes.
+11. Commit and push according to `AGENTS.md`.
 
 ## Layer Heuristics
 
@@ -81,7 +84,9 @@ URLs, headers, generated config, or token-adjacent surfaces.
 | `docs/bootstrap.md` | Supported bootstrap entrypoints and phases |
 | `docs/current-machine-baseline.md` | Current public-safe desired state |
 | `docs/macos-convergence-model.md` | Source-vs-target discrepancy loop and macOS layers |
+| `references/known-failures.md` | Symptom-to-action registry for repeated bootstrap failures |
 | `references/trigger-evals.md` | Trigger and non-trigger examples for this skill |
+| `MAINTENANCE.md` | Append-only lessons for keeping this skill aligned with repo harness |
 
 ## Gaps
 
