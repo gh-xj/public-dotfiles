@@ -6,6 +6,28 @@
         "parameters": { "basic.to_if_alone_timeout_milliseconds": 300 },
         "rules": [
           {
+            "description": "WeChat: Disable Command+4 Moments shortcut",
+            "manipulators": [
+              {
+                "conditions": [
+                  {
+                    "bundle_identifiers": ["^com\\.tencent\\.xinWeChat$"],
+                    "type": "frontmost_application_if"
+                  }
+                ],
+                "from": {
+                  "key_code": "4",
+                  "modifiers": {
+                    "mandatory": ["command"],
+                    "optional": ["caps_lock"]
+                  }
+                },
+                "to": [{ "key_code": "vk_none" }],
+                "type": "basic"
+              }
+            ]
+          },
+          {
             "description": "[SpaceFN] xj combo",
             "manipulators": [
               {
