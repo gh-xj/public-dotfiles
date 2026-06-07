@@ -87,6 +87,39 @@ nix_cmd() {
   nix --extra-experimental-features "nix-command flakes" "$@"
 }
 
+public_nixpkgs_release() {
+  local release_expr
+
+  have_cmd nix || return 1
+
+  release_expr=$(cat <<EOF
+(let
+  flake = builtins.getFlake $(nix_string "path:$repo_root");
+  pkgs = import flake.inputs.nixpkgs { system = $(nix_string "$host_platform"); };
+in pkgs.lib.trivial.release)
+EOF
+)
+
+  nix_cmd eval --impure --raw --expr "$release_expr"
+}
+
+bootstrap_nix_darwin_ref() {
+  local release=""
+  local major_minor=""
+
+  release="$(public_nixpkgs_release 2>/dev/null || true)"
+  major_minor="$(printf '%s\n' "$release" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')"
+
+  case "$major_minor" in
+    [0-9][0-9].[0-9][0-9])
+      printf 'nix-darwin-%s\n' "$major_minor"
+      ;;
+    *)
+      printf '%s\n' "master"
+      ;;
+  esac
+}
+
 enable_nix_flake_features() {
   local features_config="experimental-features = nix-command flakes"
 
@@ -470,14 +503,16 @@ write_bootstrap_flake() {
   local darwin_inputs=""
   local darwin_package=""
   local darwin_configuration=""
+  local nix_darwin_ref="master"
   local outputs_args="inputs@{ public, nixpkgs, home-manager, ... }"
 
   mkdir -p "$flake_dir"
 
   if [ "$darwin_phase" -eq 1 ]; then
+    nix_darwin_ref="$(bootstrap_nix_darwin_ref)"
     outputs_args="inputs@{ public, nixpkgs, home-manager, nix-darwin, ... }"
-    darwin_inputs='    nix-darwin.url = "github:nix-darwin/nix-darwin/master";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";'
+    darwin_inputs="    nix-darwin.url = \"github:nix-darwin/nix-darwin/$nix_darwin_ref\";
+    nix-darwin.inputs.nixpkgs.follows = \"nixpkgs\";"
     darwin_package="    packages.$host_platform.darwin-rebuild = nix-darwin.packages.$host_platform.darwin-rebuild;"
     darwin_configuration=$(cat <<EOF
     darwinConfigurations.$profile_name = nix-darwin.lib.darwinSystem {

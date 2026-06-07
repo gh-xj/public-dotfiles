@@ -38,6 +38,6 @@ Rules:
 - each live path has exactly one owner
 - `public-dotfiles` owns public-safe comfort config, even when it is opinionated
 - `private-config` owns sensitive, account-bound, private, and runtime-adjacent durable state
-- `$HOME/.codex/config.toml` is seeded from the public template only when
-  missing; the live file stays mutable because Codex writes project trust and
-  other runtime state there
+- `$HOME/.codex/config.toml` is seeded from `config/codex/config.toml` only
+  when missing; the live file stays mutable because Codex writes project trust
+  and other runtime state there

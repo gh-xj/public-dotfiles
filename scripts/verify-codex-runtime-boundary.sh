@@ -50,8 +50,12 @@ nix_cmd() {
   nix --extra-experimental-features "nix-command flakes" "$@"
 }
 
-template=".codex/config.toml"
+template="config/codex/config.toml"
 [ -f "$template" ] || fail "missing public Codex template: $template"
+
+if [ -e ".codex/config.toml" ] || [ -L ".codex/config.toml" ]; then
+  fail ".codex/config.toml is a reserved project-local Codex path; keep the public seed template at $template"
+fi
 
 if grep -En '^[[:space:]]*(\[projects\.|\[(marketplaces|plugins|model_providers)(\.|\])|trust_level[[:space:]]*=|.*(api_key|auth_token|access_token|refresh_token|client_secret|password)[[:space:]]*=)' "$template" >&2; then
   fail "$template contains runtime, provider, trust, or secret-like state"

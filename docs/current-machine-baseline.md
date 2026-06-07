@@ -56,7 +56,7 @@ Home Manager now owns these public config files on a new machine:
 | `~/.config/bat`, `~/.config/lazygit`, `~/.config/yazi`, `~/.config/starship.toml` | repo CLI config |
 | `~/.config/opencode` | repo opencode config |
 | `~/.codex/AGENTS.md`, `~/.codex/rules/default.rules` | public Codex policy files |
-| `~/.codex/config.toml` | seeded from public `.codex/config.toml` only when missing or replacing an old read-only public link; live file remains Codex/private runtime state |
+| `~/.codex/config.toml` | seeded from public `config/codex/config.toml` only when missing or replacing an old read-only public link; live file remains Codex/private runtime state |
 
 ## App And Tool Baseline
 
@@ -157,7 +157,7 @@ public Raycast script-command directories. Private Raycast script directories ar
 | `task dotfiles:converge` | Applies live/app-owned convergence helpers, then runs full `task dotfiles:verify` |
 | `task verify:home-files` | Home Manager generation contains the public config files above |
 | `task verify:global-taskfile` | The public global go-task Taskfile is parseable and contains expected tasks |
-| `task verify:codex-runtime-boundary` | Public Codex template stays safe and Home Manager does not own mutable `~/.codex/config.toml` |
+| `task verify:codex-runtime-boundary` | Public Codex seed template stays outside project-local `.codex/config.toml`, stays safe, and Home Manager does not own mutable `~/.codex/config.toml` |
 | `task verify:bootstrap-darwin` | The generated nix-darwin bootstrap host still builds |
 | `task verify:display-layout` | Known display serials match the displayplacer layout policy |
 | `task verify:macos-defaults` | The current host matches the public macOS defaults baseline |

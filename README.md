@@ -180,7 +180,7 @@ This repo now publishes the reusable Claude/Codex baseline:
 - `~/.claude/statusline-command.sh`
 - `~/.codex/AGENTS.md`
 - `~/.codex/rules/default.rules`
-- `.codex/config.toml` as the public Codex template
+- `config/codex/config.toml` as the public Codex seed template
 
 The private repo continues to own agent runtime and account-local material such
 as `settings.local.json`, plugin registry state, skills trees, sessions, auth,

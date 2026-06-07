@@ -128,12 +128,13 @@ task dotfiles:verify-user
 
 ## Codex Runtime Config
 
-The public repo owns `.codex/config.toml` as a template, not as a live Home
-Manager link. During `--apply`, Home Manager seeds
-`~/.codex/config.toml` from that template only when the live file is missing or
-still points at an old read-only public Nix store generation. After seeding,
-the live file remains a normal writable runtime file so Codex can persist
-project trust, marketplace state, hook state, and other TUI updates.
+The public repo owns `config/codex/config.toml` as a template, not the
+project-local reserved `.codex/config.toml` path and not a live Home Manager
+link. During `--apply`, Home Manager seeds `~/.codex/config.toml` from that
+template only when the live file is missing or still points at an old
+read-only public Nix store generation. After seeding, the live file remains a
+normal writable runtime file so Codex can persist project trust, marketplace
+state, hook state, and other TUI updates.
 
 If Codex shows `config/batchWrite failed in TUI` after a direct public apply,
 rerun the public bootstrap once:

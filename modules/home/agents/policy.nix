@@ -21,7 +21,7 @@ in
       if [ -L "$target" ]; then
         link_target="$(readlink "$target" 2>/dev/null || true)"
         case "$link_target" in
-          /nix/store/*/.codex/config.toml)
+          /nix/store/*/.codex/config.toml|/nix/store/*/config/codex/config.toml)
             seed=1
             ;;
         esac
@@ -32,7 +32,7 @@ in
       if [ "$seed" -eq 1 ]; then
         $DRY_RUN_CMD rm -f "$target"
         $DRY_RUN_CMD mkdir -p "${config.home.homeDirectory}/.codex"
-        $DRY_RUN_CMD install -m 600 ${../../../.codex/config.toml} "$target"
+        $DRY_RUN_CMD install -m 600 ${../../../config/codex/config.toml} "$target"
       elif [ ! -w "$target" ]; then
         echo "warning: $target is not writable; Codex project trust prompts may fail" >&2
       fi

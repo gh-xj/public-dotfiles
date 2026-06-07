@@ -5,7 +5,9 @@ real target-Mac symptom to the owning harness surface.
 
 | Symptom | Status | First Action | Permanent Owner |
 | --- | --- | --- | --- |
-| Codex shows `config/batchWrite failed in TUI` after trust prompt | fixed | Restore latest public bootstrap and rerun `task verify:codex-runtime-boundary -- --live` | `fe40b49`; `.codex/config.toml` is a template, live `~/.codex/config.toml` is mutable |
+| Codex warns that `.codex/config.toml` has unsupported project-local keys or enables unstable features | fixed | Move the public seed template out of `.codex/config.toml`, then rerun `task verify:codex-runtime-boundary` | `config/codex/config.toml` is the seed template; `.codex/config.toml` stays unused so Codex does not parse it as repo config |
+| Codex shows `config/batchWrite failed in TUI` after trust prompt | fixed | Restore latest public bootstrap and rerun `task verify:codex-runtime-boundary -- --live` | `fe40b49`; `config/codex/config.toml` seeds the live file, and `~/.codex/config.toml` stays mutable |
+| `task verify:bootstrap-darwin` fails because `nix-darwin` release no longer matches the pinned public `nixpkgs` release | fixed | Regenerate the bootstrap flake after aligning the generated `nix-darwin` ref with the current public `nixpkgs` release | `scripts/bootstrap-macos.sh` derives `nix-darwin-YY.MM` from public `nixpkgs` instead of hard-coding `master` |
 | Tap-to-click still feels disabled even though defaults verification passes | recoverable | Run `task input:reload-live && task input:verify`; inspect global, currentHost, and live `AppleMultitouchDevice` state | `53a1429`, `45d74c1`, `ca9864d`; persisted defaults plus live convergence |
 | `defaults read NSGlobalDomain com.apple.mouse.tapBehavior` is not `1` | fixed | Reapply Darwin defaults or run bootstrap apply, then rerun `task input:verify` | `ca9864d`; global tap-to-click key belongs in public input defaults |
 | Input verifier fails because the currently selected input source changed | fixed | Remove selected-source comparison from the diagnosis; verify only enabled public-safe sources | `1404b5c`; selected input source is runtime state |

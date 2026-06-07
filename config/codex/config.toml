@@ -1,5 +1,5 @@
-# Public-safe Codex baseline. Keep custom providers, per-project trust, auth,
-# and runtime state in the private repo or live home directory.
+# Public-safe user-level Codex seed template. Keep custom providers, per-project
+# trust, auth, and runtime state in the private repo or live home directory.
 model_reasoning_effort = "xhigh"
 model_provider = "openai"
 model = "gpt-5.4"
@@ -22,7 +22,7 @@ status_line = ["model-with-reasoning", "context-remaining", "current-dir", "fast
 
 [features]
 multi_agent = true
-child_agents_md = true
+child_agents_md = false
 
 [agents]
 max_threads = 6

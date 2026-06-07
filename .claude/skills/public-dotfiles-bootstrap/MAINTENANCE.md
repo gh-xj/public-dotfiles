@@ -113,6 +113,42 @@ before treating a discrepancy as a new missing baseline.
 **Falsifier:** A target Mac is judged incomplete before
 `task dotfiles:converge && task dotfiles:verify` has been attempted.
 
+### 2026-06-07 - The public Codex seed template cannot live at `.codex/config.toml`
+
+**Trigger:** Codex started parsing `.codex/config.toml` as project-local config
+inside this repo, which produced unsupported-key warnings and unstable-feature
+warnings from a file that was only meant to seed `~/.codex/config.toml`.
+
+**Change:** Move the seed template to `config/codex/config.toml`, keep
+`.codex/config.toml` absent, and make
+`task verify:codex-runtime-boundary` fail if the reserved project-local path is
+reintroduced.
+
+**Expected effect:** The public bootstrap still seeds a writable live Codex
+config, but opening this repo no longer causes Codex to parse the seed template
+as repo-local config.
+
+**Falsifier:** Opening `public-dotfiles` still shows a warning that references
+`.codex/config.toml`, or `task verify:codex-runtime-boundary` passes while that
+path exists in the repo.
+
+### 2026-06-07 - Bootstrap must align `nix-darwin` with the pinned public `nixpkgs` release
+
+**Trigger:** `task verify:bootstrap-darwin` started failing because generated
+bootstrap flakes hard-coded `nix-darwin/master` while the pinned public
+`nixpkgs` release still evaluated as `26.05`.
+
+**Change:** `scripts/bootstrap-macos.sh` now derives `nix-darwin-YY.MM` from
+the current public `nixpkgs` release when it generates a Darwin bootstrap
+flake, and falls back to `master` only when it cannot determine a release.
+
+**Expected effect:** Darwin bootstrap verification stays compatible across
+upstream release-branch cutovers without requiring a manual script edit.
+
+**Falsifier:** `task verify:bootstrap-darwin` fails with a
+`nix-darwin`/`nixpkgs` release mismatch while the generated bootstrap flake
+still points at `master`.
+
 ### 2026-06-02 - Worker Mac failures need regression coverage
 
 **Trigger:** An Intel macOS bootstrap surfaced multiple independent installer,

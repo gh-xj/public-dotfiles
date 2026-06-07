@@ -16,13 +16,15 @@ Live paths owned by Home Manager:
 
 Template path owned by the public repo:
 
-- `.codex/config.toml`
+- `config/codex/config.toml`
 
 The public Codex template stores reusable baseline settings such as model,
 theme, and feature defaults. Bootstrap copies it to `~/.codex/config.toml` only
 when that live file is missing or still points at an old read-only public Home
 Manager generation. Home Manager must not own the live Codex config because
 Codex writes project trust and other runtime state there.
+Keep the project-local reserved `.codex/config.toml` path empty so Codex does
+not parse the seed template as repo config.
 
 Project-local public skills may live in this repo when they operate this repo
 itself. The canonical source for those skills is `.claude/skills/`, with
