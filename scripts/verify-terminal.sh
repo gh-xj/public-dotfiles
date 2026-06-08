@@ -37,6 +37,18 @@ run_first_available() {
   fi
 }
 
+each_legacy_selector() {
+  ruby -rjson -e '
+    JSON.parse(File.read(ARGV[0])).each do |item|
+      puts [
+        item.fetch("tmuxKey"),
+        item.fetch("tmuxCommand"),
+        Array(item.fetch("ghosttyKeybinds")).join(",")
+      ].join("\t")
+    end
+  ' "$repo_root/config/terminal/legacy-selectors.json"
+}
+
 assert_line() {
   local file="$1"
   local expected="$2"
@@ -130,6 +142,7 @@ RUBY
 verify_tmux() {
   local socket="public-dotfiles-verify-terminal-$$"
   local generation home_files tmux_config ghostty_config
+  local selector_key selector_command selector_shortcuts selector_shortcut
 
   cleanup() {
     tmux -L "public-dotfiles-verify-terminal-$$" kill-server >/dev/null 2>&1 || true
@@ -154,33 +167,15 @@ verify_tmux() {
     fi
   done
 
-  local root_binding
-  for root_binding in \
-    "M-a|select-pane -t 1" \
-    "M-s|select-pane -t 2" \
-    "M-c|select-pane -t 3" \
-    "M-e|select-pane -t 4" \
-    "M-g|select-pane -t 5" \
-    "M-i|select-pane -t 6" \
-    "M-o|select-pane -t 7" \
-    "M-p|select-pane -t 8" \
-    "M-u|select-pane -t 9" \
-    "M-y|select-pane -t :.#{window_panes}" \
-    "M-1|select-window -t 1" \
-    "M-2|select-window -t 2" \
-    "M-3|select-window -t 3" \
-    "M-4|select-window -t 4" \
-    "M-5|select-window -t 5" \
-    "M-6|select-window -t 6" \
-    "M-7|select-window -t 7" \
-    "M-8|select-window -t 8" \
-    "M-9|select-window -t 9" \
-    "M-0|select-window -t \"{end}\""
-  do
-    local key="${root_binding%%|*}"
-    local expected="${root_binding#*|}"
-    tmux -L "$socket" list-keys -T root "$key" | grep -Fq -- "$expected"
-  done
+  while IFS=$'\t' read -r selector_key selector_command selector_shortcuts; do
+    tmux -L "$socket" list-keys -T root "M-$selector_key" | grep -Fq -- "$selector_command"
+
+    [ -n "$selector_shortcuts" ] || continue
+    IFS=',' read -r -a shortcut_array <<< "$selector_shortcuts"
+    for selector_shortcut in "${shortcut_array[@]}"; do
+      assert_line "$ghostty_config" "keybind = ${selector_shortcut}=text:\\x1b${selector_key}"
+    done
+  done < <(each_legacy_selector)
 
   tmux -L "$socket" list-keys -T prefix '|' >/dev/null
   tmux -L "$socket" list-keys -T prefix '_' >/dev/null
@@ -198,26 +193,6 @@ verify_tmux() {
     fi
     tmux -L "$socket" list-keys -T "$table" C-j | grep -q 'select-pane -D'
   done
-
-  assert_line "$ghostty_config" 'keybind = ctrl+digit_1=text:\x1ba'
-  assert_line "$ghostty_config" 'keybind = ctrl+digit_2=text:\x1bs'
-  assert_line "$ghostty_config" 'keybind = ctrl+digit_3=text:\x1bc'
-  assert_line "$ghostty_config" 'keybind = ctrl+digit_4=text:\x1be'
-  assert_line "$ghostty_config" 'keybind = ctrl+digit_5=text:\x1bg'
-  assert_line "$ghostty_config" 'keybind = ctrl+digit_6=text:\x1bi'
-  assert_line "$ghostty_config" 'keybind = ctrl+digit_7=text:\x1bo'
-  assert_line "$ghostty_config" 'keybind = ctrl+digit_8=text:\x1bp'
-  assert_line "$ghostty_config" 'keybind = ctrl+digit_9=text:\x1bu'
-  assert_line "$ghostty_config" 'keybind = super+digit_1=text:\x1b1'
-  assert_line "$ghostty_config" 'keybind = super+digit_2=text:\x1b2'
-  assert_line "$ghostty_config" 'keybind = super+digit_3=text:\x1b3'
-  assert_line "$ghostty_config" 'keybind = super+digit_4=text:\x1b4'
-  assert_line "$ghostty_config" 'keybind = super+digit_5=text:\x1b5'
-  assert_line "$ghostty_config" 'keybind = super+digit_6=text:\x1b6'
-  assert_line "$ghostty_config" 'keybind = super+digit_7=text:\x1b7'
-  assert_line "$ghostty_config" 'keybind = super+digit_8=text:\x1b8'
-  assert_line "$ghostty_config" 'keybind = super+digit_9=text:\x1b9'
-  assert_line "$ghostty_config" 'keybind = super+digit_0=text:\x1b0'
 }
 
 verify_ghostty

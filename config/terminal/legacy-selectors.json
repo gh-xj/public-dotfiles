@@ -1,0 +1,122 @@
+[
+  {
+    "id": "pane-1",
+    "tmuxKey": "a",
+    "tmuxCommand": "select-pane -t 1",
+    "ghosttyKeybinds": ["ctrl+digit_1", "ctrl+1"]
+  },
+  {
+    "id": "pane-2",
+    "tmuxKey": "s",
+    "tmuxCommand": "select-pane -t 2",
+    "ghosttyKeybinds": ["ctrl+digit_2", "ctrl+2"]
+  },
+  {
+    "id": "pane-3",
+    "tmuxKey": "c",
+    "tmuxCommand": "select-pane -t 3",
+    "ghosttyKeybinds": ["ctrl+digit_3", "ctrl+3"]
+  },
+  {
+    "id": "pane-4",
+    "tmuxKey": "e",
+    "tmuxCommand": "select-pane -t 4",
+    "ghosttyKeybinds": ["ctrl+digit_4", "ctrl+4"]
+  },
+  {
+    "id": "pane-5",
+    "tmuxKey": "g",
+    "tmuxCommand": "select-pane -t 5",
+    "ghosttyKeybinds": ["ctrl+digit_5", "ctrl+5"]
+  },
+  {
+    "id": "pane-6",
+    "tmuxKey": "i",
+    "tmuxCommand": "select-pane -t 6",
+    "ghosttyKeybinds": ["ctrl+digit_6", "ctrl+6"]
+  },
+  {
+    "id": "pane-7",
+    "tmuxKey": "o",
+    "tmuxCommand": "select-pane -t 7",
+    "ghosttyKeybinds": ["ctrl+digit_7", "ctrl+7"]
+  },
+  {
+    "id": "pane-8",
+    "tmuxKey": "p",
+    "tmuxCommand": "select-pane -t 8",
+    "ghosttyKeybinds": ["ctrl+digit_8", "ctrl+8"]
+  },
+  {
+    "id": "pane-9",
+    "tmuxKey": "u",
+    "tmuxCommand": "select-pane -t 9",
+    "ghosttyKeybinds": ["ctrl+digit_9", "ctrl+9"]
+  },
+  {
+    "id": "pane-last",
+    "tmuxKey": "y",
+    "tmuxCommand": "run-shell \"tmux select-pane -t :.#{window_panes}\"",
+    "ghosttyKeybinds": []
+  },
+  {
+    "id": "window-1",
+    "tmuxKey": "1",
+    "tmuxCommand": "select-window -t 1",
+    "ghosttyKeybinds": ["super+digit_1", "super+1"]
+  },
+  {
+    "id": "window-2",
+    "tmuxKey": "2",
+    "tmuxCommand": "select-window -t 2",
+    "ghosttyKeybinds": ["super+digit_2", "super+2"]
+  },
+  {
+    "id": "window-3",
+    "tmuxKey": "3",
+    "tmuxCommand": "select-window -t 3",
+    "ghosttyKeybinds": ["super+digit_3", "super+3"]
+  },
+  {
+    "id": "window-4",
+    "tmuxKey": "4",
+    "tmuxCommand": "select-window -t 4",
+    "ghosttyKeybinds": ["super+digit_4", "super+4"]
+  },
+  {
+    "id": "window-5",
+    "tmuxKey": "5",
+    "tmuxCommand": "select-window -t 5",
+    "ghosttyKeybinds": ["super+digit_5", "super+5"]
+  },
+  {
+    "id": "window-6",
+    "tmuxKey": "6",
+    "tmuxCommand": "select-window -t 6",
+    "ghosttyKeybinds": ["super+digit_6", "super+6"]
+  },
+  {
+    "id": "window-7",
+    "tmuxKey": "7",
+    "tmuxCommand": "select-window -t 7",
+    "ghosttyKeybinds": ["super+digit_7", "super+7"]
+  },
+  {
+    "id": "window-8",
+    "tmuxKey": "8",
+    "tmuxCommand": "select-window -t 8",
+    "ghosttyKeybinds": ["super+digit_8", "super+8"]
+  },
+  {
+    "id": "window-9",
+    "tmuxKey": "9",
+    "tmuxCommand": "select-window -t 9",
+    "ghosttyKeybinds": ["super+digit_9", "super+9"]
+  },
+  {
+    "id": "window-last",
+    "tmuxKey": "0",
+    "tmuxCommand": "select-window -t \"{end}\"",
+    "ghosttyKeybinds": ["super+digit_0", "super+0"]
+  }
+]

@@ -6,6 +6,7 @@ This setup treats tmux as the primary terminal workspace layer and Ghostty as a 
 
 - tmux custom config source: `~/public-dotfiles/.tmux.conf`
 - tmux Home Manager module and plugin declarations: `~/public-dotfiles/modules/home/terminal.nix`
+- legacy selector contract: `~/public-dotfiles/config/terminal/legacy-selectors.json`
 - live tmux config: Home Manager renders `~/.config/tmux/tmux.conf`
 - compatibility bridge: Home Manager renders `~/.tmux.conf` to source the live tmux config
 - Ghostty config source: `~/public-dotfiles/modules/home/terminal.nix`

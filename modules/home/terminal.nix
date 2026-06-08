@@ -2,6 +2,18 @@
 
 let
   cfg = config.xj.publicDotfiles;
+  legacySelectors = builtins.fromJSON (builtins.readFile ../../config/terminal/legacy-selectors.json);
+  ghosttyLegacySelectorKeybinds = lib.concatMap (
+    selector:
+    map (shortcut: "${shortcut}=text:\\x1b${selector.tmuxKey}") selector.ghosttyKeybinds
+  ) legacySelectors;
+  generatedTmuxLegacySelectorBindings = lib.concatLines (
+    [
+      "# Generated from config/terminal/legacy-selectors.json."
+      "# Keep Ghostty legacy selector bridges and tmux root selector bindings in sync there."
+    ]
+    ++ map (selector: "bind -n M-${selector.tmuxKey} ${selector.tmuxCommand}") legacySelectors
+  );
   easyjumpTmux = pkgs.tmuxPlugins.mkTmuxPlugin {
     pluginName = "easyjump";
     path = "easyjump.tmux";
@@ -47,7 +59,7 @@ in
           '';
         }
       ];
-      extraConfig = builtins.readFile ../../.tmux.conf;
+      extraConfig = builtins.readFile ../../.tmux.conf + "\n" + generatedTmuxLegacySelectorBindings;
     };
 
     programs.ghostty = {
@@ -67,24 +79,6 @@ in
           "global:cmd+shift+option+a=toggle_quick_terminal"
           "all:cmd+ctrl+h=text:\\x13{"
           "all:cmd+ctrl+l=text:\\x13}"
-          "ctrl+digit_1=text:\\x1ba"
-          "ctrl+1=text:\\x1ba"
-          "ctrl+digit_2=text:\\x1bs"
-          "ctrl+2=text:\\x1bs"
-          "ctrl+digit_3=text:\\x1bc"
-          "ctrl+3=text:\\x1bc"
-          "ctrl+digit_4=text:\\x1be"
-          "ctrl+4=text:\\x1be"
-          "ctrl+digit_5=text:\\x1bg"
-          "ctrl+5=text:\\x1bg"
-          "ctrl+digit_6=text:\\x1bi"
-          "ctrl+6=text:\\x1bi"
-          "ctrl+digit_7=text:\\x1bo"
-          "ctrl+7=text:\\x1bo"
-          "ctrl+digit_8=text:\\x1bp"
-          "ctrl+8=text:\\x1bp"
-          "ctrl+digit_9=text:\\x1bu"
-          "ctrl+9=text:\\x1bu"
           "shift+left=text:\\x13p"
           "shift+right=text:\\x13n"
           "ctrl+shift+comma=text:\\x13H"
@@ -95,32 +89,12 @@ in
           "super+shift+d=text:\\x13_"
           "super+shift+enter=text:\\x13z"
           "super+ctrl+equal=text:\\x13E"
-          "super+digit_1=text:\\x1b1"
-          "super+1=text:\\x1b1"
-          "super+digit_2=text:\\x1b2"
-          "super+2=text:\\x1b2"
-          "super+digit_3=text:\\x1b3"
-          "super+3=text:\\x1b3"
-          "super+digit_4=text:\\x1b4"
-          "super+4=text:\\x1b4"
-          "super+digit_5=text:\\x1b5"
-          "super+5=text:\\x1b5"
-          "super+digit_6=text:\\x1b6"
-          "super+6=text:\\x1b6"
-          "super+digit_7=text:\\x1b7"
-          "super+7=text:\\x1b7"
-          "super+digit_8=text:\\x1b8"
-          "super+8=text:\\x1b8"
-          "super+digit_9=text:\\x1b9"
-          "super+9=text:\\x1b9"
-          "super+digit_0=text:\\x1b0"
-          "super+0=text:\\x1b0"
           "all:super+shift+[=text:\\x13h"
           "all:super+shift+j=text:\\x13j"
           "all:super+shift+k=text:\\x13k"
           "all:super+shift+]=text:\\x13l"
           "shift+enter=text:\\x1b\\r"
-        ];
+        ] ++ ghosttyLegacySelectorKeybinds;
       };
     };
   };
