@@ -44,8 +44,15 @@ for displays and `ioreg AppleMultitouchDevice` for trackpad behavior.
   separate commits and pushes.
 - Start every git operation with `git status --short` in the target repo. Notice
   unrelated dirty files and leave them unstaged.
+- Run dotfiles git commands sequentially. Do not overlap `git add`, `git rm`,
+  `git commit`, or other repo-mutating git operations in parallel; avoid
+  parallel git reads around those writes too, because transient `index.lock`
+  races are easy to trigger in this repo workflow.
 - Stage explicit paths only: `git add -- path/to/file ...`. Do not use broad
   staging commands for dotfiles work.
+- If a new file will be read by Nix flakes or repo verification, stage it
+  before running `nix build`, `task`, or other flake-evaluated checks. Untracked
+  files are invisible to flake evaluation.
 - Inspect `git diff --cached` before committing.
 - Keep each commit atomic: one behavior, policy, package ledger update, or doc
   update. Before staging, write the operation boundary in one sentence; if a

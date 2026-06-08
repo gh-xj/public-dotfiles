@@ -10,18 +10,22 @@ Use this flow for routine work in `public-dotfiles`.
    `git status --short`
 3. If unrelated files are dirty, leave them alone and stage only the paths you
    intentionally changed.
+4. Run git steps sequentially. Do not overlap `git add`, `git rm`, `git commit`,
+   or adjacent git reads in parallel.
 
 ## Before Commit
 
 1. Stage explicit paths:
    `git add -- path/to/file ...`
-2. Inspect exactly what will be committed:
+2. If a new file is consumed by flake evaluation, stage it before any `nix` or
+   `task` verification step.
+3. Inspect exactly what will be committed:
    `git diff --cached`
-3. Verify the repo, including staged secret risk:
+4. Verify the repo, including staged secret risk:
    `task dotfiles:verify`
-4. Commit one behavior at a time:
+5. Commit one behavior at a time:
    `git commit -m "Improve lazygit workflow"`
-5. Do not leave an accepted atomic operation uncommitted by default. If the
+6. Do not leave an accepted atomic operation uncommitted by default. If the
    commit is deferred, the final report must say exactly why.
 
 ## Atomic Completion
