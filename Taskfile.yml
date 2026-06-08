@@ -39,6 +39,7 @@ tasks:
     cmds:
       - task: nix:build
       - task: verify:home-files
+      - task: verify:repo-hygiene
       - task: verify:global-taskfile
       - task: verify:codex-runtime-boundary
       - task: verify:zsh
@@ -57,6 +58,11 @@ tasks:
     desc: Verify Home Manager owns the expected public config files
     cmds:
       - ./scripts/verify-home-files.sh
+
+  verify:repo-hygiene:
+    desc: Reject tracked repo noise that should stay ignored
+    cmds:
+      - ./scripts/verify-repo-hygiene.sh
 
   verify:global-taskfile:
     desc: Verify public global go-task Taskfile
