@@ -6,7 +6,7 @@ cd "$repo_root"
 
 tracked_noise="$(
   git ls-files |
-    rg '(^|/)\.DS_Store$|^\.config/karabiner/automatic_backups/' || true
+    rg '(^|/)\.DS_Store$|^\.config/karabiner/automatic_backups/|^\.config/nvim/_machine_specific(_default)?\.vim$' || true
 )"
 
 if [ -n "$tracked_noise" ]; then

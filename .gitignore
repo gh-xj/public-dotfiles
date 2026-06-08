@@ -18,6 +18,7 @@
 /.config/nvim/autoload/
 /.config/nvim/lazy-lock.json
 /.config/nvim/init.vim.bak
+/.config/nvim/_machine_specific.vim
 
 # karabiner writes a dated backup on every config change — too noisy to track
 /.config/karabiner/automatic_backups/
