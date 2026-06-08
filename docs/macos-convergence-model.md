@@ -31,6 +31,33 @@ behavior, fold the result back into the repo harness.
 | Live hardware/runtime state | script verifier ledgers | active trackpad preferences, display layout | `ioreg`, `displayplacer` |
 | App runtime state | public ledgers plus manual install flows | Raycast Store extensions | `task verify:raycast-extensions` |
 
+## Placement Decision
+
+When adding a new macOS-related setting, pick the narrowest owning layer that
+can actually converge the behavior.
+
+1. Use nix-darwin typed defaults when the setting is already modeled by
+   `system.defaults` and no runtime/session caveat is known.
+2. Use `CustomUserPreferences` when the key is still a durable persisted
+   preference, but nix-darwin does not expose it as a typed option.
+3. Use the TSV-ledger plus script path when the setting is ByHost/currentHost,
+   input-specific, or otherwise needs a shell-level apply/verify loop.
+4. Add a live-state verifier when persisted values are known to produce false
+   positives without a GUI-session or hardware-state check.
+5. Treat app-encrypted, TCC-gated, confirmation-driven, or UI-registered state
+   as an interactive boundary. Record the durable public intent in a ledger or
+   doc, but do not pretend the runtime state is repo-owned.
+
+Anti-rules:
+
+- Do not add a shell ledger when `system.defaults` already expresses the same
+  setting cleanly.
+- Do not keep the same setting in both `modules/darwin/defaults.nix` and a TSV
+  ledger unless the persisted key and the live-state check genuinely target
+  different layers.
+- Do not treat `defaults read` as sufficient proof when the symptom is
+  behavioral and a known live-state check exists.
+
 ## Live-State Rule
 
 Any macOS setting with an observable runtime behavior should have a live-state
