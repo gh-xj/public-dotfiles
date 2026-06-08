@@ -1,17 +1,15 @@
-{ config, lib, ... }:
+{ config, lib, publicDotfilesDelivery, ... }:
 
 let
   cfg = config.xj.publicDotfiles.agents.hooks;
+  inherit (publicDotfilesDelivery) mkImmutableFile mkImmutableTree;
 in
 {
   config = lib.mkIf cfg.enable {
     home.file = {
-      ".claude/hooks" = {
-        source = ../../../.claude/hooks;
-        force = true;
-      };
-      ".claude/settings.json".source = ../../../.claude/settings.json;
-      ".claude/statusline-command.sh".source = ../../../.claude/statusline-command.sh;
+      ".claude/hooks" = mkImmutableTree ".claude/hooks";
+      ".claude/settings.json" = mkImmutableFile ".claude/settings.json";
+      ".claude/statusline-command.sh" = mkImmutableFile ".claude/statusline-command.sh";
     };
   };
 }

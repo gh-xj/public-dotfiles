@@ -34,6 +34,23 @@ assert_symlink_target() {
   fi
 }
 
+assert_target_prefix() {
+  local path="$1"
+  local expected_prefix="$2"
+  local final
+
+  assert_file "$path"
+  final="$(realpath "$home_files/$path")"
+  case "$final" in
+    "$expected_prefix"*)
+      ;;
+    *)
+      printf 'unexpected generated link target prefix for %s: expected prefix %s got %s\n' "$path" "$expected_prefix" "$final" >&2
+      exit 1
+      ;;
+  esac
+}
+
 assert_line() {
   local path="$1"
   local expected="$2"
@@ -71,6 +88,16 @@ assert_symlink_target ".amethyst.yml" "/Users/example/public-dotfiles/.config/am
 assert_symlink_target "Taskfile.yml" "/Users/example/public-dotfiles/global/Taskfile.yml"
 assert_symlink_target ".zprofile" "/Users/example/public-dotfiles/.zprofile"
 assert_symlink_target ".zshrc" "/Users/example/public-dotfiles/.zshrc"
+
+assert_target_prefix ".config/bat/config" "/nix/store/"
+assert_target_prefix ".config/lazygit/config.yml" "/nix/store/"
+assert_target_prefix ".config/starship.toml" "/nix/store/"
+assert_target_prefix ".config/yazi/yazi.toml" "/nix/store/"
+assert_target_prefix ".claude/CLAUDE.md" "/nix/store/"
+assert_target_prefix ".claude/settings.json" "/nix/store/"
+assert_target_prefix ".claude/statusline-command.sh" "/nix/store/"
+assert_target_prefix ".codex/AGENTS.md" "/nix/store/"
+assert_target_prefix ".codex/rules" "/nix/store/"
 
 assert_line ".config/ghostty/config" "font-family = RecMonoDuotone Nerd Font"
 assert_line ".config/ghostty/config" "theme = light:Atom One Light,dark:One Dark Two"

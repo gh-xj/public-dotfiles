@@ -188,7 +188,8 @@ and per-project trust or provider overrides. The public bootstrap seeds
 `~/.codex/config.toml` only when it is missing or still an old read-only public
 Home Manager symlink; after that, the live file stays writable for Codex TUI
 trust, marketplace, hook, and runtime updates. A short reference lives in
-`docs/agent-config.md`.
+`docs/agent-config.md`. The broader Home Manager delivery model is documented in
+`docs/config-delivery-model.md`.
 
 Project-local public skills that operate this repo may live under
 `.claude/skills/`, with `.agents/skills/` used only as a Codex discovery

@@ -41,3 +41,5 @@ Rules:
 - `$HOME/.codex/config.toml` is seeded from `config/codex/config.toml` only
   when missing; the live file stays mutable because Codex writes project trust
   and other runtime state there
+- Home Manager delivery classes and when to use them are defined in
+  `docs/config-delivery-model.md`

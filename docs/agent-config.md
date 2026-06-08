@@ -26,6 +26,9 @@ Codex writes project trust and other runtime state there.
 Keep the project-local reserved `.codex/config.toml` path empty so Codex does
 not parse the seed template as repo config.
 
+For the general public config ownership and delivery classes used across Home
+Manager modules, see `docs/config-delivery-model.md`.
+
 Project-local public skills may live in this repo when they operate this repo
 itself. The canonical source for those skills is `.claude/skills/`, with
 `.agents/skills/` reserved for Codex discovery adapters when needed. These are
