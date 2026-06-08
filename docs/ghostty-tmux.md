@@ -29,6 +29,8 @@ Ghostty sends raw bytes into tmux for a subset of shortcuts.
 Legacy exception:
 
 - Some pane/window selectors still use tmux root `M-*` bindings and Ghostty `\x1b...` mappings. Treat those as migration debt, not as the preferred pattern for new shortcuts.
+- Current pane selectors are `Ctrl+1..9 -> M-a/M-s/M-c/M-e/M-g/M-i/M-o/M-p/M-u`.
+- Current window selectors are `Cmd+1..9 -> M-1..M-9`, and `Cmd+0 -> M-0` for the last tmux window.
 
 Current tmux prefix:
 
@@ -82,7 +84,7 @@ Run this after changing Ghostty, tmux, or Karabiner terminal key rules:
 task verify:terminal
 ```
 
-This validates Ghostty config, Karabiner complex-modification assets, tmux config parsing, the Karabiner `Ctrl-h/l` no-rewrite policy, root `M-*` migration guards, and the EasyJump `prefix + J` only policy.
+This validates Ghostty config, Karabiner complex-modification assets, tmux config parsing, the Karabiner `Ctrl-h/l` no-rewrite policy, legacy selector mappings, root `M-*` migration guards, and the EasyJump `prefix + J` only policy.
 
 ## Theme policy
 
