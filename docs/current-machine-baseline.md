@@ -64,7 +64,7 @@ Home Manager now owns these public config files on a new machine:
 | --- | --- |
 | Nix shell set | `atuin`, `bat`, `btop`, `eza`, `fd`, `fzf`, `git`, `glow`, `hyperfine`, `jq`, `ripgrep`, `starship`, `tealdeer`, `trash`, `yazi`, `zoxide`, zsh plugins |
 | Nix dev set | `go`, `go-task`, `lazygit`, `marksman`, `neovim`, `nodejs`, `prettier`, `rust`, `shfmt`, `tmux`, `uv`, `delta`, `difftastic` |
-| Nix ops set | `claude-code`, `codex`, `gh`, `gitleaks` |
+| Nix ops set | `claude-code`, `codex`, `gh`, `gitleaks`, `work` |
 | npm globals | narrow public ledger in `npm-globals.txt`; currently `@google/gemini-cli`, `@googleworkspace/cli`, `ccusage`, `markdownlint-cli2` |
 | Homebrew brews | `displayplacer`, `mole`, `pngpaste` |
 | Homebrew casks | Ghostty, Chrome, Karabiner, Amethyst, Raycast, Codex app, Setapp, Mimestream, 1Password, CleanShot, Tailscale, public font set; version-gated additions are OrbStack and ChatGPT on macOS 14+, and TypeWhisper on macOS 15+ |
