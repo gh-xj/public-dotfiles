@@ -14,6 +14,11 @@ buildGoModule rec {
   vendorHash = "sha256-97TzBn+JtSjCkA0CORFE8Rb8OGKg7qBJsEFEnBut8Kk=";
 
   subPackages = [ "cmd/work" ];
+  ldflags = [
+    "-s"
+    "-w"
+    "-X github.com/gh-xj/work-cli/internal/workcli.appVersion=v${version}"
+  ];
 
   meta = {
     description = "Local-first work tracker CLI for repo-local .work stores";
