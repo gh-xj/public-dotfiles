@@ -39,6 +39,7 @@ tasks:
     cmds:
       - task: nix:build
       - task: verify:home-files
+      - task: verify:patchkit
       - task: verify:repo-hygiene
       - task: verify:global-taskfile
       - task: verify:codex-runtime-boundary
@@ -58,6 +59,11 @@ tasks:
     desc: Verify Home Manager owns the expected public config files
     cmds:
       - ./scripts/verify-home-files.sh
+
+  verify:patchkit:
+    desc: Verify patchkit/apply_patch helper behavior
+    cmds:
+      - ./scripts/verify-patchkit.sh
 
   verify:repo-hygiene:
     desc: Reject tracked repo noise that should stay ignored

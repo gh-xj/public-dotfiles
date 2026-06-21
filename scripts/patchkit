@@ -60,3 +60,9 @@ apply_args=(--whitespace=nowarn)
 if [[ "$mode" == "check" ]]; then
   apply_args+=(--check)
 fi
+
+if [[ -n "$repo" ]]; then
+  git -C "$repo" apply "${apply_args[@]}" "$patch_file"
+else
+  git apply "${apply_args[@]}" "$patch_file"
+fi
