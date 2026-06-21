@@ -11,6 +11,25 @@ setup_environment() {
     export NPM_CONFIG_PREFIX="${NPM_CONFIG_PREFIX:-$XDG_DATA_HOME/npm-global}"
     export HOMEBREW_AUTO_UPDATE_SECS=604800
 
+    # Ghostty exports TERMINFO to its app bundle. Codex doctor expects the
+    # searchable directory list to contain only existing roots, so keep the
+    # directory search explicit and remove stale Nix profile entries.
+    local _terminfo_dir
+    local -a _terminfo_dirs
+    for _terminfo_dir in \
+        "$HOME/.terminfo" \
+        "/Applications/Ghostty.app/Contents/Resources/terminfo" \
+        "$HOME/.nix-profile/share/terminfo" \
+        "/etc/profiles/per-user/${USER:-xj}/share/terminfo" \
+        "/run/current-system/sw/share/terminfo" \
+        "/usr/share/terminfo"; do
+        [[ -d "$_terminfo_dir" ]] && _terminfo_dirs+=("$_terminfo_dir")
+    done
+    if (( ${#_terminfo_dirs[@]} )); then
+        export TERMINFO_DIRS="${(j.:.)_terminfo_dirs}"
+    fi
+    unset TERMINFO
+
     # Initialize Homebrew (sets HOMEBREW_PREFIX, PATH, MANPATH, INFOPATH)
     # Cached to avoid ~30ms subprocess per login shell
     local _brew_cache="$HOME/.cache/brew-shellenv.zsh"

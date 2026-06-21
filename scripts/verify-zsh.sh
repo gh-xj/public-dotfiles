@@ -74,6 +74,26 @@ if [[ -n "$shell_tools_path" ]]; then
   export PATH="$shell_tools_path/bin:$PATH"
 fi
 
+profile_probe="$(
+  REPO_ROOT="$repo_root" \
+  HOME="$home_dir" \
+  TERMINFO="/missing/terminfo" \
+  TERMINFO_DIRS="/missing/terminfo:/usr/share/terminfo" \
+  zsh -f -c '
+source "$REPO_ROOT/.zprofile"
+missing=0
+for dir in ${(s.:.)TERMINFO_DIRS}; do
+  [[ -d "$dir" ]] || missing=1
+done
+printf "terminfo-dirs-existing=%s\n" "$(( 1 - missing ))"
+if [[ -z "${TERMINFO:-}" ]]; then
+  printf "terminfo-unset=1\n"
+else
+  printf "terminfo-unset=0\n"
+fi
+'
+)"
+
 probe="$(
   REPO_ROOT="$repo_root" \
   HOME="$home_dir" \
@@ -143,18 +163,21 @@ printf "starship-prompt=%s\n" "$+functions[prompt_starship_precmd]"
 '
 )"
 
+printf '%s\n' "$profile_probe"
 printf '%s\n' "$probe"
 
 require_probe() {
   local key="$1"
   local want="$2"
 
-  if ! printf '%s\n' "$probe" | grep -qx "${key}=${want}"; then
+  if ! printf '%s\n' "$profile_probe"$'\n'"$probe" | grep -qx "${key}=${want}"; then
     printf 'zsh contract failed: expected %s=%s\n' "$key" "$want" >&2
     exit 1
   fi
 }
 
+require_probe terminfo-dirs-existing 1
+require_probe terminfo-unset 1
 require_probe plugin-paths-generated 1
 require_probe zinit 0
 require_probe zsh-vi-mode 1
