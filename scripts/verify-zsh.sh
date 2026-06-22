@@ -17,6 +17,7 @@ nix_cmd() {
 
 need_cmd zsh
 
+zsh -n "$repo_root/.zshenv"
 zsh -n "$repo_root/.zshrc"
 zsh -n "$repo_root/.zprofile"
 

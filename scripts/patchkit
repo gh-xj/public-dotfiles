@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: patchkit [--check] [--repo PATH]
+
+Apply a standard unified diff from stdin using git apply.
+Use --check to validate without applying.
+
+This is a machine-local patch helper for SSH/non-interactive harness work.
+It intentionally expects normal unified diff input, not Codex custom
+"*** Begin Patch" tool payloads.
+USAGE
+}
+
+mode="apply"
+repo=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --check)
+      mode="check"
+      shift
+      ;;
+    --repo)
+      repo="${2:-}"
+      if [[ -z "$repo" ]]; then
+        echo "patchkit: --repo requires a path" >&2
+        exit 2
+      fi
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "patchkit: unknown argument: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+patch_file="$(mktemp -t patchkit.XXXXXX)"
+trap 'rm -f "$patch_file"' EXIT
+cat > "$patch_file"
+
+if [[ ! -s "$patch_file" ]]; then
+  echo "patchkit: empty patch on stdin" >&2
+  exit 2
+fi
+
+if grep -q '^\*\*\* Begin Patch$' "$patch_file"; then
+  echo "patchkit: got Codex apply_patch payload; pass a standard unified diff instead" >&2
+  exit 2
+fi
+
+apply_args=(--whitespace=nowarn)
+if [[ "$mode" == "check" ]]; then
+  apply_args+=(--check)
+fi
+
+if [[ -n "$repo" ]]; then
+  git -C "$repo" apply "${apply_args[@]}" "$patch_file"
+else
+  git apply "${apply_args[@]}" "$patch_file"
+fi
