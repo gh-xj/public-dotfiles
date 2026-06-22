@@ -1,0 +1,62 @@
+# public-dotfiles — convention descriptor.
+# Read by agents and wrapper fleet audits.
+
+agent_docs:
+  - CLAUDE.md
+  - AGENTS.md
+
+docs_root: docs
+
+taskfile: true
+pre_commit: false
+
+tooling:
+  taskfile: Taskfile.yml
+  implementation: scripts/
+  modules: modules/
+
+git_policy:
+  recipe: git-workflow
+  default_branch: main
+  durability: remote
+  push_policy: declared_upstream_only
+  expected_remote:
+    name: origin
+    https_url: "https://github.com/gh-xj/public-dotfiles.git"
+  hooks: external_or_user_global
+  post_verify_clean: required
+  commit_subject: domain_imperative
+
+secrets_strategy:
+  boundary_note: "This repo is public-safe config only. Sensitive, account-bound, company/private, secret-adjacent, machine-local runtime, session, cache, and personal archive state belongs in private-config."
+  forbidden:
+    - credentials
+    - tokens
+    - private keys
+    - account-bound private config
+  ignored_runtime_paths:
+    - .work/
+    - .config/karabiner/automatic_backups/
+
+realms:
+  source:
+    paths: [.claude/, .codex/, .config/, docs/, modules/, scripts/, Library/]
+    encrypted: false
+    write: "agents + owner - public-safe dotfile source"
+    rule: "Safe to publish; no secrets, private account state, runtime caches, or machine-local archives."
+  runtime:
+    paths: [.work/, .task/, result, result-*]
+    encrypted: false
+    write: "runtime + tools"
+    rule: "Ignored/generated state; not canonical."
+  meta:
+    paths: [CLAUDE.md, AGENTS.md, README.md, .conventions.yaml, Taskfile.yml, flake.nix, flake.lock]
+    encrypted: false
+    write: "agents + owner"
+    rule: "Contract, Nix module graph, and verification entry points."
+
+checks:
+  - "task verify exits 0 and delegates to dotfiles:verify."
+  - "task secrets:staged passes before committing scripts, agent config, shell config, tokens, URLs, headers, or generated config."
+  - "Nix build passes for Home Manager activation package."
+  - "Public/private ownership boundary stays aligned with private-config."

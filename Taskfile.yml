@@ -27,6 +27,11 @@ tasks:
       - task: secrets:staged
       - task: secrets:full
 
+  verify:
+    desc: Canonical verification alias for wrapper audits
+    cmds:
+      - task: dotfiles:verify
+
   dotfiles:converge:
     desc: Apply app/live-state convergence helpers, then run full verification
     cmds:
