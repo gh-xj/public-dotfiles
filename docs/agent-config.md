@@ -7,12 +7,18 @@ Codex.
 
 Live paths owned by Home Manager:
 
+- `~/AGENTS.md`
 - `~/.claude/CLAUDE.md`
 - `~/.claude/settings.json`
 - `~/.claude/hooks/`
 - `~/.claude/statusline-command.sh`
 - `~/.codex/AGENTS.md`
 - `~/.codex/rules/default.rules`
+
+`~/AGENTS.md`, `~/.claude/CLAUDE.md`, and `~/.codex/AGENTS.md` are all
+generated from the same public policy source, `.claude/CLAUDE.md`. The home
+root file exists so Codex sees the same baseline when it walks ancestor
+directories outside a repo.
 
 Template path owned by the public repo:
 

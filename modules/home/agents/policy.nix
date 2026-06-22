@@ -11,6 +11,7 @@ in
 {
   config = lib.mkIf cfg.enable {
     home.file = {
+      "AGENTS.md" = mkImmutableFile ".claude/CLAUDE.md";
       ".claude/CLAUDE.md" = mkImmutableFile ".claude/CLAUDE.md";
       ".codex/AGENTS.md" = mkImmutableFile ".claude/CLAUDE.md";
       ".codex/rules" = mkImmutableTree ".codex/rules";
