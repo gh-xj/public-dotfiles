@@ -27,6 +27,7 @@ in
         "google-chrome"
         "karabiner-elements"
         "amethyst"
+        "insta360-studio"
         "raycast"
         "codex-app"
         "setapp"
