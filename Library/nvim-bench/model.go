@@ -4,7 +4,8 @@ import "time"
 
 const (
 	manifestSchemaVersion = 2
-	resultSchemaVersion   = 1
+	resultSchemaVersion   = 2
+	probeSchemaVersion    = 1
 )
 
 type Manifest struct {
@@ -80,9 +81,19 @@ type ScenarioResult struct {
 	MinMS          float64       `json:"min_ms,omitempty"`
 	MaxMS          float64       `json:"max_ms,omitempty"`
 	SamplesMS      []float64     `json:"samples_ms,omitempty"`
+	ProcessTiming  *TimingStats  `json:"process_timing,omitempty"`
 	LoadedPlugins  []string      `json:"loaded_plugins,omitempty"`
 	Clients        []ProbeClient `json:"clients,omitempty"`
-	ProbeElapsed   float64       `json:"probe_elapsed_ms,omitempty"`
+}
+
+type TimingStats struct {
+	MeanMS    float64   `json:"mean_ms"`
+	MedianMS  float64   `json:"median_ms"`
+	P95MS     float64   `json:"p95_ms"`
+	StddevMS  float64   `json:"stddev_ms"`
+	MinMS     float64   `json:"min_ms"`
+	MaxMS     float64   `json:"max_ms"`
+	SamplesMS []float64 `json:"samples_ms"`
 }
 
 type ProbeResult struct {

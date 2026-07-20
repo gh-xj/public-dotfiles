@@ -146,13 +146,13 @@ func runScenario(cmd RunCmd, manifest loadedManifest, scenario Scenario, nvimPat
 	}
 	runErr := hf.Run()
 
-	probe, probeErr := readProbe(probePath)
-	if probeErr == nil {
-		result.LoadedPlugins = probe.LoadedPlugins
-		result.Clients = probe.Clients
-		result.ProbeElapsed = probe.ElapsedMS
-		if probe.Status != "passed" && result.Error == "" {
-			result.Error = probe.Error
+	probes, probeErr := readProbeResults(probePath)
+	if probeErr == nil && len(probes) > 0 {
+		last := probes[len(probes)-1]
+		result.LoadedPlugins = last.LoadedPlugins
+		result.Clients = last.Clients
+		if last.Status != "passed" && result.Error == "" {
+			result.Error = last.Error
 		}
 	}
 	if runErr != nil {
@@ -175,14 +175,35 @@ func runScenario(cmd RunCmd, manifest loadedManifest, scenario Scenario, nvimPat
 		result.Error = "invalid hyperfine result"
 		return result
 	}
+	if probeErr != nil {
+		result.Error = fmt.Sprintf("read probe samples: %v", probeErr)
+		return result
+	}
 	stats := output.Results[0]
-	result.SamplesMS = secondsToMilliseconds(stats.Times)
-	result.MeanMS = stats.Mean * 1000
-	result.MedianMS = percentile(result.SamplesMS, 0.50)
-	result.P95MS = percentile(result.SamplesMS, 0.95)
-	result.StddevMS = stats.Stddev * 1000
-	result.MinMS = stats.Min * 1000
-	result.MaxMS = stats.Max * 1000
+	expectedProbes := cmd.Warmup + cmd.Runs
+	if len(probes) != expectedProbes {
+		result.Error = fmt.Sprintf("expected %d probe samples, got %d", expectedProbes, len(probes))
+		return result
+	}
+	measuredProbes := probes[cmd.Warmup:]
+	activationSamples := make([]float64, 0, len(measuredProbes))
+	for _, probe := range measuredProbes {
+		if probe.Status != "passed" {
+			result.Error = probe.Error
+			return result
+		}
+		activationSamples = append(activationSamples, probe.ElapsedMS)
+	}
+	activation := summarizeSamples(activationSamples)
+	result.MeanMS = activation.MeanMS
+	result.MedianMS = activation.MedianMS
+	result.P95MS = activation.P95MS
+	result.StddevMS = activation.StddevMS
+	result.MinMS = activation.MinMS
+	result.MaxMS = activation.MaxMS
+	result.SamplesMS = activation.SamplesMS
+	process := summarizeSamples(secondsToMilliseconds(stats.Times))
+	result.ProcessTiming = &process
 	result.Status = "passed"
 	if scenario.BudgetMS > 0 {
 		passed := result.P95MS <= scenario.BudgetMS

@@ -54,7 +54,7 @@ local function finish(status, message)
   end
 
   local encoded = vim.json.encode(payload)
-  vim.fn.writefile({ encoded }, output)
+  vim.fn.writefile({ encoded }, output, "a")
   vim.schedule(function()
     if status == "passed" then
       vim.cmd("qa!")

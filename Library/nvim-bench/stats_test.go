@@ -12,6 +12,16 @@ func TestPercentile(t *testing.T) {
 	}
 }
 
+func TestSummarizeSamples(t *testing.T) {
+	stats := summarizeSamples([]float64{1, 2, 3, 4, 5})
+	if stats.MeanMS != 3 || stats.MedianMS != 3 || stats.P95MS != 4.8 {
+		t.Fatalf("unexpected summary: %#v", stats)
+	}
+	if stats.MinMS != 1 || stats.MaxMS != 5 {
+		t.Fatalf("unexpected range: %#v", stats)
+	}
+}
+
 func TestCompareRunsRequiresBothGates(t *testing.T) {
 	before := RunResult{RunID: "before", Scenarios: []ScenarioResult{
 		{ID: "small-absolute", Status: "passed", MedianMS: 10},

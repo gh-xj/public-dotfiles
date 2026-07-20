@@ -13,6 +13,9 @@ as a proxy for every interaction.
   succeeds only when its declared `expected_client` is initialized.
 - The Go CLI owns environment fingerprinting, repeated measurement through
   `hyperfine`, result persistence, and comparisons.
+- Scenario median/p95 values come from harness event timestamps. Hyperfine
+  wall-clock samples remain available as `process_timing` diagnostics and do
+  not drive readiness budgets or comparisons.
 - Runs default to the repository's `.config` source so an iteration measures
   the working-tree candidate. Pass `--config-home ~/.config` to measure the
   currently activated Home Manager generation instead.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -11,16 +12,32 @@ import (
 	"strings"
 )
 
-func readProbe(path string) (ProbeResult, error) {
-	data, err := os.ReadFile(path)
+func readProbeResults(path string) ([]ProbeResult, error) {
+	file, err := os.Open(path)
 	if err != nil {
-		return ProbeResult{}, err
+		return nil, err
 	}
-	var probe ProbeResult
-	if err := json.Unmarshal(data, &probe); err != nil {
-		return ProbeResult{}, err
+	defer file.Close()
+
+	var results []ProbeResult
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		var probe ProbeResult
+		if err := json.Unmarshal(scanner.Bytes(), &probe); err != nil {
+			return nil, fmt.Errorf("parse probe sample %d: %w", len(results)+1, err)
+		}
+		if probe.SchemaVersion != probeSchemaVersion {
+			return nil, fmt.Errorf("probe sample %d has unsupported schema_version %d", len(results)+1, probe.SchemaVersion)
+		}
+		results = append(results, probe)
 	}
-	return probe, nil
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	if len(results) == 0 {
+		return nil, fmt.Errorf("probe output has no samples")
+	}
+	return results, nil
 }
 
 func resultPath(requested, runID string) (string, error) {
@@ -43,10 +60,14 @@ func resultPath(requested, runID string) (string, error) {
 }
 
 func printRunSummary(run RunResult) {
-	fmt.Printf("%-22s %-8s %10s %10s %8s\n", "scenario", "status", "median", "p95", "plugins")
+	fmt.Printf("%-22s %-8s %10s %10s %10s %8s\n", "scenario", "status", "median", "p95", "process", "plugins")
 	for _, result := range run.Scenarios {
-		fmt.Printf("%-22s %-8s %8.1fms %8.1fms %8d\n",
-			result.ID, result.Status, result.MedianMS, result.P95MS, len(result.LoadedPlugins))
+		processMedian := 0.0
+		if result.ProcessTiming != nil {
+			processMedian = result.ProcessTiming.MedianMS
+		}
+		fmt.Printf("%-22s %-8s %8.1fms %8.1fms %8.1fms %8d\n",
+			result.ID, result.Status, result.MedianMS, result.P95MS, processMedian, len(result.LoadedPlugins))
 		if result.Error != "" {
 			fmt.Printf("  %s\n", result.Error)
 		}
@@ -78,6 +99,29 @@ func percentile(values []float64, p float64) float64 {
 	}
 	weight := position - float64(lower)
 	return sorted[lower]*(1-weight) + sorted[upper]*weight
+}
+
+func summarizeSamples(values []float64) TimingStats {
+	stats := TimingStats{SamplesMS: append([]float64(nil), values...)}
+	if len(values) == 0 {
+		return stats
+	}
+	stats.MinMS = values[0]
+	stats.MaxMS = values[0]
+	for _, value := range values {
+		stats.MeanMS += value
+		stats.MinMS = math.Min(stats.MinMS, value)
+		stats.MaxMS = math.Max(stats.MaxMS, value)
+	}
+	stats.MeanMS /= float64(len(values))
+	for _, value := range values {
+		delta := value - stats.MeanMS
+		stats.StddevMS += delta * delta
+	}
+	stats.StddevMS = math.Sqrt(stats.StddevMS / float64(len(values)))
+	stats.MedianMS = percentile(values, 0.50)
+	stats.P95MS = percentile(values, 0.95)
+	return stats
 }
 
 func commandOutput(name string, args ...string) (string, error) {
