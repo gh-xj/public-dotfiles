@@ -1,6 +1,6 @@
 # Current Machine Baseline
 
-Date: 2026-06-01
+Date: 2026-07-19
 
 This document captures the public-safe setup observed on xj's current Mac and
 the restore surface that `public-dotfiles` should own for a new Mac. Sensitive
@@ -38,7 +38,7 @@ These values were read from `/Users/xj` and encoded in
 | Magic Mouse | two-button mode |
 | Symbolic hotkeys | local Apple symbolic hotkey enablement and parameters copied for ids `15-31`, `52`, `60-65`, `79-82`, `118-122`, `164`, `184` |
 | Appearance | automatic light/dark switching enabled |
-| Display layout | known serials: Studio Display XDR `2880x1620@120Hz`, M1 MacBook built-in `1680x1050@60Hz` |
+| Display layout | known serials: Studio Display XDR `2880x1620@120Hz`, M5 Pro MacBook built-in `1800x1169@120Hz` |
 
 ## Repo-Backed User Config
 
