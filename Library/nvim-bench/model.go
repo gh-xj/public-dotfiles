@@ -42,6 +42,8 @@ type Environment struct {
 	NvimVersion      string `json:"nvim_version"`
 	HyperfinePath    string `json:"hyperfine_path"`
 	HyperfineVersion string `json:"hyperfine_version"`
+	ConfigHome       string `json:"config_home,omitempty"`
+	ConfigPath       string `json:"config_path,omitempty"`
 	GitCommit        string `json:"git_commit,omitempty"`
 	GitDirty         bool   `json:"git_dirty"`
 	ConfigSHA256     string `json:"config_sha256,omitempty"`

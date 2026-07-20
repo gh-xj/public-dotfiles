@@ -28,8 +28,12 @@ func (cmd RunCmd) Run(cli *CLI) error {
 	if _, err := exec.LookPath("hyperfine"); err != nil {
 		return fmt.Errorf("hyperfine is required: %w", err)
 	}
+	configHome, err := resolveConfigHome(cli.ConfigHome, manifest)
+	if err != nil {
+		return err
+	}
 
-	environment, err := collectEnvironment(cli.Nvim, manifest)
+	environment, err := collectEnvironment(cli.Nvim, configHome, manifest)
 	if err != nil {
 		return err
 	}
@@ -49,7 +53,7 @@ func (cmd RunCmd) Run(cli *CLI) error {
 		if cli.Verbose {
 			fmt.Fprintf(os.Stderr, "running %s (%s)\n", scenario.ID, scenario.Probe)
 		}
-		result := runScenario(cmd, manifest, scenario, environment.NvimPath, cli.Verbose)
+		result := runScenario(cmd, manifest, scenario, environment.NvimPath, configHome, cli.Verbose)
 		if result.Status != "passed" {
 			failed = true
 		}
@@ -77,7 +81,7 @@ func (cmd RunCmd) Run(cli *CLI) error {
 	return nil
 }
 
-func runScenario(cmd RunCmd, manifest loadedManifest, scenario Scenario, nvimPath string, verbose bool) ScenarioResult {
+func runScenario(cmd RunCmd, manifest loadedManifest, scenario Scenario, nvimPath, configHome string, verbose bool) ScenarioResult {
 	result := ScenarioResult{
 		ID:          scenario.ID,
 		Description: scenario.Description,
@@ -110,6 +114,7 @@ func runScenario(cmd RunCmd, manifest loadedManifest, scenario Scenario, nvimPat
 	}
 
 	env := []string{
+		"XDG_CONFIG_HOME=" + configHome,
 		"NVIM_BENCH_HARNESS=" + harnessPath,
 		"NVIM_BENCH_PROBE=" + scenario.Probe,
 		"NVIM_BENCH_OUTPUT=" + probePath,

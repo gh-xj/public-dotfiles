@@ -11,6 +11,9 @@ as a proxy for every interaction.
   state, including loaded plugins and attached clients.
 - The Go CLI owns environment fingerprinting, repeated measurement through
   `hyperfine`, result persistence, and comparisons.
+- Runs default to the repository's `.config` source so an iteration measures
+  the working-tree candidate. Pass `--config-home ~/.config` to measure the
+  currently activated Home Manager generation instead.
 - Raw results default to `~/.local/state/nvim-bench/runs/`; they are
   machine-local evidence and are not committed.
 - Result and manifest schemas are versioned independently of CLI releases.

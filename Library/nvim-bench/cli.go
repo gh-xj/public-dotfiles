@@ -1,11 +1,12 @@
 package main
 
 type CLI struct {
-	Manifest string `name:"manifest" type:"path" help:"Scenario manifest path; defaults to scenarios.json."`
-	JSON     bool   `help:"Emit machine-readable JSON."`
-	Verbose  bool   `short:"v" help:"Print runner commands and diagnostics."`
-	NoColor  bool   `name:"no-color" help:"Disable colored output."`
-	Nvim     string `name:"nvim" help:"Neovim executable path or command name." default:"nvim"`
+	Manifest   string `name:"manifest" type:"path" help:"Scenario manifest path; defaults to scenarios.json."`
+	JSON       bool   `help:"Emit machine-readable JSON."`
+	Verbose    bool   `short:"v" help:"Print runner commands and diagnostics."`
+	NoColor    bool   `name:"no-color" help:"Disable colored output."`
+	Nvim       string `name:"nvim" help:"Neovim executable path or command name." default:"nvim"`
+	ConfigHome string `name:"config-home" type:"path" help:"XDG config home; defaults to the benchmark repository's .config."`
 
 	Doctor  DoctorCmd  `cmd:"" help:"Check benchmark prerequisites and runtime identity."`
 	List    ListCmd    `cmd:"" help:"List declared benchmark scenarios."`

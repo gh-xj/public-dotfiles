@@ -12,7 +12,26 @@ import (
 	"strings"
 )
 
-func collectEnvironment(nvim string, manifest loadedManifest) (Environment, error) {
+func resolveConfigHome(requested string, manifest loadedManifest) (string, error) {
+	configHome := requested
+	if configHome == "" {
+		repoRoot, err := commandOutputIn(manifest.Dir, "git", "rev-parse", "--show-toplevel")
+		if err != nil {
+			return "", fmt.Errorf("resolve repository config home: %w", err)
+		}
+		configHome = filepath.Join(strings.TrimSpace(repoRoot), ".config")
+	}
+	absolute, err := filepath.Abs(configHome)
+	if err != nil {
+		return "", fmt.Errorf("resolve config home: %w", err)
+	}
+	if _, err := os.Stat(filepath.Join(absolute, "nvim", "init.lua")); err != nil {
+		return "", fmt.Errorf("config home %q has no nvim/init.lua: %w", absolute, err)
+	}
+	return absolute, nil
+}
+
+func collectEnvironment(nvim, configHome string, manifest loadedManifest) (Environment, error) {
 	nvimPath, err := exec.LookPath(nvim)
 	if err != nil {
 		return Environment{}, fmt.Errorf("find nvim: %w", err)
@@ -42,7 +61,26 @@ func collectEnvironment(nvim string, manifest loadedManifest) (Environment, erro
 		NvimVersion:      strings.Split(strings.TrimSpace(version), "\n")[0],
 		HyperfinePath:    hyperfinePath,
 		HyperfineVersion: strings.TrimSpace(hyperfineVersion),
+		ConfigHome:       configHome,
 		ManifestSHA256:   manifest.SHA256,
+	}
+	configPath := filepath.Join(configHome, "nvim")
+	resolvedConfigPath, err := filepath.EvalSymlinks(configPath)
+	if err != nil {
+		return Environment{}, fmt.Errorf("resolve Neovim config path: %w", err)
+	}
+	env.ConfigPath = resolvedConfigPath
+	env.ConfigSHA256, err = hashTree(resolvedConfigPath, func(path string) bool {
+		base := filepath.Base(path)
+		return base != ".DS_Store" && base != "lazy-lock.json"
+	})
+	if err != nil {
+		return Environment{}, fmt.Errorf("fingerprint Neovim config: %w", err)
+	}
+	lockPath := filepath.Join(resolvedConfigPath, "lazy-lock.json")
+	if data, readErr := os.ReadFile(lockPath); readErr == nil {
+		sum := sha256.Sum256(data)
+		env.LazyLockSHA256 = hex.EncodeToString(sum[:])
 	}
 	env.HarnessSHA256, err = hashBenchmarkHarness(manifest.Dir)
 	if err != nil {
@@ -61,15 +99,6 @@ func collectEnvironment(nvim string, manifest loadedManifest) (Environment, erro
 		env.GitCommit = strings.TrimSpace(env.GitCommit)
 		status, _ := commandOutputIn(repoRoot, "git", "status", "--porcelain")
 		env.GitDirty = strings.TrimSpace(status) != ""
-		lockPath := filepath.Join(repoRoot, ".config", "nvim", "lazy-lock.json")
-		if data, readErr := os.ReadFile(lockPath); readErr == nil {
-			sum := sha256.Sum256(data)
-			env.LazyLockSHA256 = hex.EncodeToString(sum[:])
-		}
-		env.ConfigSHA256, _ = hashTree(filepath.Join(repoRoot, ".config", "nvim"), func(path string) bool {
-			base := filepath.Base(path)
-			return base != ".DS_Store" && base != "lazy-lock.json"
-		})
 	}
 	return env, nil
 }

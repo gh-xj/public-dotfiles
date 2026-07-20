@@ -42,6 +42,8 @@ func (DoctorCmd) Run(cli *CLI) error {
 		harness := filepath.Join(manifest.Dir, manifest.Harness)
 		_, err := os.Stat(harness)
 		report.Checks = append(report.Checks, checkPath("lua-harness", harness, err, true))
+		configHome, configErr := resolveConfigHome(cli.ConfigHome, manifest)
+		report.Checks = append(report.Checks, checkPath("config-home", configHome, configErr, true))
 	}
 
 	nvimPaths := executablePaths(cli.Nvim)
