@@ -6,9 +6,11 @@ as a proxy for every interaction.
 
 ## Contract
 
-- `scenarios.json` owns scenario definitions, fixtures, probes, and budgets.
+- `scenarios.json` owns scenario definitions, fixtures, probes, expected LSP
+  clients, and budgets.
 - `harness.lua` runs before the user config and records `VimEnter` or LSP-ready
-  state, including loaded plugins and attached clients.
+  state, including loaded plugins and attached clients. An `lsp_ready` probe
+  succeeds only when its declared `expected_client` is initialized.
 - The Go CLI owns environment fingerprinting, repeated measurement through
   `hyperfine`, result persistence, and comparisons.
 - Runs default to the repository's `.config` source so an iteration measures

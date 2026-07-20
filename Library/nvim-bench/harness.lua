@@ -2,6 +2,7 @@ local uv = vim.uv or vim.loop
 local started_at = uv.hrtime()
 local output = vim.env.NVIM_BENCH_OUTPUT
 local probe = vim.env.NVIM_BENCH_PROBE or "vim_enter"
+local expected_client = vim.env.NVIM_BENCH_EXPECTED_CLIENT or ""
 local timeout_ms = tonumber(vim.env.NVIM_BENCH_TIMEOUT_MS) or 5000
 local finished = false
 
@@ -42,6 +43,7 @@ local function finish(status, message)
   local payload = {
     schema_version = 1,
     probe = probe,
+    expected_client = expected_client ~= "" and expected_client or nil,
     status = status,
     elapsed_ms = (uv.hrtime() - started_at) / 1e6,
     loaded_plugins = loaded_plugins(),
@@ -66,13 +68,17 @@ local function wait_for_lsp()
   local elapsed_ms = (uv.hrtime() - started_at) / 1e6
   local active = clients()
   for _, client in ipairs(active) do
-    if client.initialized then
+    if client.name == expected_client and client.initialized then
       finish("passed")
       return
     end
   end
   if elapsed_ms >= timeout_ms then
-    finish("failed", string.format("no initialized LSP client after %d ms", timeout_ms))
+    finish("failed", string.format(
+      "LSP client %q was not initialized after %d ms",
+      expected_client,
+      timeout_ms
+    ))
     return
   end
   vim.defer_fn(wait_for_lsp, 10)

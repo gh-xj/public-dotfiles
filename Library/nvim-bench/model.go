@@ -3,7 +3,7 @@ package main
 import "time"
 
 const (
-	manifestSchemaVersion = 1
+	manifestSchemaVersion = 2
 	resultSchemaVersion   = 1
 )
 
@@ -14,15 +14,16 @@ type Manifest struct {
 }
 
 type Scenario struct {
-	ID          string            `json:"id"`
-	Description string            `json:"description"`
-	Suites      []string          `json:"suites"`
-	Probe       string            `json:"probe"`
-	Fixture     string            `json:"fixture,omitempty"`
-	Generate    *GeneratedFixture `json:"generate,omitempty"`
-	NvimArgs    []string          `json:"nvim_args,omitempty"`
-	TimeoutMS   int               `json:"timeout_ms"`
-	BudgetMS    float64           `json:"budget_ms,omitempty"`
+	ID             string            `json:"id"`
+	Description    string            `json:"description"`
+	Suites         []string          `json:"suites"`
+	Probe          string            `json:"probe"`
+	ExpectedClient string            `json:"expected_client,omitempty"`
+	Fixture        string            `json:"fixture,omitempty"`
+	Generate       *GeneratedFixture `json:"generate,omitempty"`
+	NvimArgs       []string          `json:"nvim_args,omitempty"`
+	TimeoutMS      int               `json:"timeout_ms"`
+	BudgetMS       float64           `json:"budget_ms,omitempty"`
 }
 
 type GeneratedFixture struct {
@@ -64,33 +65,35 @@ type RunResult struct {
 }
 
 type ScenarioResult struct {
-	ID            string        `json:"id"`
-	Description   string        `json:"description"`
-	Probe         string        `json:"probe"`
-	Status        string        `json:"status"`
-	Error         string        `json:"error,omitempty"`
-	BudgetMS      float64       `json:"budget_ms,omitempty"`
-	BudgetPassed  *bool         `json:"budget_passed,omitempty"`
-	MeanMS        float64       `json:"mean_ms,omitempty"`
-	MedianMS      float64       `json:"median_ms,omitempty"`
-	P95MS         float64       `json:"p95_ms,omitempty"`
-	StddevMS      float64       `json:"stddev_ms,omitempty"`
-	MinMS         float64       `json:"min_ms,omitempty"`
-	MaxMS         float64       `json:"max_ms,omitempty"`
-	SamplesMS     []float64     `json:"samples_ms,omitempty"`
-	LoadedPlugins []string      `json:"loaded_plugins,omitempty"`
-	Clients       []ProbeClient `json:"clients,omitempty"`
-	ProbeElapsed  float64       `json:"probe_elapsed_ms,omitempty"`
+	ID             string        `json:"id"`
+	Description    string        `json:"description"`
+	Probe          string        `json:"probe"`
+	ExpectedClient string        `json:"expected_client,omitempty"`
+	Status         string        `json:"status"`
+	Error          string        `json:"error,omitempty"`
+	BudgetMS       float64       `json:"budget_ms,omitempty"`
+	BudgetPassed   *bool         `json:"budget_passed,omitempty"`
+	MeanMS         float64       `json:"mean_ms,omitempty"`
+	MedianMS       float64       `json:"median_ms,omitempty"`
+	P95MS          float64       `json:"p95_ms,omitempty"`
+	StddevMS       float64       `json:"stddev_ms,omitempty"`
+	MinMS          float64       `json:"min_ms,omitempty"`
+	MaxMS          float64       `json:"max_ms,omitempty"`
+	SamplesMS      []float64     `json:"samples_ms,omitempty"`
+	LoadedPlugins  []string      `json:"loaded_plugins,omitempty"`
+	Clients        []ProbeClient `json:"clients,omitempty"`
+	ProbeElapsed   float64       `json:"probe_elapsed_ms,omitempty"`
 }
 
 type ProbeResult struct {
-	SchemaVersion int           `json:"schema_version"`
-	Probe         string        `json:"probe"`
-	Status        string        `json:"status"`
-	Error         string        `json:"error,omitempty"`
-	ElapsedMS     float64       `json:"elapsed_ms"`
-	LoadedPlugins []string      `json:"loaded_plugins,omitempty"`
-	Clients       []ProbeClient `json:"clients,omitempty"`
+	SchemaVersion  int           `json:"schema_version"`
+	Probe          string        `json:"probe"`
+	ExpectedClient string        `json:"expected_client,omitempty"`
+	Status         string        `json:"status"`
+	Error          string        `json:"error,omitempty"`
+	ElapsedMS      float64       `json:"elapsed_ms"`
+	LoadedPlugins  []string      `json:"loaded_plugins,omitempty"`
+	Clients        []ProbeClient `json:"clients,omitempty"`
 }
 
 type ProbeClient struct {

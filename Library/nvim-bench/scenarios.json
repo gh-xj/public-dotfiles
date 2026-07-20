@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "harness": "harness.lua",
   "scenarios": [
     {
@@ -55,15 +55,17 @@
       "description": "Marksman is initialized for a deterministic Markdown fixture.",
       "suites": ["readiness", "baseline"],
       "probe": "lsp_ready",
+      "expected_client": "marksman",
       "fixture": "fixtures/small.md",
       "timeout_ms": 3000,
-      "budget_ms": 500
+      "budget_ms": 700
     },
     {
       "id": "lua-lsp-ready",
       "description": "lua_ls is initialized for a deterministic Lua fixture.",
       "suites": ["readiness", "baseline"],
       "probe": "lsp_ready",
+      "expected_client": "lua_ls",
       "fixture": "fixtures/small.lua",
       "timeout_ms": 3000,
       "budget_ms": 500

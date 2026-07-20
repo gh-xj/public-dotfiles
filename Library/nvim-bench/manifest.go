@@ -90,6 +90,12 @@ func validateManifest(manifest Manifest) error {
 		if !slices.Contains([]string{"vim_enter", "lsp_ready"}, scenario.Probe) {
 			return fmt.Errorf("scenario %q has unsupported probe %q", scenario.ID, scenario.Probe)
 		}
+		if scenario.Probe == "lsp_ready" && scenario.ExpectedClient == "" {
+			return fmt.Errorf("scenario %q needs expected_client for lsp_ready", scenario.ID)
+		}
+		if scenario.Probe != "lsp_ready" && scenario.ExpectedClient != "" {
+			return fmt.Errorf("scenario %q sets expected_client for non-LSP probe", scenario.ID)
+		}
 		if scenario.Fixture != "" && scenario.Generate != nil {
 			return fmt.Errorf("scenario %q cannot set fixture and generate", scenario.ID)
 		}
