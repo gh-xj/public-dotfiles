@@ -4,18 +4,7 @@ local function is_dark_mode()
   end
 
   local pref = vim.fn.trim(vim.fn.system("defaults read -g AppleInterfaceStyle 2>/dev/null"))
-  if vim.v.shell_error == 0 and pref == "Dark" then
-    return true
-  end
-
-  local dark = vim.fn.trim(vim.fn.system(
-    "osascript -e 'tell application \"System Events\" to tell appearance preferences to return dark mode' 2>/dev/null"
-  ))
-  if vim.v.shell_error == 0 then
-    return dark == "true"
-  end
-
-  return vim.o.background == "dark"
+  return vim.v.shell_error == 0 and pref == "Dark"
 end
 
 -- Atom One does not ship Headline1..6 / CodeBlock / Dash / Quote, but
