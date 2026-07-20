@@ -1,0 +1,94 @@
+version: "3"
+
+vars:
+  BIN: bin/nvim-bench
+
+tasks:
+  default:
+    desc: List Neovim benchmark tasks
+    cmds:
+      - task --list
+
+  deps:
+    desc: Sync nvim-bench Go dependencies
+    cmds:
+      - go mod tidy
+
+  deps:check:
+    desc: Fail when nvim-bench Go dependencies are untidy
+    cmds:
+      - go mod tidy -diff
+
+  fmt:
+    desc: Format nvim-bench Go files
+    cmds:
+      - gofmt -w *.go
+
+  fmt:check:
+    desc: Fail when nvim-bench Go files need formatting
+    cmds:
+      - test -z "$(gofmt -l *.go)"
+
+  lint:
+    desc: Run static checks for nvim-bench
+    deps: [deps:check, fmt:check]
+    cmds:
+      - go vet ./...
+
+  test:
+    desc: Run nvim-bench unit tests
+    deps: [deps:check, fmt:check]
+    cmds:
+      - go test ./...
+
+  build:
+    desc: Build the nvim-bench CLI
+    deps: [deps:check, fmt:check]
+    sources: ["**/*.go", go.mod, go.sum, scenarios.json, harness.lua]
+    generates: ["{{.BIN}}"]
+    method: checksum
+    cmds:
+      - mkdir -p bin
+      - go build -trimpath -o {{.BIN}} .
+
+  doctor:
+    desc: Check Neovim benchmark prerequisites
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} doctor {{.CLI_ARGS}}
+
+  list:
+    desc: List Neovim benchmark scenarios
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} list {{.CLI_ARGS}}
+
+  run:
+    desc: Run a Neovim benchmark suite
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} run {{.CLI_ARGS}}
+
+  compare:
+    desc: Compare two Neovim benchmark results
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} compare {{.CLI_ARGS}}
+
+  smoke:
+    desc: Run the deterministic Neovim benchmark smoke suite
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} run --suite smoke --warmup 1 --runs 3 --output /tmp/nvim-bench-smoke.json
+
+  ci:
+    desc: Verify the nvim-bench CLI and smoke suite
+    cmds:
+      - task: lint
+      - task: test
+      - task: build
+      - task: smoke
+
+  verify:
+    desc: Run the complete nvim-bench verification surface
+    deps: [ci]

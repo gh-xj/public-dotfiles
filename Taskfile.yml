@@ -6,6 +6,11 @@ vars:
 env:
   NIX_CONFIG: experimental-features = nix-command flakes
 
+includes:
+  nvim-bench:
+    taskfile: ./Library/nvim-bench/Taskfile.yml
+    dir: ./Library/nvim-bench
+
 tasks:
   install:
     desc: Apply the local public Home Manager example
@@ -53,6 +58,7 @@ tasks:
       - task: security:approved-gh-account
       - task: verify:lazygit
       - task: verify:nvim
+      - task: nvim-bench:ci
 
   verify:bootstrap-darwin:
     desc: Verify generated nix-darwin bootstrap hosts for native and Intel targets

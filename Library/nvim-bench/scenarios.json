@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "harness": "harness.lua",
+  "scenarios": [
+    {
+      "id": "core-empty",
+      "description": "Neovim core reaches VimEnter without user configuration.",
+      "suites": ["smoke", "startup", "baseline"],
+      "probe": "vim_enter",
+      "nvim_args": ["-u", "NONE"],
+      "timeout_ms": 1000,
+      "budget_ms": 25
+    },
+    {
+      "id": "config-empty",
+      "description": "Current configuration reaches VimEnter with an empty buffer.",
+      "suites": ["smoke", "startup", "baseline"],
+      "probe": "vim_enter",
+      "timeout_ms": 1000,
+      "budget_ms": 150
+    },
+    {
+      "id": "lua-open",
+      "description": "A deterministic Lua fixture reaches VimEnter.",
+      "suites": ["startup", "baseline"],
+      "probe": "vim_enter",
+      "fixture": "fixtures/small.lua",
+      "timeout_ms": 1000,
+      "budget_ms": 180
+    },
+    {
+      "id": "markdown-open",
+      "description": "A deterministic Markdown fixture reaches VimEnter.",
+      "suites": ["startup", "baseline"],
+      "probe": "vim_enter",
+      "fixture": "fixtures/small.md",
+      "timeout_ms": 1000,
+      "budget_ms": 250
+    },
+    {
+      "id": "markdown-large",
+      "description": "A generated 10,000-line Markdown file reaches VimEnter.",
+      "suites": ["scaling", "baseline"],
+      "probe": "vim_enter",
+      "generate": {
+        "extension": ".md",
+        "lines": 10000,
+        "content": "# Heading with bold text and a link https://example.com"
+      },
+      "timeout_ms": 2000,
+      "budget_ms": 450
+    },
+    {
+      "id": "markdown-lsp-ready",
+      "description": "Marksman is initialized for a deterministic Markdown fixture.",
+      "suites": ["readiness", "baseline"],
+      "probe": "lsp_ready",
+      "fixture": "fixtures/small.md",
+      "timeout_ms": 3000,
+      "budget_ms": 500
+    },
+    {
+      "id": "lua-lsp-ready",
+      "description": "lua_ls is initialized for a deterministic Lua fixture.",
+      "suites": ["readiness", "baseline"],
+      "probe": "lsp_ready",
+      "fixture": "fixtures/small.lua",
+      "timeout_ms": 3000,
+      "budget_ms": 500
+    }
+  ]
+}
