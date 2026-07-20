@@ -72,7 +72,7 @@
       "expected_client": "marksman",
       "fixture": "fixtures/small.md",
       "timeout_ms": 3000,
-      "budget_ms": 700
+      "budget_ms": 500
     },
     {
       "id": "lua-lsp-ready",

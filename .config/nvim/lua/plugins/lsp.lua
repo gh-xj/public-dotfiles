@@ -3,6 +3,11 @@ local server_list = {
   "jsonls", "yamlls", "marksman", "bashls",
 }
 
+-- Marksman is package-ledger-owned by Nix; Mason owns the remaining servers.
+local mason_server_list = vim.tbl_filter(function(name)
+  return name ~= "marksman"
+end, server_list)
+
 local lsp_filetypes = {
   "lua",
   "javascript", "javascriptreact",
@@ -14,24 +19,43 @@ local lsp_filetypes = {
   "sh", "bash", "zsh",
 }
 
-local function prepend_mason_bin()
-  local mason_bin = vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "bin")
-  if vim.fn.isdirectory(mason_bin) == 0 then
-    return
+-- Pin system tools before Mason can prepend its bin directory at VeryLazy.
+local function resolve_server_cmd(name)
+  local cmd = vim.deepcopy(vim.lsp.config[name].cmd)
+  if type(cmd) ~= "table" or type(cmd[1]) ~= "string" then
+    return nil
   end
 
+  local mason_bin = vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "bin")
   local separator = vim.fn.has("win32") == 1 and ";" or ":"
-  local path = vim.env.PATH or ""
-  if not vim.list_contains(vim.split(path, separator, { plain = true }), mason_bin) then
-    vim.env.PATH = mason_bin .. separator .. path
+  local executable = ""
+  for _, dir in ipairs(vim.split(vim.env.PATH or "", separator, { plain = true })) do
+    if vim.fs.normalize(dir) ~= vim.fs.normalize(mason_bin) then
+      local candidate = vim.fs.joinpath(dir, cmd[1])
+      if vim.fn.executable(candidate) == 1 then
+        executable = candidate
+        break
+      end
+    end
   end
+  if executable == "" then
+    local candidate = vim.fs.joinpath(mason_bin, cmd[1])
+    if vim.fn.executable(candidate) == 1 then
+      executable = candidate
+    end
+  end
+  if executable == "" then
+    return nil
+  end
+
+  cmd[1] = executable
+  return cmd
 end
 
 return {
   {
     "williamboman/mason.nvim",
     cmd = { "Mason", "MasonInstall", "MasonUpdate" },
-    init = prepend_mason_bin,
     config = true,
   },
 
@@ -41,7 +65,7 @@ return {
     event = "VeryLazy",
     config = function()
       require("mason-lspconfig").setup({
-        ensure_installed = server_list,
+        ensure_installed = mason_server_list,
       })
     end,
   },
@@ -55,7 +79,10 @@ return {
       local capabilities = ok and blink.get_lsp_capabilities() or {}
 
       for _, name in ipairs(server_list) do
-        local config = { capabilities = capabilities }
+        local config = {
+          capabilities = capabilities,
+          cmd = resolve_server_cmd(name),
+        }
         if name == "marksman" then
           config.root_dir = function(buf, on_dir)
             if require("config.large_file").is_large_markdown(buf) then
