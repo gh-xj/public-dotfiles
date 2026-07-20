@@ -47,7 +47,7 @@ harness correctness without turning ambient machine noise into config failure.
 | `smoke` | Cheap harness verification used by repository checks |
 | `startup` | Core, empty config, and representative file-open readiness |
 | `readiness` | Language-server correctness and activation latency |
-| `scaling` | Deterministic large-file behavior |
+| `scaling` | Deterministic large-file behavior with a `-u NONE` core control |
 | `baseline` | All current scenarios |
 
 Add a scenario only when it represents a user workflow or a known risk. Do not

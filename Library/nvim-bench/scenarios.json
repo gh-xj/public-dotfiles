@@ -38,6 +38,20 @@
       "budget_ms": 250
     },
     {
+      "id": "core-markdown-large",
+      "description": "Neovim core reaches VimEnter for a generated 10,000-line Markdown file without user configuration.",
+      "suites": ["scaling", "baseline"],
+      "probe": "vim_enter",
+      "generate": {
+        "extension": ".md",
+        "lines": 10000,
+        "content": "# Heading with bold text and a link https://example.com"
+      },
+      "nvim_args": ["-u", "NONE"],
+      "timeout_ms": 2000,
+      "budget_ms": 5
+    },
+    {
       "id": "markdown-large",
       "description": "A generated 10,000-line Markdown file reaches VimEnter.",
       "suites": ["scaling", "baseline"],
