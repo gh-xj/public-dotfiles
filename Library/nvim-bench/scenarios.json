@@ -9,7 +9,7 @@
       "probe": "vim_enter",
       "nvim_args": ["-u", "NONE"],
       "timeout_ms": 1000,
-      "budget_ms": 25
+      "budget_ms": 2
     },
     {
       "id": "config-empty",
@@ -17,7 +17,7 @@
       "suites": ["smoke", "startup", "baseline"],
       "probe": "vim_enter",
       "timeout_ms": 1000,
-      "budget_ms": 150
+      "budget_ms": 30
     },
     {
       "id": "lua-open",
@@ -26,7 +26,7 @@
       "probe": "vim_enter",
       "fixture": "fixtures/small.lua",
       "timeout_ms": 1000,
-      "budget_ms": 180
+      "budget_ms": 60
     },
     {
       "id": "markdown-open",
@@ -35,7 +35,7 @@
       "probe": "vim_enter",
       "fixture": "fixtures/small.md",
       "timeout_ms": 1000,
-      "budget_ms": 250
+      "budget_ms": 120
     },
     {
       "id": "core-markdown-large",
@@ -62,7 +62,7 @@
         "content": "# Heading with bold text and a link https://example.com"
       },
       "timeout_ms": 2000,
-      "budget_ms": 450
+      "budget_ms": 75
     },
     {
       "id": "markdown-lsp-ready",
@@ -82,7 +82,7 @@
       "expected_client": "lua_ls",
       "fixture": "fixtures/small.lua",
       "timeout_ms": 3000,
-      "budget_ms": 500
+      "budget_ms": 80
     }
   ]
 }

@@ -39,6 +39,9 @@ are exceeded. Defaults are 10 percent and 5 milliseconds.
 Scenario budgets are always recorded. They become an exit-code gate only when
 `run --enforce-budgets` is passed; repository smoke checks intentionally test
 harness correctness without turning ambient machine noise into config failure.
+Budgets are rounded p95 ceilings derived from a 10-run canonical baseline with
+at least 25 percent headroom. Recalibrate them only from a full baseline run,
+not from a single fast sample.
 
 ## Suites
 
