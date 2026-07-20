@@ -57,6 +57,13 @@ autocmd("FileType", {
     vim.opt_local.conceallevel = 2
     vim.opt_local.concealcursor = "nc"
     vim.opt_local.spell = false
+
+    -- Load prose services only after the large-file policy is known.
+    vim.api.nvim_exec_autocmds("User", {
+      pattern = "XjSmallMarkdown",
+      modeline = false,
+      data = { buf = ev.buf },
+    })
   end,
 })
 

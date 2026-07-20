@@ -1,7 +1,7 @@
 return {
   {
     "mfussenegger/nvim-lint",
-    ft = { "markdown" },
+    event = "User XjSmallMarkdown",
     config = function()
       local lint = require("lint")
       lint.linters_by_ft = { markdown = { "markdownlint-cli2" } }

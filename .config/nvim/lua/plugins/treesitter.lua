@@ -7,7 +7,6 @@ local ts_filetypes = {
   "python",
   "html",
   "css",
-  "markdown",
 }
 
 return {
@@ -15,6 +14,7 @@ return {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
     ft = ts_filetypes,
+    event = "User XjSmallMarkdown",
     dependencies = {
       "nvim-treesitter/nvim-treesitter-textobjects",
     },

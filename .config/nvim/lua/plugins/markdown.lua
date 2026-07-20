@@ -43,7 +43,7 @@ return {
   -- not shadow LSP hover (markdown LSP attaches via marksman).
   {
     "tadmccorkle/markdown.nvim",
-    ft = { "markdown" },
+    event = "User XjSmallMarkdown",
     opts = {
       mappings = {
         go_curr_heading = false,
@@ -54,11 +54,11 @@ return {
   -- LSP / completion / diagnostics inside fenced code blocks. otter parses
   -- the markdown buffer with treesitter and attaches the matching language
   -- server to each ```lang block (lua_ls in ```lua, pyright in ```python,
-  -- etc.). Lazy on markdown FileType and skipped for large markdown buffers
-  -- to keep open-time cheap.
+  -- etc.). The XjSmallMarkdown event skips this stack for large buffers to
+  -- keep open-time cheap.
   {
     "jmbuhr/otter.nvim",
-    ft = { "markdown" },
+    event = "User XjSmallMarkdown",
     dependencies = { "nvim-treesitter/nvim-treesitter" },
     opts = {},
     config = function(_, opts)
@@ -92,7 +92,7 @@ return {
   -- the language icon for fenced code blocks.
   {
     "MeanderingProgrammer/render-markdown.nvim",
-    ft = { "markdown" },
+    event = "User XjSmallMarkdown",
     dependencies = {
       "nvim-treesitter/nvim-treesitter",
       "nvim-tree/nvim-web-devicons",

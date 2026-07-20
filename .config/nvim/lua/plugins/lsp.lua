@@ -49,41 +49,24 @@ return {
   {
     "neovim/nvim-lspconfig",
     ft = lsp_filetypes,
-    init = function()
-      local group = vim.api.nvim_create_augroup("xj_lsp_markdown_lazy", { clear = true })
-      vim.api.nvim_create_autocmd("FileType", {
-        group = group,
-        pattern = "markdown",
-        callback = function(ev)
-          if require("config.large_file").is_large_markdown(ev.buf) then
-            return
-          end
-
-          require("lazy").load({ plugins = { "nvim-lspconfig" } })
-        end,
-      })
-    end,
+    event = "User XjSmallMarkdown",
     config = function()
-      local capabilities = {}
-      local current_buf = vim.api.nvim_get_current_buf()
-      local is_large_markdown = vim.bo[current_buf].filetype == "markdown"
-        and require("config.large_file").is_large_markdown(current_buf)
-      if not is_large_markdown then
-        local ok, blink = pcall(require, "blink.cmp")
-        capabilities = ok and blink.get_lsp_capabilities() or {}
-      end
-
-      local enabled_servers = vim.deepcopy(server_list)
-      if is_large_markdown then
-        enabled_servers = vim.tbl_filter(function(name)
-          return name ~= "marksman"
-        end, enabled_servers)
-      end
+      local ok, blink = pcall(require, "blink.cmp")
+      local capabilities = ok and blink.get_lsp_capabilities() or {}
 
       for _, name in ipairs(server_list) do
-        vim.lsp.config(name, { capabilities = capabilities })
+        local config = { capabilities = capabilities }
+        if name == "marksman" then
+          config.root_dir = function(buf, on_dir)
+            if require("config.large_file").is_large_markdown(buf) then
+              return
+            end
+            on_dir(vim.fs.root(buf, { ".marksman.toml", ".git" }))
+          end
+        end
+        vim.lsp.config(name, config)
       end
-      vim.lsp.enable(enabled_servers)
+      vim.lsp.enable(server_list)
 
       -- Zed-aligned LSP keymaps, set on attach so they only exist where a
       -- server is actually answering.
