@@ -14,10 +14,24 @@ local lsp_filetypes = {
   "sh", "bash", "zsh",
 }
 
+local function prepend_mason_bin()
+  local mason_bin = vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "bin")
+  if vim.fn.isdirectory(mason_bin) == 0 then
+    return
+  end
+
+  local separator = vim.fn.has("win32") == 1 and ";" or ":"
+  local path = vim.env.PATH or ""
+  if not vim.list_contains(vim.split(path, separator, { plain = true }), mason_bin) then
+    vim.env.PATH = mason_bin .. separator .. path
+  end
+end
+
 return {
   {
     "williamboman/mason.nvim",
     cmd = { "Mason", "MasonInstall", "MasonUpdate" },
+    init = prepend_mason_bin,
     config = true,
   },
 
