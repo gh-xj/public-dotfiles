@@ -31,7 +31,7 @@ Legacy exception:
 
 - Some pane/window selectors still use tmux root `M-*` bindings and Ghostty `\x1b...` mappings. Treat those as migration debt, not as the preferred pattern for new shortcuts.
 - Current pane selectors are `Ctrl+1..9 -> M-a/M-s/M-c/M-e/M-g/M-i/M-o/M-p/M-u`.
-- Current window selectors are `Cmd+1..9 -> M-1..M-9`, and `Cmd+0 -> M-0` for the last tmux window.
+- Current window selectors are `Cmd+1..8 -> M-1..M-8`; `Cmd+9 -> M-9` returns to the last focused tmux window; and `Cmd+0 -> M-0` selects the highest-numbered window.
 
 Current tmux prefix:
 
