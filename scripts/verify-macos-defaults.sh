@@ -95,6 +95,8 @@ assert_default com.apple.finder AppleShowAllExtensions 1
 assert_default com.apple.finder FXPreferredViewStyle clmv
 assert_default com.apple.finder ShowPathbar 1
 
+assert_default com.paulsolt.SuperEasyTimerMac keepTimerOnTop 1
+
 assert_default com.apple.AppleMultitouchMouse MouseButtonMode TwoButton
 assert_default com.apple.driver.AppleBluetoothMultitouch.mouse MouseButtonMode TwoButton
 

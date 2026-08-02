@@ -142,6 +142,10 @@ in
           useHyperKeyIcon = true;
         };
 
+        "com.paulsolt.SuperEasyTimerMac" = {
+          keepTimerOnTop = true;
+        };
+
         "com.apple.symbolichotkeys" = {
           AppleSymbolicHotKeys = {
             "15".enabled = false;
