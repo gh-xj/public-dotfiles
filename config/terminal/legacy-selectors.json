@@ -108,9 +108,9 @@
     "ghosttyKeybinds": ["super+digit_8", "super+8"]
   },
   {
-    "id": "window-last-focused",
+    "id": "window-highest-cmd9",
     "tmuxKey": "9",
-    "tmuxCommand": "last-window",
+    "tmuxCommand": "select-window -t \"{end}\"",
     "ghosttyKeybinds": ["super+digit_9", "super+9"]
   },
   {
