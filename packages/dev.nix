@@ -13,4 +13,5 @@ pkgs: [
   pkgs.shfmt
   pkgs.tmux
   pkgs.uv
+  (pkgs.callPackage ./workmux.nix { })
 ]

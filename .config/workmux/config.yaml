@@ -1,0 +1,10 @@
+# Global defaults for workmux-managed git worktrees and tmux windows.
+# Project-specific pane layouts and setup hooks belong in .workmux.yaml.
+nerdfont: true
+agent: codex
+window_prefix: "wm-"
+window_placement: rightmost
+
+# The shared tmux config renders @workmux_status without letting workmux
+# rewrite the theme-specific window formats at runtime.
+status_format: false
