@@ -59,6 +59,14 @@ assert_line() {
   fi
 }
 
+tmux_key_binding() {
+  local socket="$1"
+  local table="$2"
+  local key="$3"
+
+  tmux -L "$socket" list-keys -T "$table" 2>/dev/null | awk -v key="$key" '$4 == key'
+}
+
 verify_ghostty() {
   run_first_available \
     ghostty \
@@ -142,7 +150,7 @@ RUBY
 verify_tmux() {
   local socket="public-dotfiles-verify-terminal-$$"
   local generation home_files tmux_config ghostty_config
-  local selector_key selector_command selector_shortcuts selector_shortcut
+  local binding selector_key selector_command selector_shortcuts selector_shortcut
 
   cleanup() {
     tmux -L "public-dotfiles-verify-terminal-$$" kill-server >/dev/null 2>&1 || true
@@ -160,15 +168,16 @@ verify_tmux() {
 
   local key
   for key in M-b M-d M-D M-f M-w M-z; do
-    if tmux -L "$socket" list-keys -T root "$key" >/dev/null 2>&1; then
+    binding="$(tmux_key_binding "$socket" root "$key")"
+    if [ -n "$binding" ]; then
       printf 'unexpected root tmux binding claims %s\n' "$key" >&2
-      tmux -L "$socket" list-keys -T root "$key" >&2
+      printf '%s\n' "$binding" >&2
       exit 1
     fi
   done
 
   while IFS=$'\t' read -r selector_key selector_command selector_shortcuts; do
-    tmux -L "$socket" list-keys -T root "M-$selector_key" | grep -Fq -- "$selector_command"
+    tmux_key_binding "$socket" root "M-$selector_key" | grep -Fq -- "$selector_command"
 
     [ -n "$selector_shortcuts" ] || continue
     IFS=',' read -r -a shortcut_array <<< "$selector_shortcuts"
@@ -177,21 +186,22 @@ verify_tmux() {
     done
   done < <(each_legacy_selector)
 
-  tmux -L "$socket" list-keys -T prefix '|' >/dev/null
-  tmux -L "$socket" list-keys -T prefix '_' >/dev/null
-  tmux -L "$socket" list-keys -T prefix X >/dev/null
-  tmux -L "$socket" list-keys -T prefix z >/dev/null
-  tmux -L "$socket" list-keys -T prefix E >/dev/null
-  tmux -L "$socket" list-keys -T prefix J | grep -q 'easyjump.tmux/easyjump.py'
+  test -n "$(tmux_key_binding "$socket" prefix '|')"
+  test -n "$(tmux_key_binding "$socket" prefix '_')"
+  test -n "$(tmux_key_binding "$socket" prefix X)"
+  test -n "$(tmux_key_binding "$socket" prefix z)"
+  test -n "$(tmux_key_binding "$socket" prefix E)"
+  tmux_key_binding "$socket" prefix J | grep -q 'easyjump.tmux/easyjump.py'
 
   local table
   for table in copy-mode copy-mode-vi; do
-    if tmux -L "$socket" list-keys -T "$table" C-J >/dev/null 2>&1; then
+    binding="$(tmux_key_binding "$socket" "$table" C-J)"
+    if [ -n "$binding" ]; then
       printf 'unexpected EasyJump copy-mode binding in %s C-J\n' "$table" >&2
-      tmux -L "$socket" list-keys -T "$table" C-J >&2
+      printf '%s\n' "$binding" >&2
       exit 1
     fi
-    tmux -L "$socket" list-keys -T "$table" C-j | grep -q 'select-pane -D'
+    tmux_key_binding "$socket" "$table" C-j | grep -q 'select-pane -D'
   done
 }
 
