@@ -21,6 +21,13 @@ in
       '';
       ".local/bin/apply_patch" = mkRepoFile "scripts/patchkit" // { force = true; };
       ".local/bin/patchkit" = mkRepoFile "scripts/patchkit" // { force = true; };
+      ".local/bin/workmux" = mkGeneratedText ''
+        #!/bin/sh
+        exec "$HOME/.local/state/nix/profiles/home-manager/home-path/bin/workmux" "$@"
+      '' // {
+        executable = true;
+        force = true;
+      };
       ".zshenv" = mkGeneratedText (
         builtins.readFile ../../.zshenv
         + lib.optionalString (cfg.zshEnvExtra != "") ("\n" + cfg.zshEnvExtra)

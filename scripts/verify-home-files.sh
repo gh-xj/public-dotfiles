@@ -75,6 +75,7 @@ assert_file ".config/xj_public_raycast_scripts"
 assert_file ".config/yazi/yazi.toml"
 assert_file ".local/bin/apply_patch"
 assert_file ".local/bin/patchkit"
+assert_file ".local/bin/workmux"
 assert_file ".tmux.conf"
 assert_file "Taskfile.yml"
 assert_file ".zshenv"
@@ -99,6 +100,7 @@ assert_target_prefix ".config/bat/config" "/nix/store/"
 assert_target_prefix ".config/lazygit/config.yml" "/nix/store/"
 assert_target_prefix ".config/starship.toml" "/nix/store/"
 assert_target_prefix ".config/yazi/yazi.toml" "/nix/store/"
+assert_target_prefix ".local/bin/workmux" "/nix/store/"
 assert_target_prefix ".claude/CLAUDE.md" "/nix/store/"
 assert_target_prefix ".claude/settings.json" "/nix/store/"
 assert_target_prefix ".claude/statusline-command.sh" "/nix/store/"
@@ -107,6 +109,7 @@ assert_target_prefix ".codex/rules" "/nix/store/"
 
 assert_line ".config/ghostty/config" "font-family = RecMonoDuotone Nerd Font"
 assert_line ".config/ghostty/config" "theme = light:Atom One Light,dark:One Dark Two"
+assert_line ".local/bin/workmux" 'exec "$HOME/.local/state/nix/profiles/home-manager/home-path/bin/workmux" "$@"'
 assert_line ".zshenv" 'export PATH="$HOME/.local/bin:$PATH"'
 
 echo "home file baseline verified"
