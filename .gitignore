@@ -23,3 +23,14 @@
 
 # karabiner writes a dated backup on every config change — too noisy to track
 /.config/karabiner/automatic_backups/
+
+# Recreated by `workmux setup`; the workmux executable is pinned by Nix.
+/.config/opencode/package.json
+/.config/opencode/plugins/workmux-status.ts
+/.config/opencode/skills/coordinator/
+/.config/opencode/skills/merge/
+/.config/opencode/skills/open-pr/
+/.config/opencode/skills/rebase/
+/.config/opencode/skills/workmux/
+/.config/opencode/skills/worktree/
+/.github/hooks/workmux-status/
