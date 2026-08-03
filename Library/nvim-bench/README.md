@@ -6,11 +6,13 @@ as a proxy for every interaction.
 
 ## Contract
 
-- `scenarios.json` owns scenario definitions, fixtures, probes, expected LSP
-  clients, and budgets.
-- `harness.lua` runs before the user config and records `VimEnter` or LSP-ready
-  state, including loaded plugins and attached clients. An `lsp_ready` probe
-  succeeds only when its declared `expected_client` is initialized.
+- `scenarios.json` owns scenario definitions, fixtures, probes, expected
+  clients or render namespaces, and budgets.
+- `harness.lua` runs before the user config and records event readiness,
+  including loaded plugins and attached clients. Supported probes cover
+  `VimEnter`, initialized LSP clients, rendered extmarks, and a returned buffer
+  completion menu. An `lsp_ready` probe can use `client_scope: all` for a
+  server attached to an embedded-language virtual buffer.
 - The Go CLI owns environment fingerprinting, repeated measurement through
   `hyperfine`, result persistence, and comparisons.
 - Scenario median/p95 values come from harness event timestamps. Hyperfine
@@ -49,7 +51,7 @@ not from a single fast sample.
 | --- | --- |
 | `smoke` | Cheap harness verification used by repository checks |
 | `startup` | Core, empty config, and representative file-open readiness |
-| `readiness` | Language-server correctness and activation latency |
+| `readiness` | Interactive service correctness and activation latency |
 | `scaling` | Deterministic large-file behavior with a `-u NONE` core control |
 | `baseline` | All current scenarios |
 

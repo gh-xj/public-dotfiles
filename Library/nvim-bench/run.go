@@ -83,12 +83,14 @@ func (cmd RunCmd) Run(cli *CLI) error {
 
 func runScenario(cmd RunCmd, manifest loadedManifest, scenario Scenario, nvimPath, configHome string, verbose bool) ScenarioResult {
 	result := ScenarioResult{
-		ID:             scenario.ID,
-		Description:    scenario.Description,
-		Probe:          scenario.Probe,
-		ExpectedClient: scenario.ExpectedClient,
-		Status:         "failed",
-		BudgetMS:       scenario.BudgetMS,
+		ID:                scenario.ID,
+		Description:       scenario.Description,
+		Probe:             scenario.Probe,
+		ExpectedClient:    scenario.ExpectedClient,
+		ClientScope:       scenario.ClientScope,
+		ExpectedNamespace: scenario.ExpectedNamespace,
+		Status:            "failed",
+		BudgetMS:          scenario.BudgetMS,
 	}
 
 	tempDir, err := os.MkdirTemp("", "nvim-bench-")
@@ -119,6 +121,8 @@ func runScenario(cmd RunCmd, manifest loadedManifest, scenario Scenario, nvimPat
 		"NVIM_BENCH_HARNESS=" + harnessPath,
 		"NVIM_BENCH_PROBE=" + scenario.Probe,
 		"NVIM_BENCH_EXPECTED_CLIENT=" + scenario.ExpectedClient,
+		"NVIM_BENCH_CLIENT_SCOPE=" + scenario.ClientScope,
+		"NVIM_BENCH_EXPECTED_NAMESPACE=" + scenario.ExpectedNamespace,
 		"NVIM_BENCH_OUTPUT=" + probePath,
 		"NVIM_BENCH_TIMEOUT_MS=" + strconv.Itoa(scenario.TimeoutMS),
 	}

@@ -8,8 +8,8 @@ import (
 
 func TestReadProbeResultsReadsJSONLines(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "probes.jsonl")
-	data := "{\"schema_version\":1,\"probe\":\"vim_enter\",\"status\":\"passed\",\"elapsed_ms\":1.5}\n" +
-		"{\"schema_version\":1,\"probe\":\"vim_enter\",\"status\":\"passed\",\"elapsed_ms\":2.5}\n"
+	data := "{\"schema_version\":2,\"probe\":\"vim_enter\",\"status\":\"passed\",\"elapsed_ms\":1.5}\n" +
+		"{\"schema_version\":2,\"probe\":\"vim_enter\",\"status\":\"passed\",\"elapsed_ms\":2.5}\n"
 	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
 		t.Fatal(err)
 	}

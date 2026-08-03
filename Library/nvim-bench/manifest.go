@@ -87,7 +87,7 @@ func validateManifest(manifest Manifest) error {
 			return fmt.Errorf("duplicate scenario id %q", scenario.ID)
 		}
 		seen[scenario.ID] = true
-		if !slices.Contains([]string{"vim_enter", "lsp_ready"}, scenario.Probe) {
+		if !slices.Contains([]string{"vim_enter", "lsp_ready", "render_ready", "completion_ready"}, scenario.Probe) {
 			return fmt.Errorf("scenario %q has unsupported probe %q", scenario.ID, scenario.Probe)
 		}
 		if scenario.Probe == "lsp_ready" && scenario.ExpectedClient == "" {
@@ -95,6 +95,20 @@ func validateManifest(manifest Manifest) error {
 		}
 		if scenario.Probe != "lsp_ready" && scenario.ExpectedClient != "" {
 			return fmt.Errorf("scenario %q sets expected_client for non-LSP probe", scenario.ID)
+		}
+		if scenario.ClientScope != "" {
+			if scenario.Probe != "lsp_ready" {
+				return fmt.Errorf("scenario %q sets client_scope for non-LSP probe", scenario.ID)
+			}
+			if !slices.Contains([]string{"buffer", "all"}, scenario.ClientScope) {
+				return fmt.Errorf("scenario %q has unsupported client_scope %q", scenario.ID, scenario.ClientScope)
+			}
+		}
+		if scenario.Probe == "render_ready" && scenario.ExpectedNamespace == "" {
+			return fmt.Errorf("scenario %q needs expected_namespace for render_ready", scenario.ID)
+		}
+		if scenario.Probe != "render_ready" && scenario.ExpectedNamespace != "" {
+			return fmt.Errorf("scenario %q sets expected_namespace for non-render probe", scenario.ID)
 		}
 		if scenario.Fixture != "" && scenario.Generate != nil {
 			return fmt.Errorf("scenario %q cannot set fixture and generate", scenario.ID)

@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "harness": "harness.lua",
   "scenarios": [
     {
@@ -75,6 +75,27 @@
       "budget_ms": 500
     },
     {
+      "id": "markdown-render-ready",
+      "description": "The deterministic Markdown fixture has rendered extmarks.",
+      "suites": ["readiness", "baseline"],
+      "probe": "render_ready",
+      "expected_namespace": "render-markdown.nvim",
+      "fixture": "fixtures/small.md",
+      "timeout_ms": 1500,
+      "budget_ms": 150
+    },
+    {
+      "id": "markdown-code-lsp-ready",
+      "description": "Lua LS is initialized for the fenced Lua block in a deterministic Markdown fixture.",
+      "suites": ["readiness", "baseline"],
+      "probe": "lsp_ready",
+      "expected_client": "lua_ls",
+      "client_scope": "all",
+      "fixture": "fixtures/small.md",
+      "timeout_ms": 3000,
+      "budget_ms": 250
+    },
+    {
       "id": "lua-lsp-ready",
       "description": "lua_ls is initialized for a deterministic Lua fixture.",
       "suites": ["readiness", "baseline"],
@@ -83,6 +104,15 @@
       "fixture": "fixtures/small.lua",
       "timeout_ms": 3000,
       "budget_ms": 80
+    },
+    {
+      "id": "lua-completion-ready",
+      "description": "Blink returns a buffer completion menu for a deterministic Lua prefix.",
+      "suites": ["readiness", "baseline"],
+      "probe": "completion_ready",
+      "fixture": "fixtures/completion.lua",
+      "timeout_ms": 1000,
+      "budget_ms": 110
     }
   ]
 }
