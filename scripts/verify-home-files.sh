@@ -91,10 +91,10 @@ assert_symlink_target ".amethyst.yml" "/Users/example/public-dotfiles/.config/am
 assert_symlink_target "Taskfile.yml" "/Users/example/public-dotfiles/global/Taskfile.yml"
 assert_symlink_target ".local/bin/apply_patch" "/Users/example/public-dotfiles/scripts/patchkit"
 assert_symlink_target ".local/bin/patchkit" "/Users/example/public-dotfiles/scripts/patchkit"
-assert_symlink_target ".zshenv" "/Users/example/public-dotfiles/.zshenv"
 assert_symlink_target ".zprofile" "/Users/example/public-dotfiles/.zprofile"
 assert_symlink_target ".zshrc" "/Users/example/public-dotfiles/.zshrc"
 
+assert_target_prefix ".zshenv" "/nix/store/"
 assert_target_prefix ".config/bat/config" "/nix/store/"
 assert_target_prefix ".config/lazygit/config.yml" "/nix/store/"
 assert_target_prefix ".config/starship.toml" "/nix/store/"
@@ -107,5 +107,6 @@ assert_target_prefix ".codex/rules" "/nix/store/"
 
 assert_line ".config/ghostty/config" "font-family = RecMonoDuotone Nerd Font"
 assert_line ".config/ghostty/config" "theme = light:Atom One Light,dark:One Dark Two"
+assert_line ".zshenv" 'export PATH="$HOME/.local/bin:$PATH"'
 
 echo "home file baseline verified"

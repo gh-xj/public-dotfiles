@@ -20,6 +20,11 @@ in
       default = "${config.home.homeDirectory}/public-dotfiles";
       description = "Absolute path to the checked-out public-dotfiles repository for direct live config symlinks.";
     };
+    zshEnvExtra = lib.mkOption {
+      type = lib.types.lines;
+      default = "";
+      description = "Optional downstream Home Manager overlay appended to the generated .zshenv.";
+    };
   };
 
   config = lib.mkIf cfg.enable {

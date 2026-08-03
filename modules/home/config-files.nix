@@ -21,7 +21,10 @@ in
       '';
       ".local/bin/apply_patch" = mkRepoFile "scripts/patchkit" // { force = true; };
       ".local/bin/patchkit" = mkRepoFile "scripts/patchkit" // { force = true; };
-      ".zshenv" = mkRepoFile ".zshenv" // { force = true; };
+      ".zshenv" = mkGeneratedText (
+        builtins.readFile ../../.zshenv
+        + lib.optionalString (cfg.zshEnvExtra != "") ("\n" + cfg.zshEnvExtra)
+      ) // { force = true; };
       ".zprofile" = mkRepoFile ".zprofile";
       ".zshrc" = mkRepoFile ".zshrc";
     };
