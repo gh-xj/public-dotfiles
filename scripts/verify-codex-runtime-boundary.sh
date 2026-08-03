@@ -52,6 +52,13 @@ nix_cmd() {
 
 template="config/codex/config.toml"
 [ -f "$template" ] || fail "missing public Codex template: $template"
+hooks="config/codex/hooks.json"
+[ -f "$hooks" ] || fail "missing public Codex hooks: $hooks"
+jq empty "$hooks" || fail "$hooks is not valid JSON"
+
+if grep -En '(/Users/xj/|/Volumes/|private-config|xj-private-brain)' "$hooks" >&2; then
+  fail "$hooks contains machine-local or private path state"
+fi
 
 if [ -e ".codex/config.toml" ] || [ -L ".codex/config.toml" ]; then
   fail ".codex/config.toml is a reserved project-local Codex path; keep the public seed template at $template"
@@ -69,7 +76,7 @@ activation_attr="$("$repo_root/scripts/home-config-attr.sh" activation-package)"
 generation="$(nix_cmd build --no-link --print-out-paths "$activation_attr")"
 home_files="$(readlink "$generation/home-files")"
 
-for path in ".codex/AGENTS.md" ".codex/rules/default.rules"; do
+for path in ".codex/AGENTS.md" ".codex/hooks.json" ".codex/rules/default.rules"; do
   if [ ! -e "$home_files/$path" ] && [ ! -L "$home_files/$path" ]; then
     fail "missing generated public Codex policy file: $path"
   fi

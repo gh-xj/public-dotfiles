@@ -1,0 +1,11 @@
+# Generated with `workmux init`, then reduced to public-dotfiles policy.
+main_branch: main
+base_branch: auto
+
+panes:
+  - command: "<agent>"
+    focus: true
+  - split: horizontal
+
+pre_merge:
+  - task dotfiles:verify
