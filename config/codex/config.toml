@@ -21,6 +21,7 @@ theme = "catppuccin-latte"
 status_line = ["model-with-reasoning", "context-remaining", "current-dir", "fast-mode"]
 
 [features]
+hooks = true
 multi_agent = true
 child_agents_md = false
 

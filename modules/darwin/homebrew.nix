@@ -16,6 +16,7 @@ in
 
       brews = [
         "displayplacer"
+        "herdr"
         "mole"
         "pngpaste"
       ];

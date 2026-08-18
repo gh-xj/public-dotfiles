@@ -82,6 +82,7 @@ assert_default NSGlobalDomain com.apple.keyboard.fnState 1
 assert_default NSGlobalDomain com.apple.trackpad.forceClick 1
 assert_default NSGlobalDomain com.apple.trackpad.scaling 3
 assert_default .GlobalPreferences com.apple.mouse.scaling 3
+assert_default /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates 0
 
 assert_default com.apple.dock autohide 1
 assert_default com.apple.dock autohide-delay 0

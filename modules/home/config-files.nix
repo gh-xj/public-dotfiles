@@ -40,6 +40,7 @@ in
     xdg.configFile = {
       "bat" = mkImmutableTree ".config/bat";
       "amethyst" = mkRepoTree ".config/amethyst";
+      "herdr/config.toml" = mkRepoFile ".config/herdr/config.toml";
       "karabiner" = mkRepoTree ".config/karabiner";
       "lazygit" = mkImmutableTree ".config/lazygit";
       "nvim" = mkRepoTree ".config/nvim";

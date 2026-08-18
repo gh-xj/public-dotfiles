@@ -10,6 +10,9 @@ in
       ".claude/hooks" = mkImmutableTree ".claude/hooks";
       ".claude/settings.json" = mkImmutableFile ".claude/settings.json";
       ".claude/statusline-command.sh" = mkImmutableFile ".claude/statusline-command.sh";
+      ".codex/herdr-agent-state.sh" = mkImmutableFile "config/codex/herdr-agent-state.sh" // {
+        executable = true;
+      };
     };
   };
 }

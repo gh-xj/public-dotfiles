@@ -23,6 +23,8 @@ in
     system.defaults = {
       ".GlobalPreferences"."com.apple.mouse.scaling" = 3.0;
 
+      SoftwareUpdate.AutomaticallyInstallMacOSUpdates = false;
+
       NSGlobalDomain = {
         AppleInterfaceStyleSwitchesAutomatically = true;
         ApplePressAndHoldEnabled = false;
