@@ -20,7 +20,11 @@
 #
 #   _xj_cache_tool_init <name> [extra-dep-path...] -- <command...>
 _xj_cache_tool_init() {
-    emulate -L zsh
+    # Deliberately no `emulate -L zsh` here. The -L flag implies LOCAL_OPTIONS,
+    # which reverts every `setopt` the sourced init performs as soon as this
+    # function returns -- silently killing starship's `setopt promptsubst` (the
+    # prompt then renders its own $(...) literally) and atuin's
+    # `setopt interactive_comments`. Do not add it back.
 
     local name="$1"; shift
     local -a deps=()
