@@ -49,9 +49,8 @@ tasks:
       - task: raycast:apply-preferences
       - task: check:full
 
+  # User-level public dotfile verification steps for check:full
   check:user:
-    internal: true
-    desc: User-level public dotfile verification steps for check:full
     cmds:
       - task: nix:build
       - task: verify:home-files
@@ -66,40 +65,34 @@ tasks:
       - task: verify:nvim
       - task: nvim-bench:ci
 
+  # Verify generated nix-darwin bootstrap hosts for native and Intel targets
   verify:bootstrap-darwin:
-    internal: true
-    desc: Verify generated nix-darwin bootstrap hosts for native and Intel targets
     cmds:
       - ./scripts/bootstrap-macos.sh --darwin --dry-run --user example --home /Users/example
       - ./scripts/verify-darwin-homebrew-version-gates.sh
 
+  # Verify Home Manager owns the expected public config files
   verify:home-files:
-    internal: true
-    desc: Verify Home Manager owns the expected public config files
     cmds:
       - ./scripts/verify-home-files.sh
 
+  # Verify patchkit/apply_patch helper behavior
   verify:patchkit:
-    internal: true
-    desc: Verify patchkit/apply_patch helper behavior
     cmds:
       - ./scripts/verify-patchkit.sh
 
+  # Reject tracked repo noise that should stay ignored
   verify:repo-hygiene:
-    internal: true
-    desc: Reject tracked repo noise that should stay ignored
     cmds:
       - ./scripts/verify-repo-hygiene.sh
 
+  # Verify public global go-task Taskfile
   verify:global-taskfile:
-    internal: true
-    desc: Verify public global go-task Taskfile
     cmds:
       - ./scripts/verify-global-taskfile.sh
 
+  # Verify public Codex config stays template-only and live-mutable
   verify:codex-runtime-boundary:
-    internal: true
-    desc: Verify public Codex config stays template-only and live-mutable
     cmds:
       - ./scripts/verify-codex-runtime-boundary.sh
 
@@ -123,21 +116,18 @@ tasks:
     cmds:
       - ./scripts/apply-current-host-defaults.sh --verify
 
+  # Verify known display layout policy
   verify:display-layout:
-    internal: true
-    desc: Verify known display layout policy
     cmds:
       - ./scripts/apply-display-layout.sh --verify
 
+  # Verify this host matches the public macOS defaults baseline
   verify:macos-defaults:
-    internal: true
-    desc: Verify this host matches the public macOS defaults baseline
     cmds:
       - ./scripts/verify-macos-defaults.sh
 
+  # Verify public-safe Raycast preferences
   verify:raycast:
-    internal: true
-    desc: Verify public-safe Raycast preferences
     cmds:
       - ./scripts/verify-raycast-preferences.sh
 
@@ -146,15 +136,13 @@ tasks:
     cmds:
       - ./scripts/verify-raycast-preferences.sh --apply
 
+  # Verify public Raycast Script Commands
   verify:raycast-scripts:
-    internal: true
-    desc: Verify public Raycast Script Commands
     cmds:
       - ./scripts/verify-raycast-script-commands.sh
 
+  # Check desired Raycast Store extensions
   verify:raycast-extensions:
-    internal: true
-    desc: Check desired Raycast Store extensions
     cmds:
       - ./scripts/verify-raycast-extensions.sh
 
@@ -178,15 +166,13 @@ tasks:
     cmds:
       - ./scripts/inspect-macos-baseline.sh
 
+  # Verify public npm global CLIs are installed
   verify:npm-globals:
-    internal: true
-    desc: Verify public npm global CLIs are installed
     cmds:
       - ./scripts/verify-npm-globals.sh
 
+  # Reject unapproved GitHub CLI auth
   security:approved-gh-account:
-    internal: true
-    desc: Reject unapproved GitHub CLI auth
     cmds:
       - |
         if ! command -v gh >/dev/null 2>&1; then
@@ -222,9 +208,8 @@ tasks:
         activation_attr="$(./scripts/home-config-attr.sh activation-package)"
         nix {{.NIX_FLAGS}} build --no-link "$activation_attr"
 
+  # Verify lazygit config and required helpers
   verify:lazygit:
-    internal: true
-    desc: Verify lazygit config and required helpers
     cmds:
       - ruby -ryaml -e 'YAML.load_file(".config/lazygit/config.yml")'
       - command -v lazygit
@@ -232,19 +217,18 @@ tasks:
       - command -v difft
       - command -v gh
 
+  # Verify Neovim starts with this config
   verify:nvim:
-    internal: true
-    desc: Verify Neovim starts with this config
     cmds:
       - nvim --headless '+qa'
 
+  # Verify terminal app workflow (also a cross-repo bridge from private-config)
   verify:terminal:
-    desc: Verify terminal app workflow (used as cross-repo bridge from private-config)
     cmds:
       - ./scripts/verify-terminal.sh
 
+  # Verify zsh startup and plugin contract (also a cross-repo bridge from private-config)
   verify:zsh:
-    desc: Verify zsh startup and plugin contract (used as cross-repo bridge from private-config)
     preconditions:
       - sh: command -v zsh >/dev/null 2>&1
         msg: "zsh is required to verify shell startup"
@@ -271,15 +255,13 @@ tasks:
     cmds:
       - ./scripts/starship-diagnose.sh {{.CLI_ARGS}}
 
+  # Scan staged public-dotfiles changes for secrets
   secrets:staged:
-    internal: true
-    desc: Scan staged public-dotfiles changes for secrets
     cmds:
       - gitleaks protect --staged --source . --redact --no-banner
 
+  # Scan the entire working tree (including history) for secrets
   secrets:full:
-    internal: true
-    desc: Scan the entire working tree (including history) for secrets
     cmds:
       - gitleaks detect --source . --redact --no-banner
 
