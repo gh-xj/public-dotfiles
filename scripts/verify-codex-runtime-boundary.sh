@@ -56,6 +56,10 @@ hooks="config/codex/hooks.json"
 [ -f "$hooks" ] || fail "missing public Codex hooks: $hooks"
 jq empty "$hooks" || fail "$hooks is not valid JSON"
 
+if grep -R -En 'pkgs\.codex|@openai/codex' packages npm-globals.txt 2>/dev/null >&2; then
+  fail "Codex CLI must use the official standalone installer, not Nix or npm"
+fi
+
 if grep -En '(/Users/xj/|/Volumes/|private-config|xj-private-brain)' "$hooks" >&2; then
   fail "$hooks contains machine-local or private path state"
 fi
@@ -89,6 +93,22 @@ fi
 if [ "$live" -eq 1 ]; then
   [ -n "$home_dir" ] || fail "HOME is not set; pass --home"
   live_config="$home_dir/.codex/config.toml"
+  standalone_link="$home_dir/.local/bin/codex"
+
+  if [ ! -L "$standalone_link" ]; then
+    fail "missing standalone Codex CLI link: $standalone_link"
+  fi
+
+  standalone_target="$(readlink "$standalone_link" 2>/dev/null || true)"
+  case "$standalone_target" in
+    "$home_dir/.codex/packages/standalone/"*/bin/codex) ;;
+    *) fail "$standalone_link does not point to the official standalone package: $standalone_target" ;;
+  esac
+
+  resolved_codex="$(command -v codex 2>/dev/null || true)"
+  if [ "$resolved_codex" != "$standalone_link" ]; then
+    fail "codex resolves to $resolved_codex instead of $standalone_link; remove duplicate CLI installs"
+  fi
 
   if [ ! -e "$live_config" ]; then
     fail "missing live Codex config: $live_config"

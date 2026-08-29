@@ -3,6 +3,27 @@
 `public-dotfiles` owns the reusable, publishable agent baseline for Claude and
 Codex.
 
+## Codex ownership
+
+Keep each Codex layer single-owned:
+
+| Layer | Owner |
+| --- | --- |
+| CLI executable | Official standalone installer; `~/.local/bin/codex` points into `~/.codex/packages/standalone` |
+| Desktop app | Homebrew cask `codex-app`; its bundled executable is app-internal, not the shell CLI |
+| Public policy/defaults | This repo: `.claude/CLAUDE.md`, `.codex/rules`, `config/codex/config.toml`, and `config/codex/hooks.json` |
+| Private skills and account-specific declarations | `private-config` |
+| Auth, sessions, trust, plugin registries, caches, and mutable config | Live real directory `~/.codex`; never a repo parent symlink |
+
+Install or update the shell CLI with the official standalone installer:
+
+```bash
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+```
+
+Do not add `pkgs.codex`, `@openai/codex`, or another Homebrew CLI package. The
+desktop cask and standalone CLI are separate surfaces.
+
 ## Public paths
 
 Live paths owned by Home Manager:
