@@ -19,33 +19,39 @@ tasks:
         config_name="$(./scripts/home-config-attr.sh name)"
         nix {{.NIX_FLAGS}} run github:nix-community/home-manager/master -- switch --flake ".#$config_name" {{.CLI_ARGS}}
 
-  dotfiles:verify:
-    desc: Verify public dotfile config surfaces
+  check:
+    desc: Pre-commit verification (fast static + secrets checks)
     cmds:
-      - task: dotfiles:verify-user
+      - task: verify:repo-hygiene
+      - task: verify:global-taskfile
+      - task: verify:codex-runtime-boundary
+      - task: verify:lazygit
+      - task: verify:npm-globals
+      - task: security:approved-gh-account
+      - task: secrets:staged
+
+  check:full:
+    desc: Release verification (Nix builds + shell/editor/terminal + macOS/Raycast + secrets history)
+    cmds:
+      - task: check:user
       - task: verify:bootstrap-darwin
       - task: verify:display-layout
       - task: verify:macos-defaults
       - task: verify:raycast
       - task: verify:raycast-scripts
       - task: verify:terminal
-      - task: secrets:staged
       - task: secrets:full
 
-  verify:
-    desc: Canonical verification alias for wrapper audits
-    cmds:
-      - task: dotfiles:verify
-
   dotfiles:converge:
-    desc: Apply app/live-state convergence helpers, then run full verification
+    desc: Apply app/live-state convergence helpers, then run release verification
     cmds:
       - task: input:reload-live
       - task: raycast:apply-preferences
-      - task: dotfiles:verify
+      - task: check:full
 
-  dotfiles:verify-user:
-    desc: Verify user-level public dotfile config surfaces
+  check:user:
+    internal: true
+    desc: User-level public dotfile verification steps for check:full
     cmds:
       - task: nix:build
       - task: verify:home-files
@@ -61,32 +67,38 @@ tasks:
       - task: nvim-bench:ci
 
   verify:bootstrap-darwin:
+    internal: true
     desc: Verify generated nix-darwin bootstrap hosts for native and Intel targets
     cmds:
       - ./scripts/bootstrap-macos.sh --darwin --dry-run --user example --home /Users/example
       - ./scripts/verify-darwin-homebrew-version-gates.sh
 
   verify:home-files:
+    internal: true
     desc: Verify Home Manager owns the expected public config files
     cmds:
       - ./scripts/verify-home-files.sh
 
   verify:patchkit:
+    internal: true
     desc: Verify patchkit/apply_patch helper behavior
     cmds:
       - ./scripts/verify-patchkit.sh
 
   verify:repo-hygiene:
+    internal: true
     desc: Reject tracked repo noise that should stay ignored
     cmds:
       - ./scripts/verify-repo-hygiene.sh
 
   verify:global-taskfile:
+    internal: true
     desc: Verify public global go-task Taskfile
     cmds:
       - ./scripts/verify-global-taskfile.sh
 
   verify:codex-runtime-boundary:
+    internal: true
     desc: Verify public Codex config stays template-only and live-mutable
     cmds:
       - ./scripts/verify-codex-runtime-boundary.sh
@@ -112,16 +124,19 @@ tasks:
       - ./scripts/apply-current-host-defaults.sh --verify
 
   verify:display-layout:
+    internal: true
     desc: Verify known display layout policy
     cmds:
       - ./scripts/apply-display-layout.sh --verify
 
   verify:macos-defaults:
+    internal: true
     desc: Verify this host matches the public macOS defaults baseline
     cmds:
       - ./scripts/verify-macos-defaults.sh
 
   verify:raycast:
+    internal: true
     desc: Verify public-safe Raycast preferences
     cmds:
       - ./scripts/verify-raycast-preferences.sh
@@ -132,11 +147,13 @@ tasks:
       - ./scripts/verify-raycast-preferences.sh --apply
 
   verify:raycast-scripts:
+    internal: true
     desc: Verify public Raycast Script Commands
     cmds:
       - ./scripts/verify-raycast-script-commands.sh
 
   verify:raycast-extensions:
+    internal: true
     desc: Check desired Raycast Store extensions
     cmds:
       - ./scripts/verify-raycast-extensions.sh
@@ -162,11 +179,13 @@ tasks:
       - ./scripts/inspect-macos-baseline.sh
 
   verify:npm-globals:
+    internal: true
     desc: Verify public npm global CLIs are installed
     cmds:
       - ./scripts/verify-npm-globals.sh
 
   security:approved-gh-account:
+    internal: true
     desc: Reject unapproved GitHub CLI auth
     cmds:
       - |
@@ -204,6 +223,7 @@ tasks:
         nix {{.NIX_FLAGS}} build --no-link "$activation_attr"
 
   verify:lazygit:
+    internal: true
     desc: Verify lazygit config and required helpers
     cmds:
       - ruby -ryaml -e 'YAML.load_file(".config/lazygit/config.yml")'
@@ -213,17 +233,18 @@ tasks:
       - command -v gh
 
   verify:nvim:
+    internal: true
     desc: Verify Neovim starts with this config
     cmds:
       - nvim --headless '+qa'
 
   verify:terminal:
-    desc: Verify terminal app workflow
+    desc: Verify terminal app workflow (used as cross-repo bridge from private-config)
     cmds:
       - ./scripts/verify-terminal.sh
 
   verify:zsh:
-    desc: Verify zsh startup and plugin contract
+    desc: Verify zsh startup and plugin contract (used as cross-repo bridge from private-config)
     preconditions:
       - sh: command -v zsh >/dev/null 2>&1
         msg: "zsh is required to verify shell startup"
@@ -251,19 +272,16 @@ tasks:
       - ./scripts/starship-diagnose.sh {{.CLI_ARGS}}
 
   secrets:staged:
+    internal: true
     desc: Scan staged public-dotfiles changes for secrets
     cmds:
       - gitleaks protect --staged --source . --redact --no-banner
 
   secrets:full:
+    internal: true
     desc: Scan the entire working tree (including history) for secrets
     cmds:
       - gitleaks detect --source . --redact --no-banner
-
-  doctor:
-    desc: Run public dotfiles verification
-    cmds:
-      - task: dotfiles:verify
 
   help:
     desc: Show available tasks

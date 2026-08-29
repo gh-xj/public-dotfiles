@@ -22,7 +22,7 @@ Use this flow for routine work in `public-dotfiles`.
 3. Inspect exactly what will be committed:
    `git diff --cached`
 4. Verify the repo, including staged secret risk:
-   `task dotfiles:verify`
+   `task check:full`
 5. Commit one behavior at a time:
    `git commit -m "Improve lazygit workflow"`
 6. Do not leave an accepted atomic operation uncommitted by default. If the

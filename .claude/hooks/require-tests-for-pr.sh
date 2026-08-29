@@ -8,11 +8,15 @@ if [[ -z "$cwd" ]]; then
 fi
 
 if [[ -f "$cwd/Taskfile.yml" ]] && command -v task >/dev/null 2>&1; then
-  if grep -Eq '^[[:space:]]*verify:' "$cwd/Taskfile.yml"; then
-    if (cd "$cwd" && task verify); then
+  if grep -Eq '^[[:space:]]*(check|verify):' "$cwd/Taskfile.yml"; then
+    target=check
+    if ! grep -Eq '^[[:space:]]*check:' "$cwd/Taskfile.yml"; then
+      target=verify
+    fi
+    if (cd "$cwd" && task "$target"); then
       exit 0
     fi
-    echo "task verify failed. Fix verification failures before creating a PR." >&2
+    echo "task $target failed. Fix verification failures before creating a PR." >&2
     exit 2
   fi
 fi

@@ -123,7 +123,7 @@ extension, or `--no-backup` when you want a strict conflict failure.
 Verify the user-level surface after Home Manager apply:
 
 ```bash
-task dotfiles:verify-user
+task check:user
 ```
 
 ## Codex Runtime Config
@@ -194,7 +194,7 @@ task dotfiles:converge
 ```
 
 `task dotfiles:converge` reloads live input preferences, reapplies public-safe
-Raycast preferences, then runs `task dotfiles:verify`.
+Raycast preferences, then runs `task check:full`.
 
 If verification reports a live `AppleMultitouchDevice` mismatch while the
 persisted trackpad defaults are correct, run this from the target Mac or an

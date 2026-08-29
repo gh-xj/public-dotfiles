@@ -31,8 +31,8 @@ app ledger, opt in explicitly:
 ./scripts/bootstrap-macos.sh --darwin --apply
 ```
 
-After the user-level apply, run `task dotfiles:verify-user`. After the Darwin
-phase has installed the public GUI/app ledger, run `task dotfiles:verify`.
+After the user-level apply, run `task check:user`. After the Darwin
+phase has installed the public GUI/app ledger, run `task check:full`.
 
 The bootstrap supports both Apple Silicon and Intel Macs. `--darwin --apply`
 uses `sudo` for `darwin-rebuild switch`. If Homebrew is missing from the

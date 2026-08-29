@@ -35,7 +35,7 @@ for displays and `ioreg AppleMultitouchDevice` for trackpad behavior.
   `APPROVED_GITHUB_CLI_ACCOUNTS` to a space-separated allowlist when needed.
 - Do not authenticate unapproved GitHub accounts or commit tokens to repo,
   shell, agent, or generated config.
-- `task dotfiles:verify` includes `security:approved-gh-account`; keep that gate
+- `task check:full` includes `security:approved-gh-account`; keep that gate
   aligned with the approved-account policy.
 
 ## Commit Discipline
@@ -77,7 +77,7 @@ for displays and `ioreg AppleMultitouchDevice` for trackpad behavior.
 
 ## Verification
 
-- Run `task dotfiles:verify` before committing public dotfile changes.
+- Run `task check:full` before committing public dotfile changes.
 - Run `task secrets:staged` before committing any change that touches scripts,
   agent config, shell config, tokens, URLs, headers, or generated config.
 - If a check cannot run, state the exact command and failure reason in the final
