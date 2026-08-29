@@ -161,6 +161,16 @@ else
   printf "atuin-ctrl-r-binding=0\n"
 fi
 printf "starship-prompt=%s\n" "$+functions[prompt_starship_precmd]"
+if [[ -o promptsubst ]]; then
+  printf "opt-promptsubst=1\n"
+else
+  printf "opt-promptsubst=0\n"
+fi
+if print -P -- "$PROMPT" 2>/dev/null | grep -q "starship prompt"; then
+  printf "prompt-renders=0\n"
+else
+  printf "prompt-renders=1\n"
+fi
 '
 )"
 
@@ -199,3 +209,8 @@ require_probe ssh-wildcard-filtered 1
 require_probe atuin-widget 1
 require_probe atuin-ctrl-r-binding 1
 require_probe starship-prompt 1
+# Global options that cached tool inits must leave set for the whole shell.
+# A helper wrapping those `source` calls in `emulate -L zsh` silently reverts
+# them, which is how the prompt once ended up printing its own substitution.
+require_probe opt-promptsubst 1
+require_probe prompt-renders 1
