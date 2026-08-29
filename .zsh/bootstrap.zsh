@@ -13,6 +13,45 @@
 #
 # --- Completion helpers (was 20-completion.zsh) ---
 #
+# Source a tool's shell-init output from ~/.cache, regenerating the cache when
+# the tool's binary -- or any extra dependency path given before "--" -- is
+# newer than it. Returns non-zero when the tool is absent or generation failed,
+# so callers can skip their follow-up wiring.
+#
+#   _xj_cache_tool_init <name> [extra-dep-path...] -- <command...>
+_xj_cache_tool_init() {
+    emulate -L zsh
+
+    local name="$1"; shift
+    local -a deps=()
+    while (( $# )) && [[ "$1" != "--" ]]; do
+        deps+=("$1")
+        shift
+    done
+    shift  # drop the "--" separator
+
+    local bin="${commands[$name]:-}"
+    [[ -n "$bin" ]] || return 1
+
+    local cache="$HOME/.cache/${name}-init.zsh"
+    local dep
+    integer stale=0
+
+    [[ -f "$cache" ]] || stale=1
+    [[ "$bin" -nt "$cache" ]] && stale=1
+    for dep in "${deps[@]}"; do
+        [[ -e "$dep" && "$dep" -nt "$cache" ]] && stale=1
+    done
+
+    if (( stale )); then
+        mkdir -p "$HOME/.cache"
+        "$@" >| "$cache" 2>/dev/null || return 1
+    fi
+
+    [[ -r "$cache" ]] || return 1
+    source "$cache" 2>/dev/null
+}
+
 # FZF preview command (shared by FZF_DEFAULT_OPTS and yazi wrapper)
 _FZF_PREVIEW='bash -c '\''if [[ -d {} ]]; then eza --all --color=always --icons=always --group-directories-first --no-quotes --tree --level=2 --long {}; elif [[ -f {} ]]; then eza --all --color=always --icons=always --no-quotes -l {} && echo && bat --style=numbers --color=always {} 2>/dev/null || cat {}; else echo File not found: {}; fi'\'''
 
@@ -28,15 +67,7 @@ setup_fzf() {
     _fzf_compgen_path() { fd --hidden --follow --exclude ".git" . "$1"; }
     _fzf_compgen_dir() { fd --type d --hidden --follow --exclude ".git" . "$1"; }
 
-    local fzf_bin="${commands[fzf]:-}"
-    if [[ -n "$fzf_bin" ]]; then
-        local fzf_cache="$HOME/.cache/fzf-init.zsh"
-        if [[ ! -f "$fzf_cache" || "$fzf_bin" -nt "$fzf_cache" ]]; then
-            mkdir -p "$HOME/.cache"
-            "$fzf_bin" --zsh >| "$fzf_cache" 2>/dev/null || true
-        fi
-        [[ -r "$fzf_cache" ]] && source "$fzf_cache" 2>/dev/null
-    fi
+    _xj_cache_tool_init fzf -- fzf --zsh
 
     zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
     zstyle -e ':completion:*:(ssh|scp|sftp|ssh-copy-id|rsync):*:hosts' hosts '_xj_ssh_completion_hosts_style'
@@ -225,16 +256,8 @@ _source_zsh_plugin() {
 }
 
 setup_atuin() {
-    local atuin_bin="${commands[atuin]:-}"
-    [[ -n "$atuin_bin" ]] || return 0
+    _xj_cache_tool_init atuin -- env ATUIN_NOBIND=true atuin init zsh || return 0
 
-    local atuin_cache="$HOME/.cache/atuin-init.zsh"
-    if [[ ! -f "$atuin_cache" || "$atuin_bin" -nt "$atuin_cache" ]]; then
-        mkdir -p "$HOME/.cache"
-        ATUIN_NOBIND=true "$atuin_bin" init zsh >| "$atuin_cache" 2>/dev/null || return 0
-    fi
-
-    [[ -r "$atuin_cache" ]] && source "$atuin_cache" 2>/dev/null
     if (( $+widgets[atuin-search] )); then
         bindkey '^r' atuin-search
         bindkey -M emacs '^r' atuin-search 2>/dev/null || true
@@ -293,14 +316,9 @@ setup_plugins() {
         "zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
         "zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-    # Load cached Starship prompt silently
-    local starship_cache="$HOME/.cache/starship-init.zsh"
-    local starship_bin="${commands[starship]:-}"
-    if [[ -n "$starship_bin" && ( ! -f "$starship_cache" || "$HOME/.config/starship.toml" -nt "$starship_cache" || "$starship_bin" -nt "$starship_cache" ) ]]; then
-        mkdir -p ~/.cache
-        "$starship_bin" init zsh >| "$starship_cache" 2>/dev/null
-    fi
-    [[ -r "$starship_cache" ]] && source "$starship_cache" 2>/dev/null
+    # Load cached Starship prompt silently; the config file is an extra
+    # staleness input because editing it must regenerate the init.
+    _xj_cache_tool_init starship "$HOME/.config/starship.toml" -- starship init zsh
 
     # Reset terminal title to current directory before each prompt.
     _set_terminal_title() {
@@ -467,13 +485,4 @@ fi
 # Keep interactive mode light; the shared FZF preview is too heavy here.
 export _ZO_DOCTOR=0
 export _ZO_FZF_OPTS='--height 60% --layout reverse --border top --extended --no-sort'
-if (( $+commands[zoxide] )); then
-    _zoxide_cache="$HOME/.cache/zoxide-init.zsh"
-    _zoxide_bin="$commands[zoxide]"
-    if [[ ! -f "$_zoxide_cache" || "$_zoxide_bin" -nt "$_zoxide_cache" ]]; then
-        mkdir -p "$HOME/.cache"
-        "$_zoxide_bin" init zsh --cmd j >| "$_zoxide_cache" 2>/dev/null
-    fi
-    [[ -r "$_zoxide_cache" ]] && source "$_zoxide_cache" 2>/dev/null
-fi
-unset _zoxide_cache _zoxide_bin
+_xj_cache_tool_init zoxide -- zoxide init zsh --cmd j
