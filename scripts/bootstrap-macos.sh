@@ -780,14 +780,6 @@ apply_display_layout() {
   "$repo_root/scripts/apply-display-layout.sh" --apply
 }
 
-apply_current_host_defaults() {
-  [ "$darwin_phase" -eq 1 ] || return 0
-  [ "$mode" = "apply" ] || return 0
-
-  info "applying currentHost input defaults"
-  "$repo_root/scripts/apply-current-host-defaults.sh" --apply --allow-live-mismatch
-}
-
 finish_message() {
   if [ "$mode" = "dry-run" ]; then
     if [ "$darwin_phase" -eq 1 ]; then
@@ -823,7 +815,6 @@ main() {
   apply_home_manager "$flake_dir"
   install_public_npm_globals
   apply_darwin_system "$flake_dir"
-  apply_current_host_defaults
   apply_display_layout
   finish_message
 }

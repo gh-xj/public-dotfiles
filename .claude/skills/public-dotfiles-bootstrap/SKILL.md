@@ -35,7 +35,7 @@ Project-local router for restoring and auditing the public, reusable
    - `docs/macos-convergence-model.md`
 3. Identify the reported discrepancy and the source/target machines.
 4. Inspect before changing:
-   - `task inspect:macos-baseline`
+   - `defaults read` for the affected domain, compared against `modules/darwin/defaults.nix`
    - target equivalent over SSH when available
    - a narrow live-state command for the affected layer
 5. Check `references/known-failures.md` for an existing symptom pattern.
@@ -52,9 +52,9 @@ Project-local router for restoring and auditing the public, reusable
 | Symptom | First Place To Look |
 | --- | --- |
 | Defaults show correct but behavior differs | live state such as `ioreg`, app cache, GUI session, or TCC |
-| Display resolution differs | `config/macos/display-layouts.tsv` and `task verify:display-layout` |
-| Tap-to-click or gestures differ | `task input:verify`, `task input:reload-live`, and live `AppleMultitouchDevice` |
-| Raycast command/settings drift | `task raycast:apply-preferences`, `modules/darwin/defaults.nix`, `config/raycast/script-commands.tsv`, `.config/raycast/scripts`, and Raycast verifiers |
+| Display resolution differs | `config/macos/display-layouts.tsv` and `task display:apply` |
+| Tap-to-click or gestures differ | `modules/darwin/defaults.nix`, then live `AppleMultitouchDevice`; a switch reapplies the declared values |
+| Raycast command/settings drift | `modules/darwin/defaults.nix`, `config/raycast/script-commands.tsv`, `.config/raycast/scripts`, and the Raycast script/extension verifiers |
 | Store extension missing | `config/raycast/extensions.tsv`; open install intents, do not copy caches |
 | Package/app drift | Nix package sets, `Brewfile`/Homebrew module, or npm globals ledger |
 
@@ -65,10 +65,8 @@ Use the narrowest gate first, then the full gate:
 | Change | Narrow Gate |
 | --- | --- |
 | Bootstrap script or Nix host | `task verify:bootstrap-darwin` |
-| Display policy | `task verify:display-layout` |
-| Input/trackpad defaults | `task input:verify` |
-| Live trackpad reload | `task input:reload-live` |
-| Raycast preferences | `task raycast:apply-preferences`, then `task verify:raycast` |
+| Display policy | `task display:apply` |
+| Input/trackpad and Raycast preferences | `task switch` in `private-config`; these are declared in `modules/darwin/defaults.nix` |
 | Raycast script commands | `task verify:raycast-scripts` |
 | Raycast runtime/UI setup | `task raycast:runtime-check` |
 | Raycast Store extensions | `task verify:raycast-extensions` |
@@ -94,5 +92,5 @@ URLs, headers, generated config, or token-adjacent surfaces.
   exists yet.
 - Raycast Store extension install, Script Command directory registration,
   and command aliases/hotkeys remain interactive.
-- Trackpad live reload may require `task input:reload-live` from an
-  interactive target-Mac session, then logout/login on some target Macs.
+- Trackpad changes may not take effect until the GUI session reloads them;
+  logout/login is the reliable path on some target Macs.

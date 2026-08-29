@@ -31,24 +31,14 @@ tasks:
       - task: secrets:staged
 
   check:full:
-    desc: Release verification (Nix builds + shell/editor/terminal + macOS/Raycast + staged and historical secrets)
+    desc: Release verification (Nix builds + shell/editor/terminal + Raycast scripts + staged and historical secrets)
     cmds:
       - task: check:user
       - task: verify:bootstrap-darwin
-      - task: verify:display-layout
-      - task: verify:macos-defaults
-      - task: verify:raycast
       - task: verify:raycast-scripts
       - task: verify:terminal
       - task: secrets:staged
       - task: secrets:full
-
-  dotfiles:converge:
-    desc: Apply app/live-state convergence helpers, then run release verification
-    cmds:
-      - task: input:reload-live
-      - task: raycast:apply-preferences
-      - task: check:full
 
   # User-level public dotfile verification steps for check:full
   check:user:
@@ -102,41 +92,9 @@ tasks:
     cmds:
       - ./scripts/apply-display-layout.sh --apply
 
-  input:apply:
-    desc: Apply input defaults and reload live trackpad state
-    cmds:
-      - ./scripts/apply-current-host-defaults.sh --apply
-
-  input:reload-live:
-    desc: Prompt for sudo and reload live trackpad state
-    cmds:
-      - ./scripts/apply-current-host-defaults.sh --reload-live
-
-  input:verify:
-    desc: Verify persisted and live mouse, keyboard, and trackpad defaults
-    cmds:
-      - ./scripts/apply-current-host-defaults.sh --verify
-
   # Verify known display layout policy
-  verify:display-layout:
-    cmds:
-      - ./scripts/apply-display-layout.sh --verify
-
   # Verify this host matches the public macOS defaults baseline
-  verify:macos-defaults:
-    cmds:
-      - ./scripts/verify-macos-defaults.sh
-
   # Verify public-safe Raycast preferences
-  verify:raycast:
-    cmds:
-      - ./scripts/verify-raycast-preferences.sh
-
-  raycast:apply-preferences:
-    desc: Apply public-safe Raycast preferences
-    cmds:
-      - ./scripts/verify-raycast-preferences.sh --apply
-
   # Verify public Raycast Script Commands
   verify:raycast-scripts:
     cmds:
@@ -161,11 +119,6 @@ tasks:
     desc: Open Raycast setup for public Script Commands
     cmds:
       - ./scripts/diagnose-raycast-runtime.sh --open-setup
-
-  inspect:macos-baseline:
-    desc: Print a public-safe macOS and Raycast baseline inventory
-    cmds:
-      - ./scripts/inspect-macos-baseline.sh
 
   # Verify public npm global CLIs are installed
   verify:npm-globals:

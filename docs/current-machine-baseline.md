@@ -34,7 +34,7 @@ These values were read from `/Users/xj` and encoded in
 | Language/input | English plus Simplified Chinese language list; U.S. keyboard plus Simplified Chinese Shuangpin input source; current selected input source is runtime state |
 | Mouse / trackpad speed | mouse scaling `3`, trackpad scaling `3` |
 | Trackpad | tap to click, right click, three-finger drag, light click thresholds, four-finger gestures, three-finger horizontal/vertical gestures disabled |
-| Input defaults | ByHost keys in `config/macos/current-host-defaults.tsv`, user input keys in `config/macos/input-user-defaults.tsv`, including the global tap-to-click key, and live trackpad expectations in `config/macos/live-trackpad-defaults.tsv` |
+| Input defaults | Declared in `modules/darwin/defaults.nix`, including ByHost trackpad keys and the global tap-to-click key, and applied by the switch |
 | Magic Mouse | two-button mode |
 | Symbolic hotkeys | local Apple symbolic hotkey enablement and parameters copied for ids `15-31`, `52`, `60-65`, `79-82`, `118-122`, `164`, `184` |
 | Appearance | automatic light/dark switching enabled |
@@ -145,32 +145,21 @@ expected and non-blocking.
 
 ## Baseline Inspection
 
-Run `task inspect:macos-baseline` on any Mac to print the public-safe inventory
-used for discrepancy triage. It reports display hardware and displayplacer
-state, global keyboard/mouse defaults, persisted input defaults, live trackpad
-state, input sources, Dock items, Raycast preferences, Raycast extensions, and
-public Raycast script-command directories. Private Raycast script directories are omitted unless
-`XJ_PUBLIC_DOTFILES_INSPECT_PRIVATE_RAYCAST=1` is set for local-only triage.
+`modules/darwin/defaults.nix` is the inventory. Compare a target Mac against it
+with `defaults read` for the affected domain, or `displayplacer list` for the
+display layer. There is no separate inspection ledger to keep in sync.
 
 ## Verification
 
 | Gate | What it protects |
 | --- | --- |
-| `task dotfiles:converge` | Applies live/app-owned convergence helpers, then runs full `task check:full` |
 | `task verify:home-files` | Home Manager generation contains the public config files above |
 | `task verify:global-taskfile` | The public global go-task Taskfile is parseable and contains expected tasks |
 | `task verify:codex-runtime-boundary` | Public Codex seed template stays outside project-local `.codex/config.toml`, stays safe, and Home Manager does not own mutable `~/.codex/config.toml` |
 | `task verify:bootstrap-darwin` | The generated nix-darwin bootstrap host still builds |
-| `task verify:display-layout` | Known display serials match the displayplacer layout policy |
-| `task verify:macos-defaults` | The current host matches the public macOS defaults baseline |
-| `task input:apply` | Apply persisted input defaults and attempt a non-interactive live trackpad reload |
-| `task input:reload-live` | Prompt for sudo and ask the GUI user session to reload live trackpad state |
-| `task input:verify` | Verify persisted input defaults plus live `AppleMultitouchDevice` state |
-| `task raycast:apply-preferences` | Reapply public-safe Raycast defaults when app preferences drift |
-| `task verify:raycast` | The current host matches public-safe Raycast preferences |
+| `task display:apply` | Apply the displayplacer layout policy, which no Nix option expresses |
 | `task verify:raycast-scripts` | Public Raycast Script Command files match the ledger and contain no obvious private strings |
 | `task verify:raycast-extensions` | Desired public Raycast Store extensions are installed |
 | `task raycast:runtime-check` | Reports whether Raycast runtime setup is still interactive/app-owned |
 | `task raycast:open-script-setup` | Copies the stable public Script Directory path and opens Raycast Settings |
-| `task inspect:macos-baseline` | Prints local setup state for source/target comparison |
 | `task verify:terminal` | Ghostty, Karabiner, and tmux terminal workflow invariants |

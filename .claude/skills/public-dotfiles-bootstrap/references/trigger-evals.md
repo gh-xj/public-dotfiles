@@ -1,5 +1,12 @@
 # Trigger Evals
 
+> **Historical record.** Some tasks named below no longer exist. The macOS
+> defaults restatement layer -- `verify-macos-defaults.sh`,
+> `apply-current-host-defaults.sh`, `verify-raycast-preferences.sh`,
+> `inspect-macos-baseline.sh` and their TSV ledgers -- was removed once every
+> key it asserted was found to be declared in `modules/darwin/defaults.nix`.
+> The incidents below are kept as written; only the tooling changed.
+
 Use these lightweight cases when editing the skill description or routing
 boundaries.
 

@@ -1,4 +1,0 @@
-# domain	key	type	value
-# User defaults that affect input behavior but are not ByHost/currentHost keys.
-NSGlobalDomain	com.apple.mouse.tapBehavior	int	1
-NSGlobalDomain	com.apple.trackpad.scrolling	bool	true

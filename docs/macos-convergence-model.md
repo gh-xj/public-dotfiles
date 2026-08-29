@@ -9,11 +9,13 @@ values.
 
 When the target Mac differs from the source Mac:
 
-1. Inspect both machines with `task inspect:macos-baseline` and any narrow
-   command needed for the reported area.
+1. Inspect both machines with `defaults read` for the affected domain, or the
+   narrow command for the reported area.
 2. Identify the owning layer for the behavior.
-3. Encode desired state in a repo-owned module, ledger, script, or doc.
-4. Add a verifier that fails on the observed drift.
+3. Encode desired state in `modules/darwin/defaults.nix`, or in a ledger when
+   no Nix option expresses it.
+4. Add a verifier only when the switch cannot already prove the outcome.
+   Restating a Nix declaration in shell buys nothing and rots.
 5. Apply through `./scripts/bootstrap-macos.sh --darwin --apply` or the narrow
    task, then re-run the verifier.
 
@@ -24,11 +26,9 @@ behavior, fold the result back into the repo harness.
 
 | Layer | Owned By | Example | Verification |
 | --- | --- | --- | --- |
-| nix-darwin typed defaults | `modules/darwin/defaults.nix` | Dock, Finder, keyboard repeat, typed trackpad keys | `task verify:macos-defaults` |
-| Custom user defaults | `system.defaults.CustomUserPreferences` | Raycast preferences, input source arrays, custom global keys | app-specific verifier or defaults verifier |
-| ByHost/currentHost defaults | `config/macos/current-host-defaults.tsv` | trackpad gestures and tap behavior | `task input:verify` |
-| User input defaults | `config/macos/input-user-defaults.tsv` | non-ByHost input keys such as trackpad scrolling | `task input:verify` |
-| Live hardware/runtime state | script verifier ledgers | active trackpad preferences, display layout | `ioreg`, `displayplacer` |
+| nix-darwin typed defaults | `modules/darwin/defaults.nix` | Dock, Finder, keyboard repeat, typed trackpad keys | the switch itself |
+| Custom user defaults | `system.defaults.CustomUserPreferences` | Raycast preferences, input source arrays, ByHost trackpad keys | the switch itself |
+| Live hardware/runtime state | `config/macos/display-layouts.tsv` | display arrangement, which no Nix option expresses | `displayplacer` via `task display:apply` |
 | App runtime state | public ledgers plus manual install flows | Raycast Store extensions | `task verify:raycast-extensions` |
 
 ## Placement Decision
@@ -68,8 +68,8 @@ Known live checks:
 
 | Behavior | Persisted State | Live Check |
 | --- | --- | --- |
-| Display resolution and layout | `config/macos/display-layouts.tsv` | `displayplacer list` via `task verify:display-layout` |
-| Trackpad tap, thresholds, and three-finger gestures | `config/macos/current-host-defaults.tsv`, `config/macos/input-user-defaults.tsv` | `ioreg -r -c AppleMultitouchDevice -l -w0` via `task input:verify` |
+| Display resolution and layout | `config/macos/display-layouts.tsv` | `displayplacer list` via `task display:apply` |
+| Trackpad tap, thresholds, and three-finger gestures | `modules/darwin/defaults.nix` | applied by the switch; no separate live check |
 
 When a live check cannot be made deterministic because of TCC, GUI-session, or
 human-confirmation requirements, keep it out of the blocking gate and provide a
@@ -83,7 +83,7 @@ Some state cannot be restored silently from an SSH-only bootstrap:
 | --- | --- | --- |
 | Raycast Script Command directory and command hotkeys | Raycast stores registration, aliases, and hotkeys in app-managed/encrypted runtime state | `task raycast:open-script-setup`, then user confirms commands appear in Raycast search |
 | Raycast Store extensions | Raycast owns Store install confirmation and extension runtime state | `task raycast:open-extension-installs`, then `task verify:raycast-extensions` |
-| Trackpad live reload | WindowServer may keep stale `AppleMultitouchDevice` preferences until a GUI/sudo reload or logout/login | `task input:reload-live`, then `task input:verify` |
+| Trackpad live reload | WindowServer may keep stale `AppleMultitouchDevice` preferences until a GUI reload or logout/login | logout/login on the target Mac |
 
 The repo should make these boundaries explicit. A bootstrap can be excellent
 without pretending macOS permission prompts and app-owned confirmation flows are
