@@ -31,7 +31,7 @@ tasks:
       - task: secrets:staged
 
   check:full:
-    desc: Release verification (Nix builds + shell/editor/terminal + macOS/Raycast + secrets history)
+    desc: Release verification (Nix builds + shell/editor/terminal + macOS/Raycast + staged and historical secrets)
     cmds:
       - task: check:user
       - task: verify:bootstrap-darwin
@@ -40,6 +40,7 @@ tasks:
       - task: verify:raycast
       - task: verify:raycast-scripts
       - task: verify:terminal
+      - task: secrets:staged
       - task: secrets:full
 
   dotfiles:converge:
