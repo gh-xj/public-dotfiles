@@ -565,10 +565,6 @@ $darwin_inputs
   let
     pkgs = import nixpkgs {
       system = $(nix_string "$host_platform");
-      config.allowUnfreePredicate = pkg:
-        builtins.elem (nixpkgs.lib.getName pkg) [
-          "claude-code"
-        ];
     };
   in
   {

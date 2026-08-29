@@ -64,8 +64,9 @@ Home Manager now owns these public config files on a new machine:
 | --- | --- |
 | Nix shell set | `atuin`, `bat`, `btop`, `eza`, `fd`, `fzf`, `git`, `glow`, `hyperfine`, `jq`, `ripgrep`, `starship`, `tealdeer`, `trash`, `yazi`, `zoxide`, zsh plugins |
 | Nix dev set | `go`, `go-task`, `lazygit`, `marksman`, `neovim`, `nodejs`, `prettier`, `rust`, `shfmt`, `tmux`, `uv`, `delta`, `difftastic` |
-| Nix ops set | `claude-code`, `gh`, `gitleaks`, `work` |
+| Nix ops set | `gh`, `gitleaks`, `work` |
 | Codex CLI | Official standalone installer only; `~/.local/bin/codex` points into `~/.codex/packages/standalone`. Do not also install the CLI from Nix, npm, or Homebrew |
+| Claude Code CLI | Native installer only; `~/.local/bin/claude` points into `~/.local/share/claude/versions/<version>`. Update with `claude install`. Do not also install from Nix, npm, or Homebrew |
 | npm globals | narrow public ledger in `npm-globals.txt`; currently `@google/gemini-cli`, `@googleworkspace/cli`, `ccusage`, `markdownlint-cli2` |
 | Homebrew brews | `displayplacer`, `mole`, `pngpaste` |
 | Homebrew casks | Ghostty, Chrome, Karabiner, Amethyst, Raycast, Codex app, Setapp, Mimestream, 1Password, CleanShot, Tailscale, public font set; version-gated additions are OrbStack and ChatGPT on macOS 14+, and TypeWhisper on macOS 15+ |

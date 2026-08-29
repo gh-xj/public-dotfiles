@@ -11,13 +11,8 @@
   let
     systems = [ "aarch64-darwin" "x86_64-darwin" ];
     forAllSystems = nixpkgs.lib.genAttrs systems;
-    allowedUnfreePackages = [
-      "claude-code"
-    ];
     pkgsFor = system: import nixpkgs {
       inherit system;
-      config.allowUnfreePredicate = pkg:
-        builtins.elem (nixpkgs.lib.getName pkg) allowedUnfreePackages;
     };
     mkExampleHome = system: home-manager.lib.homeManagerConfiguration {
       pkgs = pkgsFor system;
