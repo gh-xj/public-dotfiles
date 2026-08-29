@@ -108,10 +108,10 @@ Expected corrected behavior:
 - Bootstrap apply can continue after persisted input defaults are written even
   when live trackpad state needs a later reload.
 - Post-bootstrap convergence is explicit: `task dotfiles:converge`, then
-  `task dotfiles:verify`.
+  `task check:full`.
 
 Verification:
 
 - `task verify:bootstrap-darwin`
-- `task dotfiles:verify`
-- On the target Mac when available: `task dotfiles:converge && task dotfiles:verify`
+- `task check:full`
+- On the target Mac when available: `task dotfiles:converge && task check:full`

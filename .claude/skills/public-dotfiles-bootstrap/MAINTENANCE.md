@@ -111,7 +111,7 @@ Raycast preference application, npm global installation, and full verification.
 before treating a discrepancy as a new missing baseline.
 
 **Falsifier:** A target Mac is judged incomplete before
-`task dotfiles:converge && task dotfiles:verify` has been attempted.
+`task dotfiles:converge && task check:full` has been attempted.
 
 ### 2026-06-07 - The public Codex seed template cannot live at `.codex/config.toml`
 

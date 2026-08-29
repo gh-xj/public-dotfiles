@@ -42,7 +42,7 @@ Project-local router for restoring and auditing the public, reusable
 6. Classify the owning layer using `docs/macos-convergence-model.md`.
 7. Encode desired public-safe state in repo source, not in live symlinks.
 8. Add or strengthen a verifier that fails on the observed drift.
-9. Apply narrowly, then run `task dotfiles:verify`.
+9. Apply narrowly, then run `task check:full`.
 10. Record durable skill lessons in `MAINTENANCE.md` when the workflow itself
     changes.
 11. Commit and push according to `AGENTS.md`.
@@ -72,7 +72,7 @@ Use the narrowest gate first, then the full gate:
 | Raycast script commands | `task verify:raycast-scripts` |
 | Raycast runtime/UI setup | `task raycast:runtime-check` |
 | Raycast Store extensions | `task verify:raycast-extensions` |
-| General repo health | `task dotfiles:verify` |
+| General repo health | `task check:full` |
 
 Run `task secrets:staged` before committing scripts, agent config, shell config,
 URLs, headers, generated config, or token-adjacent surfaces.
