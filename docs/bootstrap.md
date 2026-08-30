@@ -123,7 +123,7 @@ extension, or `--no-backup` when you want a strict conflict failure.
 Verify the user-level surface after Home Manager apply:
 
 ```bash
-task check:user
+task check
 ```
 
 ## Codex Runtime Config
@@ -189,7 +189,7 @@ For the public app ledger as well:
 Verify the full public surface after the Darwin/Homebrew phase:
 
 ```bash
-task check:full
+task check
 ```
 
 Input, trackpad, and Raycast preferences are declared in

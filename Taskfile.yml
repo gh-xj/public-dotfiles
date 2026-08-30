@@ -12,36 +12,21 @@ includes:
     dir: ./Library/nvim-bench
 
 tasks:
-  install:
-    desc: Apply the local public Home Manager example
+  apply:
+    desc: Make this machine match the repo (Home Manager switch)
+    aliases: [install]
     cmds:
       - |
         config_name="$(./scripts/home-config-attr.sh name)"
         nix {{.NIX_FLAGS}} run github:nix-community/home-manager/master -- switch --flake ".#$config_name" {{.CLI_ARGS}}
 
+  # One gate. The former fast tier ran in 3.7s against 20.4s for the full one,
+  # a difference too small to justify two names that answered "am I safe to
+  # commit" differently -- and for a while the fast one was the stronger of the
+  # two, because only it scanned the staged index for secrets.
   check:
-    desc: Pre-commit verification (fast static + secrets checks)
-    cmds:
-      - task: verify:repo-hygiene
-      - task: verify:global-taskfile
-      - task: verify:codex-runtime-boundary
-      - task: verify:lazygit
-      - task: verify:npm-globals
-      - task: security:approved-gh-account
-      - task: secrets:staged
-
-  check:full:
-    desc: Release verification (Nix builds + shell/editor/terminal + Raycast scripts + staged and historical secrets)
-    cmds:
-      - task: check:user
-      - task: verify:bootstrap-darwin
-      - task: verify:raycast-scripts
-      - task: verify:terminal
-      - task: secrets:staged
-      - task: secrets:full
-
-  # User-level public dotfile verification steps for check:full
-  check:user:
+    desc: Prove this repo is in the declared state
+    aliases: [check:full]
     cmds:
       - task: nix:build
       - task: verify:home-files
@@ -55,6 +40,11 @@ tasks:
       - task: verify:lazygit
       - task: verify:nvim
       - task: nvim-bench:ci
+      - task: verify:bootstrap-darwin
+      - task: verify:raycast-scripts
+      - task: verify:terminal
+      - task: secrets:staged
+      - task: secrets:full
 
   # Verify generated nix-darwin bootstrap hosts for native and Intel targets
   verify:bootstrap-darwin:

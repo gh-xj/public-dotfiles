@@ -31,8 +31,8 @@ app ledger, opt in explicitly:
 ./scripts/bootstrap-macos.sh --darwin --apply
 ```
 
-After the user-level apply, run `task check:user`. After the Darwin
-phase has installed the public GUI/app ledger, run `task check:full`.
+After the user-level apply, run `task check`. After the Darwin
+phase has installed the public GUI/app ledger, run `task check`.
 
 The bootstrap supports both Apple Silicon and Intel Macs. `--darwin --apply`
 uses `sudo` for `darwin-rebuild switch`. If Homebrew is missing from the
@@ -138,7 +138,7 @@ For the GUI app/Homebrew ledger as well:
 ./scripts/bootstrap-macos.sh --darwin --apply
 ```
 
-`task install` remains a maintainer shortcut for the checked-in `.#example`
+`task apply` remains a maintainer shortcut for the checked-in `.#example`
 configuration. Use it only from a clone whose `hosts/example.nix` matches the
 target macOS account. A private host may import this repo, but that private
 overlay should only add sensitive, account-bound, or runtime-adjacent state.
@@ -206,7 +206,7 @@ operating environment on a clean machine.
 - use `./scripts/bootstrap-macos.sh --darwin --apply` when the public
   nix-darwin/Homebrew app ledger should be applied too
 - edit `hosts/example.nix` only when intentionally testing the checked-in example host
-- run `task install` only after the local example host matches that user
+- run `task apply` only after the local example host matches that user
 - use `private-config` only when the machine needs sensitive, account-bound,
   company/private, secret-adjacent, or runtime-adjacent overlays
 - the public repo owns reusable public-safe comfort config; the private repo is

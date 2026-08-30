@@ -791,9 +791,9 @@ finish_message() {
   fi
 
   if [ "$darwin_phase" -eq 1 ]; then
-    info "apply complete; run: task check:full"
+    info "apply complete; run: task check"
   else
-    info "Home Manager apply complete; run: task check:user"
+    info "Home Manager apply complete; run: task check"
     info "rerun with --darwin --apply for the Homebrew GUI/app ledger and full verification"
   fi
 }

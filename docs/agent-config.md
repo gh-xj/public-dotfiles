@@ -96,7 +96,7 @@ To apply the public baseline directly, clone the repo, edit
 `hosts/example.nix` for the target macOS account, then run:
 
 ```bash
-task install
+task apply
 ```
 
 For private machines, `private-config` imports this public baseline and adds

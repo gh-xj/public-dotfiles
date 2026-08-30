@@ -30,7 +30,7 @@ there; everything below is shared.
 3. Inspect exactly what will be committed:
    `git diff --cached`
 4. Run the central verification surface, including staged secret risk:
-   `task check:full`
+   `task check`
 5. Commit one behavior at a time:
    `git commit -m "Set git init default branch to main"`
 6. Do not leave an accepted atomic operation uncommitted by default. If the
