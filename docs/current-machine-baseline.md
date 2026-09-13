@@ -69,7 +69,7 @@ Home Manager now owns these public config files on a new machine:
 | Claude Code CLI | Native installer only; `~/.local/bin/claude` points into `~/.local/share/claude/versions/<version>`. Update with `claude install`. Do not also install from Nix, npm, or Homebrew |
 | npm globals | narrow public ledger in `npm-globals.txt`; currently `@google/gemini-cli`, `@googleworkspace/cli`, `ccusage`, `markdownlint-cli2` |
 | Homebrew brews | `displayplacer`, `mole`, `pngpaste` |
-| Homebrew casks | Ghostty, Chrome, Karabiner, Amethyst, Raycast, Codex app, Setapp, Mimestream, 1Password, CleanShot, Tailscale, public font set; version-gated additions are OrbStack and ChatGPT on macOS 14+, and TypeWhisper on macOS 15+ |
+| Homebrew casks | Ghostty, Chrome, Karabiner, Amethyst, Raycast, Codex app, Claude desktop, Setapp, Mimestream, 1Password, CleanShot, Tailscale, public font set; version-gated additions are OrbStack and ChatGPT on macOS 14+, and TypeWhisper on macOS 15+ |
 
 ## Raycast Current State
 

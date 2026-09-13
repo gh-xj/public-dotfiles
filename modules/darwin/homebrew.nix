@@ -31,6 +31,7 @@ in
         "insta360-studio"
         "raycast"
         "codex-app"
+        "claude"
         "setapp"
         "mimestream"
         "1password"
