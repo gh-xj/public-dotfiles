@@ -6,9 +6,10 @@ gui:
   expandFocusedSidePanel: true # Makes the focused side panel larger automatically
 
 git:
-  pagers:
-    - pager: 'delta --light --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"'
-    - externalDiffCommand: 'difft --color=always --display=inline'
+  diffRenderers:
+    - command: 'delta --light --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"'
+    - type: extDiff
+      command: 'difft --color=always --display=inline'
 
   mainBranches:
     - main
