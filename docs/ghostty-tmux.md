@@ -52,7 +52,7 @@ Current pane shortcuts:
 - `super+ctrl+=` sends `prefix + E`: equalize the current tmux layout.
 - `prefix + J` invokes EasyJump.
 - `Ctrl-h/j/k/l` select tmux panes directly in root and copy-mode tables, even when the active pane is running nvim.
-- `Ctrl-Left` / `Ctrl-Right` select tmux panes directly; `prefix + Ctrl-Left/Right` is intentionally unbound to avoid the default one-cell resize flicker.
+- `Ctrl-Left` / `Ctrl-Right` switch to the previous / next tmux window. Ghostty sends `prefix + p/n`; tmux also binds the native root keys for other terminal clients.
 
 Current pane swap behavior:
 

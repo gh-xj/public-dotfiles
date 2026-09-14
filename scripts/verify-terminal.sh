@@ -166,6 +166,15 @@ verify_tmux() {
   tmux -L "$socket" -f /dev/null new-session -d -s verify-terminal 'sleep 60'
   tmux -L "$socket" source-file "$tmux_config"
 
+  assert_line "$ghostty_config" 'keybind = ctrl+left=text:\x13p'
+  assert_line "$ghostty_config" 'keybind = ctrl+right=text:\x13n'
+  if grep -Eq '^keybind = shift\+(left|right)=' "$ghostty_config"; then
+    echo 'unexpected Shift+Arrow tmux window navigation remains in Ghostty config' >&2
+    exit 1
+  fi
+  tmux_key_binding "$socket" root C-Left | grep -q 'previous-window'
+  tmux_key_binding "$socket" root C-Right | grep -q 'next-window'
+
   local key
   for key in M-b M-d M-D M-f M-w M-z; do
     binding="$(tmux_key_binding "$socket" root "$key")"
