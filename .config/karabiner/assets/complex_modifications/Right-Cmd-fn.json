@@ -1,4 +1,5 @@
 {
+  "title": "rightCmdFn",
   "rules": [
     {
       "description": "rightCmdFn: right_cmd enables right_cmd_mode mode",
