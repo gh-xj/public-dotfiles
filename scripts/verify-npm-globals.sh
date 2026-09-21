@@ -34,6 +34,24 @@ while IFS= read -r spec || [ -n "$spec" ]; do
       exit 1
     }
     ;;
+  @jackwener/opencli)
+    command -v opencli >/dev/null 2>&1 || {
+      printf 'missing npm global command: opencli\n' >&2
+      exit 1
+    }
+    ;;
+  @jackwener/wx-cli)
+    command -v wx >/dev/null 2>&1 || {
+      printf 'missing npm global command: wx\n' >&2
+      exit 1
+    }
+    ;;
+  @larksuite/cli)
+    command -v lark-cli >/dev/null 2>&1 || {
+      printf 'missing npm global command: lark-cli\n' >&2
+      exit 1
+    }
+    ;;
   ccusage)
     command -v ccusage >/dev/null 2>&1 || {
       printf 'missing npm global command: ccusage\n' >&2
