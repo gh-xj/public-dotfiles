@@ -60,17 +60,31 @@ func resultPath(requested, runID string) (string, error) {
 }
 
 func printRunSummary(run RunResult) {
-	fmt.Printf("%-22s %-8s %10s %10s %10s %8s\n", "scenario", "status", "median", "p95", "process", "plugins")
+	fmt.Printf("%-22s %-8s %10s %10s %10s %8s %8s\n", "scenario", "status", "median", "p95", "process", "plugins", "invalid")
 	for _, result := range run.Scenarios {
 		processMedian := 0.0
 		if result.ProcessTiming != nil {
 			processMedian = result.ProcessTiming.MedianMS
 		}
-		fmt.Printf("%-22s %-8s %8.1fms %8.1fms %8.1fms %8d\n",
-			result.ID, result.Status, result.MedianMS, result.P95MS, processMedian, len(result.LoadedPlugins))
+		fmt.Printf("%-22s %-8s %8.1fms %8.1fms %8.1fms %8d %8d\n",
+			result.ID, result.Status, result.MedianMS, result.P95MS, processMedian, len(result.LoadedPlugins), result.InvalidSampleCount)
+		if result.InvalidSampleCount > 0 {
+			fmt.Printf("  excluded %d sample(s) that spanned system sleep or exceeded %.0f ms clock skew\n",
+				result.InvalidSampleCount, run.MaxClockSkewMS)
+		}
 		if result.Error != "" {
 			fmt.Printf("  %s\n", result.Error)
 		}
+	}
+	for _, fingerprint := range run.Environment.LSPExecutables {
+		detail := fingerprint.SHA256Prefix
+		if fingerprint.Version != "" {
+			detail += " " + fingerprint.Version
+		}
+		if fingerprint.Error != "" {
+			detail = "error: " + fingerprint.Error
+		}
+		fmt.Printf("lsp %-18s %s (%s)\n", fingerprint.Client, detail, fingerprint.ResolvedPath)
 	}
 }
 

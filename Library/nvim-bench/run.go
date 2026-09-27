@@ -17,6 +17,9 @@ func (cmd RunCmd) Run(cli *CLI) error {
 	if cmd.Runs < 1 || cmd.Warmup < 0 {
 		return fmt.Errorf("runs must be positive and warmup cannot be negative")
 	}
+	if cmd.MaxClockSkewMS <= 0 {
+		return fmt.Errorf("max-clock-skew-ms must be positive")
+	}
 	manifest, err := loadManifest(cli.Manifest)
 	if err != nil {
 		return err
@@ -39,13 +42,14 @@ func (cmd RunCmd) Run(cli *CLI) error {
 	}
 	now := time.Now().UTC()
 	run := RunResult{
-		SchemaVersion: resultSchemaVersion,
-		RunID:         now.Format("20060102T150405.000000000Z"),
-		CreatedAt:     now,
-		Suite:         cmd.Suite,
-		Runs:          cmd.Runs,
-		Warmup:        cmd.Warmup,
-		Environment:   environment,
+		SchemaVersion:  resultSchemaVersion,
+		RunID:          now.Format("20060102T150405.000000000Z"),
+		CreatedAt:      now,
+		Suite:          cmd.Suite,
+		Runs:           cmd.Runs,
+		Warmup:         cmd.Warmup,
+		MaxClockSkewMS: cmd.MaxClockSkewMS,
+		Environment:    environment,
 	}
 
 	failed := false
@@ -59,6 +63,7 @@ func (cmd RunCmd) Run(cli *CLI) error {
 		}
 		run.Scenarios = append(run.Scenarios, result)
 	}
+	run.Environment.LSPExecutables = fingerprintLSPExecutables(run.Scenarios)
 
 	output, err := resultPath(cmd.Output, run.RunID)
 	if err != nil {
@@ -189,16 +194,14 @@ func runScenario(cmd RunCmd, manifest loadedManifest, scenario Scenario, nvimPat
 		result.Error = fmt.Sprintf("expected %d probe samples, got %d", expectedProbes, len(probes))
 		return result
 	}
-	measuredProbes := probes[cmd.Warmup:]
-	activationSamples := make([]float64, 0, len(measuredProbes))
-	for _, probe := range measuredProbes {
-		if probe.Status != "passed" {
-			result.Error = probe.Error
-			return result
-		}
-		activationSamples = append(activationSamples, probe.ElapsedMS)
+	aggregate, err := aggregateSamples(probes[cmd.Warmup:], stats.Times, cmd.MaxClockSkewMS)
+	result.InvalidSamples = aggregate.Invalid
+	result.InvalidSampleCount = len(aggregate.Invalid)
+	if err != nil {
+		result.Error = err.Error()
+		return result
 	}
-	activation := summarizeSamples(activationSamples)
+	activation := aggregate.Activation
 	result.MeanMS = activation.MeanMS
 	result.MedianMS = activation.MedianMS
 	result.P95MS = activation.P95MS
@@ -206,7 +209,7 @@ func runScenario(cmd RunCmd, manifest loadedManifest, scenario Scenario, nvimPat
 	result.MinMS = activation.MinMS
 	result.MaxMS = activation.MaxMS
 	result.SamplesMS = activation.SamplesMS
-	process := summarizeSamples(secondsToMilliseconds(stats.Times))
+	process := aggregate.Process
 	result.ProcessTiming = &process
 	result.Status = "passed"
 	if scenario.BudgetMS > 0 {

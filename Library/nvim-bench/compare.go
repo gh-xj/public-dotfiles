@@ -78,6 +78,31 @@ func compatibleRuns(before, after RunResult) error {
 				check.name, check.before, check.after)
 		}
 	}
+	return compatibleLSPExecutables(before.Environment.LSPExecutables, after.Environment.LSPExecutables)
+}
+
+// compatibleLSPExecutables rejects comparisons where a language server that
+// both runs launched is a different binary, so a server upgrade or PATH switch
+// cannot masquerade as a configuration change. Clients present in only one run
+// are not compared.
+func compatibleLSPExecutables(before, after []ExecutableFingerprint) error {
+	identity := func(fingerprint ExecutableFingerprint) string {
+		return fingerprint.SHA256Prefix + " " + fingerprint.Version
+	}
+	beforeByClient := map[string]ExecutableFingerprint{}
+	for _, fingerprint := range before {
+		beforeByClient[fingerprint.Client] = fingerprint
+	}
+	for _, fingerprint := range after {
+		baseline, ok := beforeByClient[fingerprint.Client]
+		if !ok {
+			continue
+		}
+		if identity(baseline) != identity(fingerprint) {
+			return fmt.Errorf("incompatible %s executable: %s (%s) != %s (%s) (use --allow-incompatible to override)",
+				fingerprint.Client, baseline.ResolvedPath, identity(baseline), fingerprint.ResolvedPath, identity(fingerprint))
+		}
+	}
 	return nil
 }
 

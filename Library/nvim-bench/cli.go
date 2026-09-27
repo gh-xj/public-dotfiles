@@ -26,6 +26,8 @@ type RunCmd struct {
 	Warmup  int    `help:"Warmup runs per scenario." default:"3"`
 	Output  string `name:"output" type:"path" help:"Result JSON path; defaults to the user state directory."`
 	Budgets bool   `name:"enforce-budgets" help:"Fail scenarios whose p95 exceeds the declared budget."`
+	// MaxClockSkewMS is documented in samples.go.
+	MaxClockSkewMS float64 `name:"max-clock-skew-ms" help:"Exclude a sample when its wall-clock elapsed exceeds its awake elapsed by more than this many milliseconds (system sleep guard)." default:"250"`
 }
 
 type CompareCmd struct {

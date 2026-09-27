@@ -18,6 +18,15 @@ as a proxy for every interaction.
 - Scenario median/p95 values come from harness event timestamps. Hyperfine
   wall-clock samples remain available as `process_timing` diagnostics and do
   not drive readiness budgets or comparisons.
+- Every sample also records wall-clock and sleep-excluding elapsed time. A
+  sample whose clocks disagree by more than `--max-clock-skew-ms` (default
+  250) spanned a system suspend; it is excluded from all aggregates and
+  reported as `invalid_sample_count`. A scenario fails only when no valid
+  sample remains. `samples.go` documents the clocks.
+- The environment block fingerprints every external language server the run
+  launched (`lsp_executables`: resolved path, size, mtime, sha256 prefix,
+  `--version` line). `compare` treats a changed server binary as incompatible
+  so a server upgrade cannot pass as a configuration improvement.
 - Runs default to the repository's `.config` source so an iteration measures
   the working-tree candidate. Pass `--config-home ~/.config` to measure the
   currently activated Home Manager generation instead.
