@@ -32,6 +32,7 @@ bash ./scripts/verify-nvim.sh
 python3 scripts/test-agent-status.py
 python3 scripts/test-public-control.py
 python3 scripts/test-workspace-health.py
+python3 scripts/test-tmux-recovery.py
 "$generation/home-path/bin/agent-workspace" doctor --help >/dev/null
 python3 scripts/verify-codex-strict.py
 task --taskfile global/Taskfile.yml --list-all >/dev/null

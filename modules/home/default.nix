@@ -12,6 +12,7 @@ in
     ./shell.nix
     ./terminal.nix
     ./control.nix
+    ./recovery.nix
   ];
 
   options.xj.publicDotfiles = {

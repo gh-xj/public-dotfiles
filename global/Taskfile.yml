@@ -21,5 +21,7 @@ tasks:
         suffix=2
         while [ -e "$path" ]; do path="${base%.md}-$suffix.md"; suffix=$((suffix + 1)); done
         printf '# %s\n' "$name" >"$path"
-        [ -z "${TMUX:-}" ] || tmux rename-window "$(printf '%s' "$name" | tr ' ' '-')"
+        if [ -n "${TMUX:-}" ] && [ -n "${TMUX_PANE:-}" ]; then
+          tmux set-option -p -t "$TMUX_PANE" @recovery_document "$PWD/$path"
+        fi
         "${EDITOR:-nvim}" "$path"
