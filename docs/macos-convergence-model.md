@@ -1,90 +1,59 @@
 # macOS Convergence Model
 
-`public-dotfiles` restores a comfortable public-safe macOS setup by converging
-multiple preference and runtime layers. A passing bootstrap should mean the
-target Mac behaves like the source Mac, not only that a plist contains expected
-values.
+A successful bootstrap must match observable behavior, not only persisted
+preferences.
 
 ## Discrepancy Loop
 
-When the target Mac differs from the source Mac:
+When a target Mac differs from the source Mac:
 
-1. Inspect both machines with `defaults read` for the affected domain, or the
-   narrow command for the reported area.
-2. Identify the owning layer for the behavior.
-3. Encode desired state in `modules/darwin/defaults.nix`, or in a ledger when
-   no Nix option expresses it.
-4. Add a verifier only when the switch cannot already prove the outcome.
-   Restating a Nix declaration in shell buys nothing and rots.
-5. Apply through `./scripts/bootstrap-macos.sh --darwin --apply` or the narrow
-   task, then re-run the verifier.
+1. Inspect both machines with the narrow command for the affected layer.
+2. Identify the durable owner before changing anything.
+3. Encode public-safe desired state in that owner.
+4. Add a verifier only when evaluation or the owning switch cannot prove the
+   result.
+5. Apply through the supported bootstrap entrypoint, then inspect behavior and
+   run `task check`.
 
-Live one-off commands are only acceptable as probes. If they reveal desired
-behavior, fold the result back into the repo harness.
+Live one-off commands are probes. If they reveal durable desired state, move
+that state into the repo owner instead of keeping an undocumented repair step.
 
-## Layers
+## Owning Layers
 
-| Layer | Owned By | Example | Verification |
-| --- | --- | --- | --- |
-| nix-darwin typed defaults | `modules/darwin/defaults.nix` | Dock, Finder, keyboard repeat, typed trackpad keys | the switch itself |
-| Custom user defaults | `system.defaults.CustomUserPreferences` | Raycast preferences, input source arrays, ByHost trackpad keys | the switch itself |
-| Live hardware/runtime state | `config/macos/display-layouts.tsv` | display arrangement, which no Nix option expresses | `displayplacer` via `task display:apply` |
-| App runtime state | public ledgers plus manual install flows | Raycast Store extensions | `task verify:raycast-extensions` |
-
-## Placement Decision
-
-When adding a new macOS-related setting, pick the narrowest owning layer that
-can actually converge the behavior.
-
-1. Use nix-darwin typed defaults when the setting is already modeled by
-   `system.defaults` and no runtime/session caveat is known.
-2. Use `CustomUserPreferences` when the key is still a durable persisted
-   preference, but nix-darwin does not expose it as a typed option.
-3. Use the TSV-ledger plus script path when the setting is ByHost/currentHost,
-   input-specific, or otherwise needs a shell-level apply/verify loop.
-4. Add a live-state verifier when persisted values are known to produce false
-   positives without a GUI-session or hardware-state check.
-5. Treat app-encrypted, TCC-gated, confirmation-driven, or UI-registered state
-   as an interactive boundary. Record the durable public intent in a ledger or
-   doc, but do not pretend the runtime state is repo-owned.
-
-Anti-rules:
-
-- Do not add a shell ledger when `system.defaults` already expresses the same
-  setting cleanly.
-- Do not keep the same setting in both `modules/darwin/defaults.nix` and a TSV
-  ledger unless the persisted key and the live-state check genuinely target
-  different layers.
-- Do not treat `defaults read` as sufficient proof when the symptom is
-  behavioral and a known live-state check exists.
-
-## Live-State Rule
-
-Any macOS setting with an observable runtime behavior should have a live-state
-check when a reliable one exists. A persisted preference check alone can be a
-false positive.
-
-Known live checks:
-
-| Behavior | Persisted State | Live Check |
+| Layer | Owner | Evidence |
 | --- | --- | --- |
-| Display resolution and layout | `config/macos/display-layouts.tsv` | `displayplacer list` via `task display:apply` |
-| Trackpad tap, thresholds, and three-finger gestures | `modules/darwin/defaults.nix` | applied by the switch; no separate live check |
+| Typed macOS defaults | `modules/darwin/defaults.nix` | nix-darwin evaluation and switch |
+| Untyped durable preferences | `system.defaults.CustomUserPreferences` in the same module | nix-darwin evaluation and switch |
+| Display hardware layout | `config/macos/display-layouts.tsv` | `displayplacer list`; apply only with `task display:apply` |
+| Raycast Store extension intent | `config/raycast/extensions.tsv` | `task verify:raycast-extensions` plus interactive install |
+| App-owned or permission-gated state | the app, macOS, or a downstream private owner | live inspection or human confirmation |
 
-When a live check cannot be made deterministic because of TCC, GUI-session, or
-human-confirmation requirements, keep it out of the blocking gate and provide a
-task that fails with a concrete manual next step.
+Prefer typed nix-darwin defaults. Use `CustomUserPreferences` for durable keys
+that nix-darwin does not type. Add a separate ledger only when no Nix option can
+express the state and a dedicated runtime tool must apply it.
+
+Do not restate the same key in a shell verifier or TSV merely to compare it
+with `defaults read`. Persisted equality is not behavioral proof, and duplicate
+declarations drift.
+
+## Live-State Checks
+
+- Display symptoms: compare `displayplacer list` with
+  `config/macos/display-layouts.tsv`.
+- Trackpad symptoms: compare `modules/darwin/defaults.nix`, persisted defaults,
+  and `ioreg -r -c AppleMultitouchDevice`. A logout/login, sleep/wake, or
+  reconnect may be required before the device reflects applied preferences.
+- Input source symptoms: enabled sources are durable configuration; the
+  currently selected source is runtime state.
+- Raycast symptoms: preferences may be declared, while Script Command
+  registration, aliases, hotkeys, and Store confirmation remain app-owned.
+
+Remote-control software can substitute the client Mac's pointer behavior. When
+diagnosing input, confirm the physical target before changing repo policy.
 
 ## Interactive Boundaries
 
-Some state cannot be restored silently from an SSH-only bootstrap:
-
-| Surface | Reason | Current Task |
-| --- | --- | --- |
-| Raycast Script Command directory and command hotkeys | Raycast stores registration, aliases, and hotkeys in app-managed/encrypted runtime state | Add the stable repo directory in Raycast Settings, then confirm commands appear in Raycast search |
-| Raycast Store extensions | Raycast owns Store install confirmation and extension runtime state | `task raycast:open-extension-installs`, then `task verify:raycast-extensions` |
-| Trackpad live reload | WindowServer may keep stale `AppleMultitouchDevice` preferences until a GUI reload or logout/login | logout/login on the target Mac |
-
-The repo should make these boundaries explicit. A bootstrap can be excellent
-without pretending macOS permission prompts and app-owned confirmation flows are
-fully automatable.
+TCC grants, GUI-session reloads, encrypted app state, and confirmation-driven
+installs do not belong in a blocking repo verifier. Document the manual next
+step and keep the public desired state limited to what the repo can actually
+own.
