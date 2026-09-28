@@ -16,6 +16,8 @@ alias lg='lazygit'
 alias k='kubectl'
 alias b='nvim .'
 
+source "${_XJ_ZSH_MODULE_DIR}/codex-tmux.zsh"
+
 t() {
     if (( $# == 0 )); then
         tmux attach || tmux

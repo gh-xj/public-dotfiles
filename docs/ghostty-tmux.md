@@ -101,6 +101,24 @@ Codex SessionStart uses only documented hook fields to set a repository fallback
 No runtime database or transcript inspection is involved. SessionEnd and the
 interactive zsh prompt clear labels. Unchanged labels do not call tmux.
 
+Inside tmux, the zsh `codex` function passes the launching `TMUX` and `TMUX_PANE`
+through per-invocation `shell_environment_policy.set` overrides. The shared
+Codex app server may otherwise omit them from hooks and shell tools, making the
+helper correctly no-op as though it were outside tmux. No pane IDs are persisted
+in global config. The function also disables native Codex title updates in tmux
+so Workmux sees the same agent-set title. Outside tmux it delegates unchanged to
+the official standalone binary; direct binary invocations bypass this adapter.
+
+After a hook definition changes, review and trust SessionStart/SessionEnd in
+Codex `/hooks`. Trust is mutable runtime state and is never seeded or bypassed.
+On an already-running tmux server, reload with `prefix + r` after activation;
+otherwise the old border format can hide labels despite correct agent hooks.
+New shell panes pick up the Codex function automatically; existing shells can
+reload their `.zshrc` before starting another Codex session.
+
+The environment override uses the official
+[Codex command environment policy](https://learn.chatgpt.com/docs/config-file/config-advanced#shell-environment-policy).
+
 Workmux is pinned to 0.1.248: `@workmux_pane_status` is an internal contract
 covered by real working/waiting/done/clear tests. `@workmux_status` remains its
 window summary (last update, not a count of pane states). PostToolUse restores

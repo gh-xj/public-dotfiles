@@ -9,6 +9,7 @@ plugin_paths="$home_files/.config/xj/zsh/plugin-paths.zsh"
 zsh -n "$repo_root/.zshenv"
 zsh -n "$repo_root/.zprofile"
 zsh -n "$repo_root/.zshrc"
+python3 "$repo_root/scripts/test-codex-tmux.py"
 
 tmpdir="$(mktemp -d)"
 cleanup() {
