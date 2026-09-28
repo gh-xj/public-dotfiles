@@ -1,4 +1,5 @@
 # Ensure user-local tools are available to non-interactive SSH/Codex shells.
+typeset -U path  # login shells add some of these again in .zprofile
 export PATH="$HOME/.local/bin:${XDG_DATA_HOME:-$HOME/.local/share}/npm-global/bin:$PATH"
 
 # Optional account/provider environment; never required by the public baseline.
