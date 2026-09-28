@@ -1,4 +1,4 @@
-{ config, lib, publicDotfilesDelivery, ... }:
+{ config, lib, pkgs, publicDotfilesDelivery, ... }:
 
 let
   cfg = config.xj.publicDotfiles;
@@ -12,6 +12,11 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
+    home.packages = [ (pkgs.writeShellApplication {
+      name = "nvim-health";
+      runtimeInputs = [ pkgs.python3 ];
+      text = ''exec python3 ${../../scripts/nvim-health.py} "$@"'';
+    }) ];
     home.file = {
       ".amethyst.yml" = mkRepoFile ".config/amethyst/amethyst.yml";
       # Live-edited alongside the Claude hooks; keep it writable.

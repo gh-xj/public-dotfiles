@@ -2,6 +2,9 @@
 vim.g.mapleader = ","
 vim.g.maplocalleader = ","
 
+-- An explicit value prevents terminal OSC background detection racing startup.
+vim.opt.background = "dark"
+
 -- Disable built-in plugins we don't use. Saves a couple ms at startup and
 -- avoids surprise default mappings (e.g. netrw grabbing directory buffers).
 for _, plugin in ipairs({

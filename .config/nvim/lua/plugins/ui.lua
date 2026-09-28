@@ -2,7 +2,20 @@ return {
   {
     "nvim-lualine/lualine.nvim",
     event = "VeryLazy",
-    opts = { options = { theme = "auto" } },
+    opts = {
+      options = { theme = "auto" },
+      sections = {
+        lualine_b = { "branch", {
+          "diff",
+          source = function()
+            local s = vim.b.gitsigns_status_dict
+            if s then
+              return { added = s.added, modified = s.changed, removed = s.removed }
+            end
+          end,
+        }, "diagnostics" },
+      },
+    },
   },
 
   {
