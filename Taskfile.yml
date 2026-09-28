@@ -27,6 +27,12 @@ tasks:
     cmds:
       - python3 scripts/public-control.py reconcile {{.CLI_ARGS}}
 
+  workspace:health:
+    desc: Read-only bounded terminal, agent, workload and disk snapshot
+    silent: true
+    cmds:
+      - python3 scripts/public-control.py workspace doctor {{.CLI_ARGS}}
+
   raycast:install:
     desc: Verify and open install intents for missing Raycast extensions
     cmds:

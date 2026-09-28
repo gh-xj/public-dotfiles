@@ -1,8 +1,15 @@
 { config, lib, pkgs, ... }:
 let
   cfg = config.xj.publicDotfiles;
+  workspace = pkgs.writeShellApplication {
+    name = "agent-workspace";
+    runtimeInputs = [ pkgs.python3 pkgs.tmux pkgs.git ];
+    text = ''exec python3 ${../../scripts/public-control.py} --repo ${lib.escapeShellArg cfg.repoRoot} workspace "$@"'';
+  };
 in {
   config = lib.mkIf cfg.enable {
+    home.packages = [ workspace ];
+    home.file.".local/bin/agent-workspace".source = "${workspace}/bin/agent-workspace";
     xdg.configFile."public-dotfiles/generation.json".text = builtins.toJSON {
       schema = 1;
       source_revision = cfg.sourceRevision;

@@ -207,6 +207,134 @@ def disk_health(path):
         return {"state": "unavailable"}
 
 
+HEALTH_DEFAULTS = {"clients": 6, "agent_panes": 24, "panes": 40, "disk_use": 90,
+                   "long_seconds": 600, "long_cpu": 20, "top": 10}
+
+
+def elapsed_seconds(text):
+    days, _, clock = text.rpartition("-")
+    try:
+        parts = list(map(int, clock.split(":")))
+        seconds = 0
+        for part in parts:
+            seconds = seconds * 60 + part
+        return seconds + (int(days) * 86400 if days else 0)
+    except ValueError:
+        return 0
+
+
+def process_snapshot(runner=run):
+    env = dict(os.environ, LC_ALL="C")
+    stats = runner(["ps", "-axo", "pid=,pcpu=,etime=,comm="], env=env)
+    argv = runner(["ps", "-ww", "-axo", "pid=,args="], env=env)
+    if stats.returncode or argv.returncode:
+        return None
+    arguments = {}
+    for line in argv.stdout.splitlines():
+        fields = line.strip().split(None, 1)
+        if len(fields) == 2 and fields[0].isdigit():
+            arguments[int(fields[0])] = fields[1]
+    processes = []
+    for line in stats.stdout.splitlines():
+        fields = line.strip().split(None, 3)
+        if len(fields) != 4:
+            continue
+        pid, cpu, elapsed, executable = fields
+        try:
+            pid, cpu = int(pid), float(cpu)
+        except ValueError:
+            continue
+        name = Path(executable).name.lower()
+        args = arguments.get(pid, "")
+        provider = None
+        if name == "codex" and not re.search(r"\b(?:app-server|exec-server|daemon|mcp-server)\b", args):
+            provider = "Codex"
+        elif (name == "claude" and ".app/" not in executable) or "/claude/versions/" in executable:
+            provider = "Claude"
+        kind = None
+        if name in ("rg", "ripgrep", "find") or name == "grep" and re.search(r"\s-[^\s]*[rR]", args):
+            kind = "search"
+        elif name in ("pytest", "py.test", "jest", "vitest", "ctest") or name in ("go", "cargo", "node", "python", "python3") and re.search(r"\b(?:test|pytest|unittest|jest|vitest)\b", args):
+            kind = "test"
+        elif name in ("make", "gmake", "ninja", "cmake", "cargo", "rustc", "clang", "clang++", "gcc", "go", "nix"):
+            kind = "build"
+        # Discard executable paths and argv here, before any reporting function.
+        processes.append({"pid": pid, "cpu_percent": cpu, "elapsed_seconds": elapsed_seconds(elapsed),
+                          "provider": provider, "kind": kind,
+                          "terminal": "tmux" if name.startswith("tmux") else "Ghostty" if name == "ghostty" else None})
+    return processes
+
+
+def tmux_snapshot(runner=run):
+    clients = runner(["tmux", "list-clients", "-F", "#{client_termname}"])
+    sessions = runner(["tmux", "list-sessions", "-F", "#{session_id}"])
+    windows = runner(["tmux", "list-windows", "-a", "-F", "#{window_id}"])
+    panes = runner(["tmux", "list-panes", "-a", "-F", "#{pane_id}\t#{?@codex_sid,1,0}\t#{?@claude_sid,1,0}\t#{@workmux_pane_status}"])
+    if any(value.returncode for value in (clients, sessions, windows, panes)):
+        return {"state": "unavailable"}
+    unique_panes = {}
+    for line in panes.stdout.splitlines():
+        fields = line.split("\t", 3)
+        if len(fields) == 4 and re.fullmatch(r"%\d+", fields[0]):
+            unique_panes[fields[0]] = fields[1:]
+    states = {"working": 0, "waiting": 0, "done": 0, "unknown": 0, "no_status": 0}
+    icons = {"🤖": "working", "💬": "waiting", "✅": "done", "working": "working", "waiting": "waiting", "done": "done", "": "no_status"}
+    for _, _, status in unique_panes.values():
+        states[icons.get(status.strip(), "unknown")] += 1
+    states.update(active=states["working"] + states["waiting"], finished=states["done"])
+    return {"state": "observed", "clients": len(clients.stdout.splitlines()),
+            "ghostty_clients": sum("ghostty" in name.lower() for name in clients.stdout.splitlines()),
+            "sessions": len(set(sessions.stdout.splitlines())), "windows": len(set(windows.stdout.splitlines())),
+            "panes": len(unique_panes), "agent_panes": sum(a == "1" or b == "1" for a, b, _ in unique_panes.values()),
+            "workmux": states}
+
+
+def workspace_report(topology, processes, disk, generations, thresholds):
+    warnings = []
+    for key, code in (("clients", "attached-client-count"), ("agent_panes", "agent-pane-count"), ("panes", "total-pane-count")):
+        if topology.get(key, 0) > thresholds[key]:
+            warnings.append(code)
+    if disk.get("used_percent", 0) > thresholds["disk_use"]:
+        warnings.append("disk-use")
+    long_running = []
+    providers = {"Claude": 0, "Codex": 0}
+    terminal_cpu = {"tmux": 0.0, "Ghostty": 0.0}
+    terminal_processes = {"tmux": 0, "Ghostty": 0}
+    for process in processes or []:
+        if process["provider"] in providers:
+            providers[process["provider"]] += 1
+        terminal = process["terminal"]
+        if terminal:
+            terminal_cpu[terminal] += process["cpu_percent"]
+            terminal_processes[terminal] += 1
+        if process["kind"] and process["elapsed_seconds"] > thresholds["long_seconds"] and process["cpu_percent"] >= thresholds["long_cpu"]:
+            long_running.append({key: process[key] for key in ("pid", "kind", "cpu_percent", "elapsed_seconds")})
+    if long_running:
+        warnings.append("long-running-high-cpu-workload")
+    drift = generations.get("active_matches_desired")
+    if drift is False or generations.get("active_source_matches_checkout") is False:
+        warnings.append("active-generation-drift")
+    long_running.sort(key=lambda item: item["cpu_percent"], reverse=True)
+    gaps = []
+    if topology.get("state") != "observed":
+        gaps.append("tmux-snapshot-unavailable")
+    if processes is None:
+        gaps.append("process-snapshot-unavailable")
+    if "used_percent" not in disk:
+        gaps.append("disk-snapshot-unavailable")
+    if drift is None and generations.get("active_source_matches_checkout") is None:
+        gaps.append("generation-comparison-unavailable; select --flake for evaluation")
+    return {"mode": "read-only-single-snapshot", "thresholds": thresholds, "warnings": warnings,
+            "observation_gaps": gaps,
+            "tmux": topology, "provider_cli_processes": providers if processes is not None else None,
+            "terminal_processes": terminal_processes if processes is not None else None,
+            "terminal_cpu_percent": {k: round(v, 2) for k, v in terminal_cpu.items()} if processes is not None else None,
+            "long_running_workloads": long_running[:thresholds["top"]],
+            "additional_long_running_count": max(0, len(long_running) - thresholds["top"]),
+            "disk": disk, "generations": generations,
+            "follow_up": ["task doctor -- --live", "Review workload ownership manually; no process or pane is terminated."]}
+
+
 class Control:
     def __init__(self, repo, home, flake=None, generation=None, runner=run):
         self.repo, self.home = repo.resolve(), home.absolute()
@@ -297,6 +425,11 @@ class Control:
                           mutable_link_migrations=detach_mutable(self.home, self.repo))
         return report
 
+    def workspace(self, thresholds):
+        volume = Path("/System/Volumes/Data")
+        return workspace_report(tmux_snapshot(self.run), process_snapshot(self.run),
+                                disk_health(volume if volume.exists() else self.home), self.generations(), thresholds)
+
     def plan(self):
         if not self.flake or not self.desired or not self.desired.is_dir():
             raise SafeError("reconcile requires an explicitly selected, built --flake PATH#HOME_PROFILE")
@@ -383,6 +516,12 @@ def main():
     doctor = sub.add_parser("doctor")
     doctor.add_argument("--live", action="store_true")
     doctor.add_argument("--generation", type=Path, help="already built comparison generation (read-only)")
+    workspace = sub.add_parser("workspace")
+    workspace.add_argument("action", choices=["doctor"])
+    workspace.add_argument("--generation", type=Path, help="already built comparison generation")
+    workspace.add_argument("--flake", help="opt into selected-profile evaluation (no build)")
+    for key, default in HEALTH_DEFAULTS.items():
+        workspace.add_argument("--" + ("top" if key == "top" else "warn-" + key.replace("_", "-")), type=int, default=default, dest=key)
     reconcile = sub.add_parser("reconcile")
     modes = reconcile.add_mutually_exclusive_group(required=True)
     modes.add_argument("--dry-run", action="store_true")
@@ -404,6 +543,11 @@ def main():
             control.select(build=args.command == "reconcile")
             if args.command == "doctor":
                 report = control.doctor(args.live)
+            elif args.command == "workspace":
+                thresholds = {key: getattr(args, key) for key in HEALTH_DEFAULTS}
+                if any(value < 0 for value in thresholds.values()) or not 1 <= thresholds["top"] <= 50 or thresholds["disk_use"] > 100:
+                    raise SafeError("invalid-health-thresholds; use nonnegative values, disk <=100 and top between 1 and 50")
+                report = control.workspace(thresholds)
             else:
                 report = control.plan()
                 if args.apply:

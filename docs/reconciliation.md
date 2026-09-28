@@ -98,3 +98,36 @@ refresh available only as a user opt-in.
 The doctor compares the public JSON integration contract. Private inline TOML
 hooks and plugin-provided hooks remain outside that ownership; review them when
 consolidating the plan to avoid adding a duplicate integration from another source.
+
+## Bounded workspace health
+
+```sh
+agent-workspace doctor
+task workspace:health
+task workspace:health -- --warn-clients 8 --warn-agent-panes 32 --top 5
+```
+
+The installed command and task use the same read-only, single-snapshot engine.
+It reports attached tmux clients (including the Ghostty subset), unique sessions,
+windows and panes, agent-tagged panes, supported Claude/Codex CLI process counts,
+tmux/Ghostty CPU, Workmux active/finished counts, disk free space and generation
+drift. Shared Codex app-server processes are excluded from the CLI agent count;
+process counts are not conversation counts. Pane identities can be stale when
+a provider fails to run cleanup, so process counts are reported independently.
+
+Default warnings trigger above 6 clients, 24 agent-tagged panes, 40 total panes,
+or 90% Data-volume use. Search/build/test candidates older than 600 seconds with
+at least 20% CPU are reported (at most 10, configurable up to 50). `ps` CPU values
+are a snapshot, not a profiler. Only public workload categories and numeric PIDs
+are shown, never executable paths, full argv, project names or unsupported
+provider names. Custom Workmux icons are counted as unknown rather than exposed.
+
+Threshold flags: `--warn-clients`, `--warn-agent-panes`, `--warn-panes`,
+`--warn-disk-use`, `--warn-long-seconds`, `--warn-long-cpu`, and `--top`.
+Unknown/unavailable observations are explicit gaps, not a healthy zero.
+
+There is no Nix evaluation by default: generation source metadata is inspected
+locally. Add `--flake /path/to/owning-flake#home-profile` to opt into comparison
+with an evaluated current profile, or `--generation /nix/store/...` for an already
+built comparison. Health never builds, activates, merges config, reloads a
+server, terminates a process, or closes a pane. No launchd timer is installed.
