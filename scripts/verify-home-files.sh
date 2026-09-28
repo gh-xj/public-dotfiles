@@ -13,6 +13,9 @@ generation="$(nix_cmd build --no-link --print-out-paths "$activation_attr")"
 home_files="$(readlink "$generation/home-files")"
 python3 scripts/verify-generated-links.py "$home_files" "$repo_root"
 python3 scripts/verify-agent-seeds.py "$generation" "$repo_root"
+for tool in agent-pane-title agent-session nvim-health scratch-gc tmux-recovery; do
+  test -x "$generation/home-path/bin/$tool"
+done
 
 assert_file() {
   local path="$1"

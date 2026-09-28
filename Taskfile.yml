@@ -56,6 +56,7 @@ tasks:
       - task: verify:bootstrap-darwin
       - task: verify:raycast-scripts
       - task: verify:terminal
+      - task: verify:utilities
       - task: security:denylist
       - task: secrets:staged
       - task: secrets:full
@@ -178,12 +179,17 @@ tasks:
   # Verify Neovim starts with this config
   verify:nvim:
     cmds:
-      - nvim --headless '+qa'
+      - bash scripts/verify-nvim.sh
 
   # Verify terminal app workflow (also a cross-repo bridge from private-config)
   verify:terminal:
     cmds:
       - ./scripts/verify-terminal.sh
+
+  verify:utilities:
+    desc: Verify scratch ownership and provider-neutral tmux recovery
+    cmds:
+      - python3 scripts/test-utilities.py
 
   # Verify zsh startup and plugin contract (also a cross-repo bridge from private-config)
   verify:zsh:
