@@ -33,6 +33,7 @@ part of the intended workflow. Use store-backed immutable links by default.
 | Target | Class | Why |
 | --- | --- | --- |
 | `~/.codex/config.toml` | Mutable seed | Codex writes runtime trust and state after bootstrap |
+| `~/.claude/settings.json` | Mutable seed | Claude writes plugin/account/runtime state after bootstrap |
 | `~/.tmux.conf` | Generated shim | Bridges into Home Manager's generated tmux config |
 | `~/.config/raycast/scripts` | Repo-backed immutable link | Raycast setup needs the durable repo path for UI registration |
 | `~/.config/bat` | Store-backed immutable link | Static public config with no live repo-path requirement |

@@ -26,7 +26,6 @@ Representative live paths:
 - `$HOME/.zshrc`
 - `$HOME/Taskfile.yml`
 - `$HOME/.tmux.conf`
-- `$HOME/.claude/settings.json`
 - `$HOME/.codex/AGENTS.md`
 - `$HOME/.codex/rules/default.rules`
 - `$HOME/.config/karabiner`
@@ -34,6 +33,9 @@ Representative live paths:
 - `$HOME/.config/zed`
 
 Rules:
+
+- `$HOME/.claude/settings.json` is initialized from the public seed; the live
+  writable file belongs to Claude runtime after first activation
 
 - each live path has exactly one owner
 - `public-dotfiles` owns public-safe comfort config, even when it is opinionated

@@ -30,8 +30,6 @@ Live paths owned by Home Manager:
 
 - `~/AGENTS.md`
 - `~/.claude/CLAUDE.md`
-- `~/.claude/settings.json`
-- `~/.claude/hooks/`
 - `~/.claude/statusline-command.sh`
 - `~/.codex/AGENTS.md`
 - `~/.codex/rules/default.rules`
@@ -44,6 +42,15 @@ directories outside a repo.
 Template path owned by the public repo:
 
 - `config/codex/config.toml`
+- `config/claude/settings.json`
+
+Claude settings use the same mutable-seed contract: first activation creates a
+writable file and migrates old managed links; later activations preserve live
+edits. Hooks call installed `agent-session` and `agent-pane-title` helpers.
+The statusline synchronizes documented Claude names into pane labels; see
+`docs/ghostty-tmux.md`. Existing regular settings files are deliberately not
+merged: review the seed diff and opt into desired hooks/preferences manually.
+Global shell guards and formatters are no longer installed.
 
 The public Codex template stores reusable baseline settings such as model,
 theme, and feature defaults. Bootstrap copies it to `~/.codex/config.toml` only

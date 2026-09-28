@@ -4,6 +4,19 @@
 
 input=$(cat)
 
+label=$(printf '%s' "$input" | jq -r '
+  (.session_name // "") as $s | (.agent.name // "") as $a |
+  if $s != "" and $a != "" then "Claude/" + $a + " · " + $s
+  elif $s != "" then "Claude · " + $s
+  elif $a != "" then "Claude/" + $a else "" end')
+if command -v agent-pane-title >/dev/null 2>&1; then
+    if [[ -n "$label" ]]; then
+        agent-pane-title set "$label" 2>/dev/null || true
+    else
+        agent-pane-title clear 2>/dev/null || true
+    fi
+fi
+
 cwd=$(echo "$input" | jq -r '.cwd // .workspace.current_dir // ""')
 model=$(echo "$input" | jq -r '.model.display_name // ""')
 remaining=$(echo "$input" | jq -r '.context_window.remaining_percentage // empty')
@@ -19,9 +32,9 @@ branch=$(git -C "$cwd" symbolic-ref --quiet --short HEAD 2>/dev/null \
 git_status=""
 if [[ -n "$branch" ]]; then
     st=$(git -C "$cwd" status --porcelain 2>/dev/null)
-    staged=$(echo "$st" | grep -c '^[MADRC]' 2>/dev/null || echo 0)
-    modified=$(echo "$st" | grep -c '^ [MD]' 2>/dev/null || echo 0)
-    untracked=$(echo "$st" | grep -c '^??' 2>/dev/null || echo 0)
+    staged=$(echo "$st" | grep -c '^[MADRC]' || true)
+    modified=$(echo "$st" | grep -c '^ [MD]' || true)
+    untracked=$(echo "$st" | grep -c '^??' || true)
 
     [[ "$staged"    -gt 0 ]] && git_status+=" +${staged}"
     [[ "$modified"  -gt 0 ]] && git_status+=" ~${modified}"

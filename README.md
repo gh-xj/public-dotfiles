@@ -175,12 +175,16 @@ module against a different nixpkgs pin with
 This repo now publishes the reusable Claude/Codex baseline:
 
 - `~/.claude/CLAUDE.md`
-- `~/.claude/settings.json`
-- `~/.claude/hooks/`
+- `config/claude/settings.json` as a mutable settings seed
 - `~/.claude/statusline-command.sh`
 - `~/.codex/AGENTS.md`
 - `~/.codex/rules/default.rules`
 - `config/codex/config.toml` as the public Codex seed template
+
+Claude settings are seeded once into a writable live file. Old managed symlinks
+are migrated; subsequent activation preserves plugin/account/runtime edits.
+Agent helpers are installed through Home Manager; global guard/formatter hooks
+are retired in favor of native permissions and repo-local formatting.
 
 The private repo continues to own agent runtime and account-local material such
 as `settings.local.json`, plugin registry state, skills trees, sessions, auth,

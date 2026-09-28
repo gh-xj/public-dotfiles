@@ -369,6 +369,11 @@ setup_plugins() {
 
     autoload -Uz add-zsh-hook
     add-zsh-hook precmd _set_terminal_title
+    _clear_agent_pane_label() {
+        [[ -n "$TMUX_PANE" ]] && (( $+commands[agent-pane-title] )) || return 0
+        agent-pane-title clear 2>/dev/null || true
+    }
+    add-zsh-hook precmd _clear_agent_pane_label
 }
 
 #

@@ -1,18 +1,28 @@
-{ config, lib, publicDotfilesDelivery, ... }:
+{ config, lib, pkgs, publicDotfilesDelivery, ... }:
 
 let
   cfg = config.xj.publicDotfiles.agents.hooks;
-  inherit (publicDotfilesDelivery) mkImmutableFile mkRepoFile mkRepoTree;
+  inherit (publicDotfilesDelivery) mkImmutableFile mkMutableSeedActivation;
 in
 {
   config = lib.mkIf cfg.enable {
     home.file = {
-      # Live-edited by the operator and by Claude's update-config skill, so
-      # these must stay writable; a store link would make every hook tweak
-      # require a switch and would break settings.json writes outright.
-      ".claude/hooks" = mkRepoTree ".claude/hooks";
-      ".claude/settings.json" = mkRepoFile ".claude/settings.json";
       ".claude/statusline-command.sh" = mkImmutableFile ".claude/statusline-command.sh";
+    };
+    home.packages = map (name: pkgs.writeShellApplication {
+      inherit name;
+      runtimeInputs = [ pkgs.python3 pkgs.tmux pkgs.git ];
+      text = ''exec python3 ${../../../scripts + "/${name}.py"} "$@"'';
+    }) [ "agent-pane-title" "agent-session" ];
+    home.activation.seedClaudeSettings = mkMutableSeedActivation {
+      target = "${config.home.homeDirectory}/.claude/settings.json";
+      targetDir = "${config.home.homeDirectory}/.claude";
+      sourceRel = "config/claude/settings.json";
+      legacyStorePatterns = [
+        "/nix/store/*"
+        "${config.xj.publicDotfiles.repoRoot}/.claude/settings.json"
+        "${config.xj.publicDotfiles.repoRoot}/config/claude/settings.json"
+      ];
     };
   };
 }

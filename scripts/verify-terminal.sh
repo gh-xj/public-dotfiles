@@ -167,7 +167,7 @@ verify_tmux() {
   tmux -L "$socket" source-file "$tmux_config"
 
   [ "$(tmux -L "$socket" show-options -gv pane-border-status)" = "top" ]
-  [ "$(tmux -L "$socket" show-options -gv pane-border-format)" = " #{window_name} " ]
+  python3 "$repo_root/scripts/test-agent-panes.py" "$socket" "$generation/home-path/bin"
 
   assert_line "$ghostty_config" 'keybind = ctrl+left=text:\x13p'
   assert_line "$ghostty_config" 'keybind = ctrl+right=text:\x13n'

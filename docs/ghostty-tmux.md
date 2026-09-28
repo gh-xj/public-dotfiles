@@ -42,22 +42,40 @@ Native Claude Code passthrough:
 
 - Shared tmux config enables `allow-passthrough all` so Claude Code desktop notifications and progress updates can reach Ghostty even when the agent pane/window is not currently visible.
 - Shared tmux config enables `extended-keys` plus `xterm*:extkeys` so Shift+Enter remains distinguishable from Enter inside tmux.
-- Pane borders show the owning tmux window name at the top. This is deliberately
-  `#{window_name}`, not `#{pane_title}`: the former is a durable workspace
-  label; the latter is controlled by the foreground terminal program.
+- Pane borders show the pane index, Workmux pane status, and agent label (or
+  native terminal title). Bottom tabs retain the durable window name and status.
 
 ## Naming an agent workspace
 
-Tmux has `automatic-rename` disabled, so an explicit window name is stable and
-is displayed in the pane border. An agent in tmux can name its current window:
+Sessions group projects, windows identify durable work items, and panes identify
+individual agents/conversations. Agents label only their own pane:
 
 ```sh
-tmux rename-window -t "$TMUX_PANE" "Content Agent"
+agent-pane-title set "Codex · investigate flaky tests"
+agent-pane-title clear
 ```
 
-Use a concise role-oriented label (for example `Content Agent` or `Research`).
-`$TMUX_PANE` resolves the target to the current pane's window, avoiding an
-accidental rename of another active client window.
+Claude statusline consumes the official `session_name` and `agent.name` fields;
+`/rename`, `--name`, and generated names propagate on the next statusline refresh
+(also refreshed every five seconds). Missing fields restore the native title.
+Codex SessionStart uses only documented hook fields to set a repository fallback.
+No runtime database or transcript inspection is involved. SessionEnd and the
+interactive zsh prompt clear labels. Unchanged labels do not call tmux.
+
+Workmux is pinned to 0.1.248: `@workmux_pane_status` is an internal contract
+covered by real working/waiting/done/clear tests. `@workmux_status` remains its
+window summary (last update, not a count of pane states). PostToolUse restores
+working after permission approval; subagent completion must not mark the parent
+pane done. Native Codex subagents remain within its TUI.
+
+Claude Agent Teams defaults to `in-process`. Anthropic documents split panes as
+unsupported in Ghostty; no successful real Ghostty-inside-tmux team smoke test
+has established otherwise. Use Workmux or manual panes for independent sessions.
+Do not enable `auto` globally without that smoke test.
+
+References: [Claude statusline](https://code.claude.com/docs/en/statusline),
+[Agent Teams](https://code.claude.com/docs/en/agent-teams),
+[Codex hooks](https://learn.chatgpt.com/docs/hooks).
 
 Current pane shortcuts:
 

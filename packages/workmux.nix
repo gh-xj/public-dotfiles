@@ -2,13 +2,13 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "workmux";
-  version = "0.1.233";
+  version = "0.1.248";
 
   src = fetchFromGitHub {
     owner = "raine";
     repo = "workmux";
     rev = "v${version}";
-    hash = "sha256-HkT3x1UQHqUA4JalppH/BoHiteiw+mnQpdZoJwanPyY=";
+    hash = "sha256-qubWyOxzzODezZjNtQT71NmrFP7xoEGhMjbw/2QZnQk=";
   };
 
   cargoLock = {
