@@ -1,6 +1,10 @@
 # Source, generation and running state
 
-Git updates change source only. No Git hook invokes Home Manager or reconcile.
+No Git hook invokes Home Manager or reconcile. Existing repo-linked editable
+files still reflect source edits; this release detaches legacy agent-config
+links on the first explicit apply. Until that migration, those old links retain
+their existing source coupling. Regular mutable agent files are never merged
+by a Git update or reconcile.
 The explicit control plane is:
 
 ```sh

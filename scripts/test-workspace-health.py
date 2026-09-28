@@ -70,4 +70,6 @@ unavailable = control.workspace_report({"state": "unavailable"}, None, {}, {}, t
 assert unavailable["provider_cli_processes"] is None and len(unavailable["observation_gaps"]) == 4
 invalid = subprocess.run([sys.executable, str(repo / "scripts/public-control.py"), "workspace", "doctor", "--top", "0"], capture_output=True)
 assert invalid.returncode != 0
+invalid = subprocess.run([sys.executable, str(repo / "scripts/public-control.py"), "workspace", "doctor", "--top", private], capture_output=True, text=True)
+assert invalid.returncode != 0 and private not in invalid.stderr
 print("workspace counts, thresholds, bounded output, unknown state and private-data suppression verified")

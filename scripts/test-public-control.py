@@ -65,6 +65,15 @@ with tempfile.TemporaryDirectory(prefix="reconcile-test-") as tmp:
     missing_plan = control.integration_plan(home, root)
     assert missing_plan["claude"]["merge_plan"] and missing_plan["codex"]["merge_plan"]
     assert private_marker not in json.dumps(missing_plan)
+    empty_home = base / "empty-settings"
+    for relative in (".claude/settings.json", ".codex/hooks.json"):
+        empty = empty_home / relative
+        empty.parent.mkdir(parents=True, exist_ok=True)
+        empty.write_text("{}")
+    empty_plan = control.integration_plan(empty_home, root)
+    assert all(value["state"] == "present" and value["merge_plan"] for value in empty_plan.values())
+    (empty_home / ".claude/settings.json").write_text("not-json")
+    assert control.integration_plan(empty_home, root)["claude"]["state"] == "invalid-json-review-manually"
     before_mutable = {name: (home / name).read_bytes() for name in control.MUTABLE}
 
     calls = []

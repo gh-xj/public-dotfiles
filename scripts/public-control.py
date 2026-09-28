@@ -26,6 +26,13 @@ class SafeError(Exception):
     """Only fixed, public messages may be placed in this exception."""
 
 
+class PublicParser(argparse.ArgumentParser):
+    def error(self, message):
+        # argparse normally repeats the rejected value, which can be a private
+        # profile path or an accidentally pasted credential.
+        self.exit(2, "invalid arguments; use --help for supported public options\n")
+
+
 def run(argv, timeout=15, **kwargs):
     try:
         return subprocess.run(list(map(str, argv)), capture_output=True, text=True, timeout=timeout, **kwargs)
@@ -33,14 +40,15 @@ def run(argv, timeout=15, **kwargs):
         return subprocess.CompletedProcess([], 124, "", "")
 
 
-def read_json(path):
+def read_json(path, invalid=None):
+    fallback = {} if invalid is None else invalid
     try:
         if path.stat().st_size > 4 * 1024 * 1024:
-            return {}
+            return fallback
         value = json.loads(path.read_text())
-        return value if isinstance(value, dict) else {}
+        return value if isinstance(value, dict) else fallback
     except (OSError, ValueError):
-        return {}
+        return fallback
 
 
 def revision(value):
@@ -119,11 +127,16 @@ def integration_plan(home, repo):
         ("codex", ".codex/hooks.json", "config/codex/hooks.json"),
     ):
         path = home / relative
-        live, wanted = read_json(path), read_json(repo / seed)
+        live, wanted = read_json(path, invalid=False), read_json(repo / seed)
         plan = []
-        if path.exists() and not live:
-            result[provider] = {"state": "invalid-or-empty-json-review-manually", "merge_plan": []}
+        if not wanted:
+            result[provider] = {"state": "public-seed-unavailable", "merge_plan": []}
             continue
+        if path.exists() and live is False:
+            result[provider] = {"state": "invalid-json-review-manually", "merge_plan": []}
+            continue
+        if live is False:
+            live = {}
         hooks = live.get("hooks", {})
         if not isinstance(hooks, dict):
             result[provider] = {"state": "invalid-hook-structure-review-manually", "merge_plan": []}
@@ -368,6 +381,8 @@ class Control:
             raise SafeError("selected-profile-evaluation-failed; check the selected flake locally")
         values = json.loads(evaluated.stdout)
         self.desired, self.target_home = Path(values["generation"]), Path(values["home"])
+        if build and self.target_home.resolve() != self.home.resolve():
+            raise SafeError("selected-profile-targets-another-home; refusing build and activation")
         if build and not self.desired.exists():
             built = self.run([*NIX, "build", "--no-write-lock-file", "--no-link", "--print-out-paths", attr + ".activationPackage"], timeout=1800)
             if built.returncode or built.stdout.strip() != str(self.desired):
@@ -395,7 +410,8 @@ class Control:
         config = self.desired / "home-files/.config/tmux/tmux.conf" if self.desired and self.desired.exists() else self.repo / ".tmux.conf"
         expected = tmux_options(config)
         matches = bool(expected) and all(self.run(["tmux", "show-options", "-gv", key]).stdout.rstrip("\n") == val for key, val in expected.items())
-        installed = self.run([self.desired / "home-path/bin/tmux", "-V"]) if self.desired and self.desired.exists() else None
+        installed_generation = self.desired if self.desired and self.desired.exists() else self.active
+        installed = self.run([installed_generation / "home-path/bin/tmux", "-V"]) if installed_generation else None
         return {"state": "running", "pane_border_matches": matches, "reload_needed": not matches,
                 "restart_recommended": probe.stdout.strip() != installed.stdout.strip().removeprefix("tmux ")
                     if installed and installed.returncode == 0 else None}
@@ -505,11 +521,11 @@ class Control:
             if result.returncode:
                 raise SafeError("tmux-reload-failed; activation-completed; reload-manually")
         return dict(plan, mode="applied", manual_merge_plan=integration_plan(self.home, self.repo),
-                    mutable_configs="existing-contents-preserved; missing files seeded; no private hook merge")
+                    mutable_policy="preserve-existing; seed-only-if-missing; no-private-hook-merge")
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = PublicParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parent.parent)
     parser.add_argument("--home", type=Path, default=Path.home())
     sub = parser.add_subparsers(dest="command", required=True)
@@ -555,7 +571,7 @@ def main():
         print(json.dumps(report, indent=2, ensure_ascii=False))
     except SafeError as error:
         parser.exit(1, str(error) + "\n")
-    except (OSError, ValueError, TypeError, KeyError):
+    except (OSError, ValueError, TypeError, KeyError, RuntimeError):
         parser.exit(1, "invalid-or-unavailable-state; inspect the selected profile/config locally (private details suppressed)\n")
 
 
