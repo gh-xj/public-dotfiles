@@ -199,16 +199,6 @@ tasks:
     cmds:
       - ./scripts/verify-zsh.sh
 
-  starship:diagnose:
-    desc: Diagnose Starship prompt scan warnings and module timings
-    preconditions:
-      - sh: command -v starship >/dev/null 2>&1
-        msg: "starship is required to diagnose prompt scans"
-      - sh: command -v zsh >/dev/null 2>&1
-        msg: "zsh is required for millisecond prompt timing"
-    cmds:
-      - ./scripts/starship-diagnose.sh {{.CLI_ARGS}}
-
   # Scan tracked files and the staged index for identifiers listed in an
   # optional private denylist (see scripts/verify-denylist.sh). Skips
   # cleanly when the file is absent, so other clones of this repo are
