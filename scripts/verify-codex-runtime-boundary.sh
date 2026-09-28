@@ -55,6 +55,13 @@ template="config/codex/config.toml"
 hooks="config/codex/hooks.json"
 [ -f "$hooks" ] || fail "missing public Codex hooks: $hooks"
 jq empty "$hooks" || fail "$hooks is not valid JSON"
+if grep -Eq '^[[:space:]]*codex_hooks[[:space:]]*=' "$template"; then
+  fail "deprecated hook feature key; use features.hooks"
+fi
+if grep -Eq '^\[notice([.]|\])|^[[:space:]]*windows_wsl_setup_acknowledged[[:space:]]*=' "$template"; then
+  fail "runtime notice/onboarding state must not be seeded"
+fi
+python3 scripts/verify-codex-strict.py
 
 if grep -R -En 'pkgs\.codex|@openai/codex' packages npm-globals.txt 2>/dev/null >&2; then
   fail "Codex CLI must use the official standalone installer, not Nix or npm"
@@ -121,6 +128,13 @@ if [ "$live" -eq 1 ]; then
         fail "$live_config points into /nix/store; Codex cannot persist project trust"
         ;;
     esac
+    resolved_config="$(realpath "$live_config")"
+    config_repo="$(git -C "$(dirname "$resolved_config")" rev-parse --show-toplevel 2>/dev/null || true)"
+    [ -z "$config_repo" ] || fail "live Codex config resolves into a Git repository"
+  fi
+
+  if grep -Eq '^[[:space:]]*codex_hooks[[:space:]]*=' "$live_config"; then
+    fail "live config uses deprecated hook feature key; use features.hooks"
   fi
 
   if [ ! -w "$live_config" ]; then

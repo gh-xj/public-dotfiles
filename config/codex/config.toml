@@ -6,24 +6,18 @@ model = "gpt-5.4"
 review_model = "gpt-5.4"
 personality = "pragmatic"
 approvals_reviewer = "user"
-disable_response_storage = true
-network_access = "enabled"
-windows_wsl_setup_acknowledged = true
 model_context_window = 1000000
 model_auto_compact_token_limit = 900000
 service_tier = "fast"
 
-[notice.model_migrations]
-"gpt-5.3-codex" = "gpt-5.4"
-
 [tui]
+vim_mode_default = true
 theme = "catppuccin-latte"
 status_line = ["model-with-reasoning", "context-remaining", "current-dir", "fast-mode"]
 
 [features]
 hooks = true
 multi_agent = true
-child_agents_md = false
 
 [agents]
 max_threads = 6
