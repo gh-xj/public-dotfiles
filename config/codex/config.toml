@@ -1,24 +1,11 @@
 # Public-safe user-level Codex seed template. Keep custom providers, per-project
 # trust, auth, and runtime state in the private repo or live home directory.
-model_reasoning_effort = "xhigh"
-model_provider = "openai"
-model = "gpt-5.4"
-review_model = "gpt-5.4"
 personality = "pragmatic"
 approvals_reviewer = "user"
-model_context_window = 1000000
-model_auto_compact_token_limit = 900000
-service_tier = "fast"
 
 [tui]
 vim_mode_default = true
 theme = "catppuccin-latte"
-status_line = ["model-with-reasoning", "context-remaining", "current-dir", "fast-mode"]
 
 [features]
 hooks = true
-multi_agent = true
-
-[agents]
-max_threads = 6
-max_depth = 2
