@@ -81,7 +81,7 @@ Some state cannot be restored silently from an SSH-only bootstrap:
 
 | Surface | Reason | Current Task |
 | --- | --- | --- |
-| Raycast Script Command directory and command hotkeys | Raycast stores registration, aliases, and hotkeys in app-managed/encrypted runtime state | `task raycast:open-script-setup`, then user confirms commands appear in Raycast search |
+| Raycast Script Command directory and command hotkeys | Raycast stores registration, aliases, and hotkeys in app-managed/encrypted runtime state | Add the stable repo directory in Raycast Settings, then confirm commands appear in Raycast search |
 | Raycast Store extensions | Raycast owns Store install confirmation and extension runtime state | `task raycast:open-extension-installs`, then `task verify:raycast-extensions` |
 | Trackpad live reload | WindowServer may keep stale `AppleMultitouchDevice` preferences until a GUI reload or logout/login | logout/login on the target Mac |
 

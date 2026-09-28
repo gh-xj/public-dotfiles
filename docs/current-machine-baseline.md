@@ -136,13 +136,6 @@ missing extensions. Raycast's documented install path is still the in-app or web
 Store, so this check is intentionally outside the blocking `dotfiles:verify`
 gate.
 
-Run `task raycast:runtime-check` to distinguish repo-owned script sync from
-Raycast-owned runtime state. Run `task raycast:open-script-setup` to copy the
-stable Script Directory path and open Raycast Settings for the interactive
-directory/hotkey setup. After the user confirms the commands appear in Raycast
-search, the remaining runtime-check warning about plaintext visibility is
-expected and non-blocking.
-
 ## Baseline Inspection
 
 `modules/darwin/defaults.nix` is the inventory. Compare a target Mac against it
@@ -160,6 +153,4 @@ display layer. There is no separate inspection ledger to keep in sync.
 | `task display:apply` | Apply the displayplacer layout policy, which no Nix option expresses |
 | `task verify:raycast-scripts` | Public Raycast Script Command files match the ledger and contain no obvious private strings |
 | `task verify:raycast-extensions` | Desired public Raycast Store extensions are installed |
-| `task raycast:runtime-check` | Reports whether Raycast runtime setup is still interactive/app-owned |
-| `task raycast:open-script-setup` | Copies the stable public Script Directory path and opens Raycast Settings |
 | `task verify:terminal` | Ghostty, Karabiner, and tmux terminal workflow invariants |

@@ -68,7 +68,6 @@ Use the narrowest gate first, then the full gate:
 | Display policy | `task display:apply` |
 | Input/trackpad and Raycast preferences | `task apply` in `private-config`; these are declared in `modules/darwin/defaults.nix` |
 | Raycast script commands | `task verify:raycast-scripts` |
-| Raycast runtime/UI setup | `task raycast:runtime-check` |
 | Raycast Store extensions | `task verify:raycast-extensions` |
 | General repo health | `task check` |
 
