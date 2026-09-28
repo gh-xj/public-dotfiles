@@ -33,7 +33,7 @@ Include ~/.ssh/includes/*.conf
 Host *
   AddKeysToAgent yes
 
-Host unit-main main-alias 10.0.0.10
+Host unit-main main-alias 192.0.2.10
   HostName main.example.test
 
 Host wildcard-*
