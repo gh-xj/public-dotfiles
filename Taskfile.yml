@@ -56,6 +56,7 @@ tasks:
       - task: verify:bootstrap-darwin
       - task: verify:raycast-scripts
       - task: verify:terminal
+      - task: security:denylist
       - task: secrets:staged
       - task: secrets:full
 
@@ -211,6 +212,14 @@ tasks:
         msg: "zsh is required for millisecond prompt timing"
     cmds:
       - ./scripts/starship-diagnose.sh {{.CLI_ARGS}}
+
+  # Scan tracked files and the staged index for identifiers listed in an
+  # optional private denylist (see scripts/verify-denylist.sh). Skips
+  # cleanly when the file is absent, so other clones of this repo are
+  # unaffected.
+  security:denylist:
+    cmds:
+      - ./scripts/verify-denylist.sh
 
   # Scan staged public-dotfiles changes for secrets
   secrets:staged:
