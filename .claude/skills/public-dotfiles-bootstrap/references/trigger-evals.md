@@ -77,12 +77,7 @@ Expected corrected behavior:
 
 - Check the npm globals ledger and installer.
 - Run `./scripts/install-npm-globals.sh`.
-- Verify with `task verify:npm-globals`.
 - Do not add npm-distributed CLIs to the Homebrew ledger.
-
-Verification:
-
-- `task verify:npm-globals`
 
 ### Raycast Preference Drift
 

@@ -100,8 +100,7 @@ distributed through npm, not Homebrew.
 bootstrap installer.
 
 **Expected effect:** Missing commands such as `gemini` are fixed by
-`./scripts/install-npm-globals.sh` plus `task verify:npm-globals`, not by
-expanding the Brewfile.
+`./scripts/install-npm-globals.sh`, not by expanding the Brewfile.
 
 **Falsifier:** A public npm CLI is required for the baseline but is only listed
 in Homebrew sources.

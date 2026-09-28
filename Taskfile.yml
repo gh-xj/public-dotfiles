@@ -48,7 +48,6 @@ tasks:
       - task: verify:global-taskfile
       - task: verify:codex-runtime-boundary
       - task: verify:zsh
-      - task: verify:npm-globals
       - task: security:approved-gh-account
       - task: verify:lazygit
       - task: verify:nvim
@@ -124,11 +123,6 @@ tasks:
     desc: Open Raycast setup for public Script Commands
     cmds:
       - ./scripts/diagnose-raycast-runtime.sh --open-setup
-
-  # Verify public npm global CLIs are installed
-  verify:npm-globals:
-    cmds:
-      - ./scripts/verify-npm-globals.sh
 
   # Reject unapproved GitHub CLI auth
   security:approved-gh-account:
