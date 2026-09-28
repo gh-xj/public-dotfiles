@@ -582,6 +582,7 @@ apply_home_manager() {
 
   switch_args=(switch --flake "$flake_dir#$profile_name" -b "$backup_extension")
 
+  zsh "$repo_root/scripts/migrate-ghostty-parent.zsh" --home "$target_home" --repo "$repo_root" --apply
   info "running Home Manager switch"
   nix_cmd run "$flake_dir#home-manager" -- "${switch_args[@]}"
 }
@@ -643,6 +644,7 @@ main() {
   enable_nix_flake_features
   cd "$repo_root"
   preflight
+  zsh "$repo_root/scripts/migrate-ghostty-parent.zsh" --home "$target_home" --repo "$repo_root" --dry-run
   require_sudo_for_darwin_apply
   install_nix_if_requested
   prepare_nix_darwin_etc

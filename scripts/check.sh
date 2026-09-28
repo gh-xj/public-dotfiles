@@ -24,6 +24,7 @@ case "$(uname -m)" in
     ;;
 esac
 python3 scripts/verify-agent-seeds.py "$generation" "$repo_root" ".#homeConfigurations.$home_config"
+python3 scripts/test-ghostty-migration.py "$generation" ".#homeConfigurations.$home_config"
 
 ./scripts/verify-zsh.sh "$generation"
 bash ./scripts/verify-nvim.sh

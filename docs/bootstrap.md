@@ -33,6 +33,29 @@ the current option list; the script is the option source of truth.
 
 ## First-Run Safety
 
+### Upgrade from the old Ghostty parent symlink
+
+Before switching, bootstrap checks `~/.config/ghostty`. If it is the known link
+to this checkout's `.config/ghostty`, apply removes only that link and creates a
+real directory for the generated leaf. The linked target and its contents are
+preserved. This also handles a dangling link after the old repo config was
+removed. The migration is idempotent and included before Home Manager's link
+checks so downstream overlays receive it too.
+
+An unrelated parent symlink is an actionable error, including in dry-run. It is
+not covered by the automatic leaf-backup option: inspect and move it aside
+explicitly, then retry. A `.config` ancestor pointing into the checkout is also
+rejected. Bootstrap dry-run only reports planned migration; apply performs it
+before Home Manager switch. The generated Ghostty config must never be written
+back into the checkout.
+
+After an upgrade, run `python3 scripts/verify-ghostty.py --live` from this repo.
+For a private overlay, run that overlay's apply first. See
+[Ghostty upgrade details](ghostty-tmux.md#upgrading-the-legacy-ghostty-directory-link)
+for effective-settings checks and existing-surface reload limitations.
+
+### Other first-run behavior
+
 - `--apply` backs up unmanaged Home Manager targets with a timestamped
   extension.
 - `--darwin --apply` may use `sudo`. Over SSH, use an interactive session or
