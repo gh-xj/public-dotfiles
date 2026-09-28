@@ -42,7 +42,7 @@ Invariants:
   the raised window on target. **Caveat:** the heuristic breaks when
   you have multiple Ghostty _windows_ (not just tabs). If the last
   Ghostty window you interacted with isn't macOS-frontmost, `open -a
-Ghostty` raises the frontmost one, which may not be the client we
+  Ghostty` raises the frontmost one, which may not be the client we
   just yanked. Fix is manual (cmd-` or click the right window).
 
 ## The hard rule
@@ -104,16 +104,16 @@ attached session yanks the user's frontmost tab.
 
 ## Stack (locked)
 
-Per `~/.claude/skills/go-scripting`, this is a **Script tier** tool:
+This is a small Go script-tier tool:
 
 - Single `main.go`, stdlib only.
 - `stdlib slog` for logging; no third-party logger.
 - No `kong` (would cost more LOC than the router is worth for a
   one-positional-arg binary).
 - No `go-pretty`, no spinners (it's a URL handler, not a CLI).
-- `darwin/arm64` only. No build tags, no cross-compile.
 
-If you're tempted to add a dependency, re-read the skill.
+The committed binary is `darwin/arm64`; `task nvim-tmux:build` builds for the
+current Mac.
 
 ## Non-goals
 
@@ -122,20 +122,7 @@ If you're tempted to add a dependency, re-read the skill.
   LaunchServices are load-bearing.
 - Publishing to GitHub as a standalone tool. Personal infra.
 - A configuration file. Everything is in the URL.
-- Multi-file nvim invocations, quickfix integration, or line-number
-  anchors. Out of scope until there's a concrete workflow need.
-
-## Commit protocol
-
-This repo uses the Lore trailer format defined in the repo-root
-`.claude/CLAUDE.md`. When committing changes here:
-
-- Intent line first — _why_, not _what_.
-- `Tested:` / `Not-tested:` always, for code.
-- `Rejected:` any alternative you considered, so the next agent
-  doesn't waste a cycle.
-- `Directive:` if you want to constrain future modifiers.
-- Standard `Co-Authored-By:` trailer at the end.
+- Multi-file nvim invocations and quickfix integration.
 
 ## Where state lives
 

@@ -16,7 +16,7 @@ Godspeed, a browser, or any app with a clickable URL) and the handler:
 
 ```
 .
-├── main.go          # handler source (stdlib only, ~180 LOC)
+├── main.go          # handler source (stdlib only)
 ├── go.mod
 ├── handler.sh       # thin shim the .app invokes; delegates to the Go binary
 ├── bin/nvim-tmux    # prebuilt darwin/arm64 binary, committed
@@ -30,8 +30,8 @@ task nvim-tmux:build      # compile bin/nvim-tmux
 task nvim-tmux:install    # copy into ~/Applications/nvim-tmux.app
 ```
 
-`nvim-tmux:install` no-ops if `~/Applications/nvim-tmux.app` doesn't
-exist yet — see _First-time setup_ below.
+`nvim-tmux:install` fails if `~/Applications/nvim-tmux.app` does not exist;
+create the bundle once with the steps below.
 
 ## First-time setup (building the .app bundle)
 
@@ -40,7 +40,8 @@ Services. Creating the bundle from scratch:
 
 ```sh
 # 1. Scratch AppleScript source
-cat > /tmp/handler.applescript <<'APPLESCRIPT'
+scratch_dir="$(scratch-gc new nvim-tmux-app --purpose "compile the LaunchServices wrapper" --ttl-hours 24)"
+cat > "$scratch_dir/handler.applescript" <<'APPLESCRIPT'
 on open location theURL
 	set appPath to POSIX path of (path to me)
 	set scriptPath to appPath & "Contents/Resources/handler.sh"
@@ -49,7 +50,7 @@ end open location
 APPLESCRIPT
 
 # 2. Compile to .app
-osacompile -o ~/Applications/nvim-tmux.app /tmp/handler.applescript
+osacompile -o ~/Applications/nvim-tmux.app "$scratch_dir/handler.applescript"
 
 # 3. Register the URL scheme and mark the app background-only
 PLIST=~/Applications/nvim-tmux.app/Contents/Info.plist
@@ -71,12 +72,14 @@ task nvim-tmux:install
 ## URL grammar
 
 ```
-nvim-tmux://<path>[?session=<name>&window=<name>]
+nvim-tmux://<path>?session=<name>&window=<name>[&line=<n>&col=<n>]
 ```
 
 - `<path>` is absolute (or `/~/relative/to/home`).
 - `session` and `window` are both **required**. Missing either produces a
   macOS notification.
+- `line` and `col` are optional cursor anchors for newly created panes.
+  Existing panes keep their current cursor position.
 - Window is matched by name. If a window with that name doesn't exist in
   the session, the handler creates one.
 
