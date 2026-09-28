@@ -6,11 +6,6 @@ vars:
 env:
   NIX_CONFIG: experimental-features = nix-command flakes
 
-includes:
-  nvim-bench:
-    taskfile: ./Library/nvim-bench/Taskfile.yml
-    dir: ./Library/nvim-bench
-
 tasks:
   apply:
     desc: Make this machine match the repo (Home Manager switch)
@@ -50,7 +45,6 @@ tasks:
       - task: security:approved-gh-account
       - task: verify:lazygit
       - task: verify:nvim
-      - task: nvim-bench:ci
       - task: verify:bootstrap-darwin
       - task: verify:terminal
       - task: verify:utilities
