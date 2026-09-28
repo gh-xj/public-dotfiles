@@ -30,7 +30,6 @@ Representative live paths:
 - `$HOME/.codex/rules/default.rules`
 - `$HOME/.config/karabiner`
 - `$HOME/.config/nvim`
-- `$HOME/.config/zed`
 
 Rules:
 
