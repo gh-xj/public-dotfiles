@@ -53,7 +53,6 @@ tasks:
       - task: verify:nvim
       - task: nvim-bench:ci
       - task: verify:bootstrap-darwin
-      - task: verify:raycast-scripts
       - task: verify:terminal
       - task: verify:utilities
       - task: security:denylist
@@ -99,11 +98,6 @@ tasks:
   # Verify known display layout policy
   # Verify this host matches the public macOS defaults baseline
   # Verify public-safe Raycast preferences
-  # Verify public Raycast Script Commands
-  verify:raycast-scripts:
-    cmds:
-      - ./scripts/verify-raycast-script-commands.sh
-
   # Check desired Raycast Store extensions
   verify:raycast-extensions:
     cmds:

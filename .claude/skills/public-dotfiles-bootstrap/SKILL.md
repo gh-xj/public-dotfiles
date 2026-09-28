@@ -54,7 +54,7 @@ Project-local router for restoring and auditing the public, reusable
 | Defaults show correct but behavior differs | live state such as `ioreg`, app cache, GUI session, or TCC |
 | Display resolution differs | `config/macos/display-layouts.tsv` and `task display:apply` |
 | Tap-to-click or gestures differ | `modules/darwin/defaults.nix`, then live `AppleMultitouchDevice`; a switch reapplies the declared values |
-| Raycast command/settings drift | `modules/darwin/defaults.nix`, `config/raycast/script-commands.tsv`, `.config/raycast/scripts`, and the Raycast script/extension verifiers |
+| Raycast command/settings drift | `modules/darwin/defaults.nix`, `.config/raycast/scripts`, and the Raycast extension verifier |
 | Store extension missing | `config/raycast/extensions.tsv`; open install intents, do not copy caches |
 | Package/app drift | Nix package sets, `Brewfile`/Homebrew module, or npm globals ledger |
 
@@ -67,7 +67,6 @@ Use the narrowest gate first, then the full gate:
 | Bootstrap script or Nix host | `task verify:bootstrap-darwin` |
 | Display policy | `task display:apply` |
 | Input/trackpad and Raycast preferences | `task apply` in `private-config`; these are declared in `modules/darwin/defaults.nix` |
-| Raycast script commands | `task verify:raycast-scripts` |
 | Raycast Store extensions | `task verify:raycast-extensions` |
 | General repo health | `task check` |
 

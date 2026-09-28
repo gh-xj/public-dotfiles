@@ -17,7 +17,7 @@ For the layer model used when source and target Macs disagree, see
 | macOS Dock/Finder/keyboard/mouse/trackpad defaults | nix-darwin `system.defaults` | TCC grants and login-item consent |
 | Display layout / resolution | `displayplacer` is installed, known display serials are applied and verified | Unknown display hardware is inspected but not changed |
 | GUI app install ledger | nix-darwin Homebrew module | App sessions, sync accounts, caches |
-| Raycast | App install, public-safe preferences, repo-owned script commands, a public script-command ledger, and a desired Store extension ledger | Raycast account DB, extension cache, extension credentials, `raycast_env`, encrypted `.rayconfig` exports |
+| Raycast | App install, public-safe preferences, repo-owned script commands, and a desired Store extension ledger | Raycast account DB, extension cache, extension credentials, `raycast_env`, encrypted `.rayconfig` exports |
 | CLI packages | Nix package sets first | Per-account credentials and generated caches |
 
 ## macOS Defaults
@@ -87,9 +87,8 @@ The durable public baseline is:
    root search sensitivity, quicklink behavior, and onboarding state.
 3. Link public script commands at `~/.config/raycast/scripts` and the
    compatibility path `~/.config/xj_public_raycast_scripts`.
-4. Track desired public script commands in `config/raycast/script-commands.tsv`.
-5. Track desired public Store extensions in `config/raycast/extensions.tsv`.
-6. Keep `raycast_env`, extension credentials, account sync, encrypted Raycast
+4. Track desired public Store extensions in `config/raycast/extensions.tsv`.
+5. Keep `raycast_env`, extension credentials, account sync, encrypted Raycast
    exports, and private
    workflow scripts in `private-config`.
 
@@ -151,6 +150,5 @@ display layer. There is no separate inspection ledger to keep in sync.
 | `task verify:codex-runtime-boundary` | Public Codex seed template stays outside project-local `.codex/config.toml`, stays safe, and Home Manager does not own mutable `~/.codex/config.toml` |
 | `task verify:bootstrap-darwin` | The generated nix-darwin bootstrap host still builds |
 | `task display:apply` | Apply the displayplacer layout policy, which no Nix option expresses |
-| `task verify:raycast-scripts` | Public Raycast Script Command files match the ledger and contain no obvious private strings |
 | `task verify:raycast-extensions` | Desired public Raycast Store extensions are installed |
 | `task verify:terminal` | Ghostty, Karabiner, and tmux terminal workflow invariants |
