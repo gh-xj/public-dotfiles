@@ -194,7 +194,11 @@ class Engine:
                 window["width"], window["height"] = map(int, dimensions.groups())
                 session["windows"].append(window)
             session["windows"].sort(key=lambda w: w["index"])
+            if sum(w["active"] for w in session["windows"]) != 1 or len({w["index"] for w in session["windows"]}) != len(session["windows"]):
+                raise RecoveryError("window topology changed during capture; retry")
             sessions.append(session)
+        if len({s["name"] for s in sessions}) != len(sessions):
+            raise RecoveryError("session names changed during capture; retry")
         return {"sessions": sorted(sessions, key=lambda s: s["name"])}
 
     def validate(self, payload, prefix="", resume_agents=False, resume_documents=False):

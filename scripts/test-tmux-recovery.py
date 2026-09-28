@@ -110,6 +110,22 @@ with tempfile.TemporaryDirectory(prefix="recovery-fixture-") as tmp:
         assert shape(restored["windows"][0]["layout"]) == shape(payload["sessions"][0]["windows"][0]["layout"])
         assert not (root / "SHOULD_NOT_EXIST").exists()
 
+        extra_pane = tmux("split-window", "-d", "-h", "-t", "restored-project one:3", "-c", root, "-P", "-F", "#{pane_id}", "sleep", "120")
+        tmux("set-option", "-p", "-t", extra_pane, "@agent_label", "Third")
+        tmux("select-pane", "-t", extra_pane, "-T", "Third")
+        first_pane = tmux("list-panes", "-t", "restored-project one:3", "-F", "#{pane_id}").splitlines()[0]
+        tmux("select-layout", "-t", "restored-project one:3", "main-vertical")
+        tmux("swap-pane", "-s", first_pane, "-t", extra_pane)
+        geometry = "#{@agent_label}:#{pane_index}:#{pane_left},#{pane_top},#{pane_width},#{pane_height}"
+        before_geometry = tmux("list-panes", "-t", "restored-project one:3", "-F", geometry)
+        engine.restore(engine.capture("restored-project one"), apply=True, prefix="permuted-")
+        assert before_geometry == tmux("list-panes", "-t", "permuted-restored-project one:3", "-F", geometry)
+
+        changing = r.Engine(r.adapters(), socket)
+        original_field = changing.field
+        changing.field = lambda target, name: "@999999" if target.startswith("$") and name == "window_id" else original_field(target, name)
+        rejected(lambda: changing.capture("project one"))
+
         # An override is trusted argv, while checkpoint IDs remain separate data.
         marker = root / "adapter-ran"
         writer = root / "writer.py"
