@@ -13,9 +13,6 @@ in
       ".claude/hooks" = mkRepoTree ".claude/hooks";
       ".claude/settings.json" = mkRepoFile ".claude/settings.json";
       ".claude/statusline-command.sh" = mkImmutableFile ".claude/statusline-command.sh";
-      # Same class: repo-backed and live-editable. The repo file already
-      # carries its executable bit, so the symlink needs no override.
-      ".codex/herdr-agent-state.sh" = mkRepoFile "config/codex/herdr-agent-state.sh";
     };
   };
 }
