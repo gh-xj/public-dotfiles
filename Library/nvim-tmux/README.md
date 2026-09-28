@@ -40,7 +40,7 @@ Services. Creating the bundle from scratch:
 
 ```sh
 # 1. Scratch AppleScript source
-scratch_dir="$(scratch-gc new nvim-tmux-app --purpose "compile the LaunchServices wrapper" --ttl-hours 24)"
+scratch_dir="$(mktemp -d)"
 cat > "$scratch_dir/handler.applescript" <<'APPLESCRIPT'
 on open location theURL
 	set appPath to POSIX path of (path to me)

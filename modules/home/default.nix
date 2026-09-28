@@ -11,7 +11,6 @@ in
     ./packages.nix
     ./shell.nix
     ./terminal.nix
-    ./utilities.nix
   ];
 
   options.xj.publicDotfiles = {

@@ -20,11 +20,6 @@ tasks:
     cmds:
       - ./scripts/verify-raycast-extensions.sh --open-missing
 
-  verify:utilities:
-    desc: Verify scratch ownership and provider-neutral tmux recovery
-    cmds:
-      - python3 scripts/test-utilities.py
-
   nvim-tmux:build:
     desc: Build the nvim-tmux URL handler binary
     dir: Library/nvim-tmux

@@ -21,15 +21,6 @@
   tool is publicly packaged, use native `git worktree` commands; inspect dirty
   changes before removing a worktree.
 
-## Scratch Work
-
-Use `scratch-gc new <namespace> --purpose "<intent>" --ttl-hours 24` for disposable
-experiments. Keep its manifest, choose a bounded TTL, and promote durable output
-to its owning repo before expiry. Preview `scratch-gc collect` before applying;
-expired entries go to recoverable quarantine. On APFS, report logical size and
-allocated-block estimates separately; neither proves reclaimable space when
-clones or snapshots share blocks. Never store credentials or sole copies here.
-
 ## Pane Identity
 
 In tmux, sessions group projects, windows are durable work items, and panes are
