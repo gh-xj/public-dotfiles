@@ -26,6 +26,15 @@ trap 'rm -rf "$tmpdir"' EXIT
 
 home_dir="$tmpdir/home"
 mkdir -p "$home_dir/.cache" "$home_dir/.config" "$home_dir/.ssh/includes"
+mkdir -p "$home_dir/.config/zsh" "$home_dir/.openclaw/completions"
+cat > "$home_dir/.config/zsh/private.zshenv" <<'EOF'
+export PRIVATE_ENV_FIXTURE=loaded
+EOF
+cat > "$home_dir/.openclaw/completions/openclaw.zsh" <<'EOF'
+typeset -g OPENCLAW_FIXTURE_LOADED=1
+_fixture_openclaw_completion() { typeset -g OPENCLAW_FIXTURE_CALLED=1; }
+compdef _fixture_openclaw_completion openclaw
+EOF
 
 cat > "$home_dir/.ssh/config" <<'EOF'
 Include ~/.ssh/includes/*.conf
@@ -103,6 +112,12 @@ probe="$(
   XJ_ZSH_DISABLE_LEGACY_PLUGIN_CACHE=1 \
   zsh -f -i -c '
 source "$REPO_ROOT/.zshrc"
+source "$REPO_ROOT/.zshenv"
+[[ "$PRIVATE_ENV_FIXTURE" == loaded ]] || exit 1
+[[ -z "${OPENCLAW_FIXTURE_LOADED:-}" ]] || exit 1
+_openclaw_lazy_completion
+[[ "$OPENCLAW_FIXTURE_LOADED" == 1 && "$OPENCLAW_FIXTURE_CALLED" == 1 ]] || exit 1
+[[ "${_comps[openclaw]}" == _fixture_openclaw_completion ]] || exit 1
 printf "plugin-paths-generated=%s\n" "${XJ_ZSH_PLUGIN_PATHS_GENERATED:-0}"
 printf "zinit=%s\n" "$+functions[zinit]"
 printf "zsh-vi-mode=%s\n" "$+functions[zvm_select_vi_mode]"

@@ -326,7 +326,6 @@ setup_plugins() {
 
     # Reset terminal title to current directory before each prompt.
     _set_terminal_title() {
-        [[ -n "$TMUX" ]] && return 0
         print -Pn "\e]2;%~\a"
     }
 
@@ -372,6 +371,8 @@ setup_plugins() {
     _clear_agent_pane_label() {
         [[ -n "$TMUX_PANE" ]] && (( $+commands[agent-pane-title] )) || return 0
         agent-pane-title clear 2>/dev/null || true
+        tmux set-option -pu -t "$TMUX_PANE" @claude_sid 2>/dev/null
+        tmux set-option -pu -t "$TMUX_PANE" @codex_sid 2>/dev/null
     }
     add-zsh-hook precmd _clear_agent_pane_label
 }
@@ -487,7 +488,16 @@ init
 #
 # OpenClaw completion
 if [[ -r "$HOME/.openclaw/completions/openclaw.zsh" ]]; then
-    source "$HOME/.openclaw/completions/openclaw.zsh"
+    _openclaw_lazy_completion() {
+        unfunction _openclaw_lazy_completion
+        source "$HOME/.openclaw/completions/openclaw.zsh"
+        # Dispatch through the generated compdef registration, not a guessed name.
+        local completion_function="${_comps[openclaw]:-}"
+        if [[ -n "$completion_function" && "$completion_function" != _openclaw_lazy_completion ]]; then
+            "$completion_function" "$@"
+        fi
+    }
+    compdef _openclaw_lazy_completion openclaw
 fi
 
 # Initialize zoxide last so it can install its hooks cleanly.
