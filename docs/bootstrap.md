@@ -91,6 +91,10 @@ After a user or Darwin apply, run:
 task check
 ```
 
+For subsequent source/generation/runtime diagnosis and an explicit user-level
+apply, use [doctor and reconcile](reconciliation.md). Pulling or rebasing source
+never invokes them. Reconcile does not replace the opt-in Darwin system phase.
+
 ## Package Sets
 
 The Home Manager module enables `shell`, `dev`, and `ops` by default. A

@@ -30,6 +30,7 @@ python3 scripts/test-ghostty-migration.py "$generation" ".#homeConfigurations.$h
 bash ./scripts/verify-nvim.sh
 ./scripts/verify-terminal.sh "$generation"
 python3 scripts/test-agent-status.py
+python3 scripts/test-public-control.py
 python3 scripts/verify-codex-strict.py
 task --taskfile global/Taskfile.yml --list-all >/dev/null
 
