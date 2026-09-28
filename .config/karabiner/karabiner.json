@@ -82,7 +82,7 @@
                   "key_code": "b",
                   "modifiers": { "optional": ["any"] }
                 },
-                "to": [{ "rey_code": "spacebar" }],
+                "to": [{ "key_code": "spacebar" }],
                 "type": "basic"
               },
               {
