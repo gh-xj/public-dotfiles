@@ -56,7 +56,7 @@ if [ ! -f "$taskfile" ]; then
   exit 1
 fi
 
-if grep -nE '(private-config|xj-private|bytedance|ByteDance|token|secret|password|api[_-]?key|oauth|bearer|Authorization|/Users/xj|/Users/bytedance)' "$taskfile" >/dev/null; then
+if grep -nE '(token|secret|password|api[_-]?key|oauth|bearer|Authorization|/Users/)' "$taskfile" >/dev/null; then
   printf '%s contains private/sensitive-looking strings\n' "$taskfile" >&2
   exit 1
 fi

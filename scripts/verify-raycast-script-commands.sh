@@ -93,7 +93,7 @@ while IFS=$'\t' read -r script title mode package boundary notes; do
     fail=1
   fi
 
-  if grep -nE '(private-config|xj-private|bytedance|ByteDance|token|secret|password|api[_-]?key|oauth|bearer|Authorization|/Users/xj|/Users/bytedance)' "$script_file" >/dev/null; then
+  if grep -nE '(token|secret|password|api[_-]?key|oauth|bearer|Authorization|/Users/)' "$script_file" >/dev/null; then
     printf '%s: contains private/sensitive-looking strings\n' "${script_file#$repo_root/}" >&2
     fail=1
   fi

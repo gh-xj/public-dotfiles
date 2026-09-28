@@ -60,7 +60,7 @@ if grep -R -En 'pkgs\.codex|@openai/codex' packages npm-globals.txt 2>/dev/null 
   fail "Codex CLI must use the official standalone installer, not Nix or npm"
 fi
 
-if grep -En '(/Users/xj/|/Volumes/|private-config|xj-private-brain)' "$hooks" >&2; then
+if grep -En '(/Users/|/Volumes/)' "$hooks" >&2; then
   fail "$hooks contains machine-local or private path state"
 fi
 
@@ -72,7 +72,7 @@ if grep -En '^[[:space:]]*(\[projects\.|\[(marketplaces|plugins|model_providers)
   fail "$template contains runtime, provider, trust, or secret-like state"
 fi
 
-if grep -En '(/Users/xj/|/Volumes/|private-config|xj-private-brain)' "$template" >&2; then
+if grep -En '(/Users/|/Volumes/)' "$template" >&2; then
   fail "$template contains machine-local or private path state"
 fi
 
