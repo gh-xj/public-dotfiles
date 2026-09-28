@@ -32,6 +32,7 @@ zsh -dfi -c '
   source "$REPO_ROOT/.zprofile"
   source "$REPO_ROOT/.zshrc"
   [[ "$PRIVATE_ENV_FIXTURE" == loaded ]]
+  [[ ":$PATH:" == *":$HOME/.local/share/npm-global/bin:"* ]]
   [[ "$XJ_ZSH_PLUGIN_PATHS_GENERATED" == 1 ]]
   (( $+functions[zvm_select_vi_mode] ))
   (( $+functions[_zsh_autosuggest_start] ))
