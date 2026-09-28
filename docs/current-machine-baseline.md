@@ -22,7 +22,7 @@ For the layer model used when source and target Macs disagree, see
 
 ## macOS Defaults
 
-These values were read from `/Users/xj` and encoded in
+These values were read from `$HOME` and encoded in
 `modules/darwin/defaults.nix`.
 
 | Area | Baseline |
