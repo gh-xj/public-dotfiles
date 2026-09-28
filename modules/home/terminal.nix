@@ -33,14 +33,6 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    # Home Manager (Mac) composes ../../.tmux.conf with the plugins and
-    # generated legacy-selector bindings below. private-config's
-    # scripts/sync-linux-home.sh links ../../.tmux.conf raw on Linux, with no
-    # Home Manager: that subset is the base keybindings/theme in .tmux.conf
-    # only — no tmux plugin manager (fzf-tmux-url, easyjump, session-wizard,
-    # tmux-fzf) and none of the generated M-<key> legacy selector bindings.
-    # Keep .tmux.conf's own bindings self-sufficient without those plugins so
-    # the Linux subset stays usable as-is.
     programs.tmux = {
       enable = true;
       package = null;
