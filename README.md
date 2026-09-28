@@ -60,12 +60,11 @@ paths with a `public-dotfiles-backup-<timestamp>` extension before linking the
 public baseline. Use `--no-backup` when you want Home Manager to fail on those
 conflicts instead.
 
-You can still build the public Home Manager example without touching your home
-directory. The helper selects `example` on Apple Silicon and `example-x86_64`
-on Intel:
+You can still build the host-native public Home Manager example without
+touching your home directory:
 
 ```bash
-NIX_CONFIG='experimental-features = nix-command flakes' nix build "$(./scripts/home-config-attr.sh activation-package)"
+NIX_CONFIG='experimental-features = nix-command flakes' nix build .#
 ```
 
 Apply the checked-in host only from a matching test account named `example`, or
@@ -204,13 +203,13 @@ adapter. Those are not global home skill trees.
 The public repo should be enough to restore the public-safe parts of xj's
 operating environment on a clean machine.
 
-- build the host-native example with `NIX_CONFIG='experimental-features = nix-command flakes' nix build "$(./scripts/home-config-attr.sh activation-package)"`
+- build the host-native example with `NIX_CONFIG='experimental-features = nix-command flakes' nix build .#`
 - run `./scripts/bootstrap-macos.sh` first on a new macOS machine
 - use `./scripts/bootstrap-macos.sh --apply` for a real target user
 - use `./scripts/bootstrap-macos.sh --darwin --apply` when the public
   nix-darwin/Homebrew app ledger should be applied too
 - edit `hosts/example.nix` only when intentionally testing the checked-in example host
-- run `task apply` only after the local example host matches that user
+- use `task apply` as the standalone Home Manager plus nix-darwin path
 - use `private-config` only when the machine needs sensitive, account-bound,
   company/private, secret-adjacent, or runtime-adjacent overlays
 - the public repo owns reusable public-safe comfort config; the private repo is

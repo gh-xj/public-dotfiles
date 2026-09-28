@@ -24,8 +24,8 @@ that state into the repo owner instead of keeping an undocumented repair step.
 | --- | --- | --- |
 | Typed macOS defaults | `modules/darwin/defaults.nix` | nix-darwin evaluation and switch |
 | Untyped durable preferences | `system.defaults.CustomUserPreferences` in the same module | nix-darwin evaluation and switch |
-| Display hardware layout | `config/macos/display-layouts.tsv` | `displayplacer list`; apply only with `task display:apply` |
-| Raycast Store extension intent | `config/raycast/extensions.tsv` | `task verify:raycast-extensions` plus interactive install |
+| Display hardware layout | `config/macos/display-layouts.tsv` | `displayplacer list`; applied by the standalone bootstrap |
+| Raycast Store extension intent | `config/raycast/extensions.tsv` | `task raycast:install` plus interactive approval |
 | App-owned or permission-gated state | the app, macOS, or a downstream private owner | live inspection or human confirmation |
 
 Prefer typed nix-darwin defaults. Use `CustomUserPreferences` for durable keys

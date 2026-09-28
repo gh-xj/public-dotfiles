@@ -22,6 +22,7 @@
         ./hosts/example.nix
       ];
     };
+    exampleHomes = forAllSystems mkExampleHome;
   in
   {
     homeModules.default = import ./modules/home;
@@ -38,6 +39,7 @@
         pkgs = pkgsFor system;
       in
       {
+        default = exampleHomes.${system}.activationPackage;
         shellTools = pkgs.buildEnv {
           name = "xj-public-shell-tools";
           paths = self.packageSets.shell pkgs;
@@ -45,8 +47,8 @@
       });
 
     homeConfigurations = {
-      example = mkExampleHome "aarch64-darwin";
-      example-x86_64 = mkExampleHome "x86_64-darwin";
+      example = exampleHomes.aarch64-darwin;
+      example-x86_64 = exampleHomes.x86_64-darwin;
     };
 
     checks = {

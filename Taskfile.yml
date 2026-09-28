@@ -1,192 +1,29 @@
 version: "3"
 
-vars:
-  NIX_FLAGS: --extra-experimental-features 'nix-command flakes'
-
 env:
   NIX_CONFIG: experimental-features = nix-command flakes
 
 tasks:
   apply:
-    desc: Make this machine match the repo (Home Manager switch)
-    aliases: [install]
-    vars:
-      CONFIG_NAME:
-        sh: ./scripts/home-config-attr.sh name
-      TARGET_USER:
-        sh: nix {{.NIX_FLAGS}} eval --raw ".#homeConfigurations.$(./scripts/home-config-attr.sh name).config.home.username"
-      CURRENT_USER:
-        sh: id -un
-    # The public profiles are examples for their own user. On a machine whose
-    # home is composed by a private overlay, a switch here would register the
-    # example generation in the real profile before activation refuses it.
-    preconditions:
-      - sh: test "{{.TARGET_USER}}" = "{{.CURRENT_USER}}"
-        msg: "public profile {{.CONFIG_NAME}} targets user '{{.TARGET_USER}}', not '{{.CURRENT_USER}}'; apply from the repo that composes this home (e.g. task apply in your private overlay)"
+    desc: Apply the standalone public macOS baseline
     cmds:
-      - |
-        config_name="$(./scripts/home-config-attr.sh name)"
-        nix {{.NIX_FLAGS}} run github:nix-community/home-manager/master -- switch --flake ".#$config_name" {{.CLI_ARGS}}
+      - ./scripts/bootstrap-macos.sh --darwin --apply {{.CLI_ARGS}}
 
-  # One gate. The former fast tier ran in 3.7s against 20.4s for the full one,
-  # a difference too small to justify two names that answered "am I safe to
-  # commit" differently -- and for a while the fast one was the stronger of the
-  # two, because only it scanned the staged index for secrets.
   check:
-    desc: Prove this repo is in the declared state
-    aliases: [check:full]
+    desc: Build once and run public behavioral checks
+    aliases: [verify]
     cmds:
-      - task: nix:build
-      - task: verify:home-files
-      - task: verify:repo-hygiene
-      - task: verify:global-taskfile
-      - task: verify:codex-runtime-boundary
-      - task: verify:zsh
-      - task: security:approved-gh-account
-      - task: verify:lazygit
-      - task: verify:nvim
-      - task: verify:bootstrap-darwin
-      - task: verify:terminal
-      - task: verify:utilities
-      - task: security:denylist
-      - task: secrets:staged
-      - task: secrets:full
+      - ./scripts/check.sh
 
-  # Verify generated nix-darwin bootstrap hosts for native and Intel targets
-  verify:bootstrap-darwin:
-    cmds:
-      - ./scripts/bootstrap-macos.sh --darwin --dry-run --user example --home /Users/example
-      - ./scripts/verify-darwin-homebrew-version-gates.sh
-
-  # Verify Home Manager owns the expected public config files
-  verify:home-files:
-    cmds:
-      - ./scripts/verify-home-files.sh
-
-  # Reject tracked repo noise that should stay ignored
-  verify:repo-hygiene:
-    cmds:
-      - ./scripts/verify-repo-hygiene.sh
-
-  # Verify public global go-task Taskfile
-  verify:global-taskfile:
-    cmds:
-      - ./scripts/verify-global-taskfile.sh
-
-  # Verify public Codex config stays template-only and live-mutable
-  verify:codex-runtime-boundary:
-    cmds:
-      - ./scripts/verify-codex-runtime-boundary.sh
-
-  display:apply:
-    desc: Apply known display layout policy
-    cmds:
-      - ./scripts/apply-display-layout.sh --apply
-
-  # Verify known display layout policy
-  # Verify this host matches the public macOS defaults baseline
-  # Verify public-safe Raycast preferences
-  # Check desired Raycast Store extensions
-  verify:raycast-extensions:
-    cmds:
-      - ./scripts/verify-raycast-extensions.sh
-
-  raycast:open-extension-installs:
-    desc: Open Raycast install intents for missing desired Store extensions
+  raycast:install:
+    desc: Verify and open install intents for missing Raycast extensions
     cmds:
       - ./scripts/verify-raycast-extensions.sh --open-missing
-
-  # Reject unapproved GitHub CLI auth
-  security:approved-gh-account:
-    cmds:
-      - |
-        if ! command -v gh >/dev/null 2>&1; then
-          exit 0
-        fi
-        status="$(gh auth status --hostname github.com 2>&1)" || exit 0
-        accounts="$(printf '%s\n' "$status" | sed -nE 's/.*Logged in to github.com account ([^ ]+) .*/\1/p' | sort -u)"
-        approved_accounts="${APPROVED_GITHUB_CLI_ACCOUNTS:-gh-xj}"
-
-        if [ -z "$accounts" ]; then
-          printf '%s\n' "Unable to parse GitHub CLI auth status for github.com." >&2
-          exit 1
-        fi
-
-        for account in $accounts; do
-          case " $approved_accounts " in
-            *" $account "*) ;;
-            *)
-              printf '%s\n' "GitHub CLI account '$account' is not approved for this machine." >&2
-              printf '%s\n' "Approved accounts: $approved_accounts" >&2
-              exit 1
-              ;;
-          esac
-        done
-
-  nix:build:
-    desc: Build the public Nix example Home Manager activation package
-    preconditions:
-      - sh: command -v nix >/dev/null 2>&1
-        msg: "nix is required to build the public dotfiles flake"
-    cmds:
-      - |
-        activation_attr="$(./scripts/home-config-attr.sh activation-package)"
-        nix {{.NIX_FLAGS}} build --no-link "$activation_attr"
-
-  # Verify lazygit config and required helpers
-  verify:lazygit:
-    cmds:
-      - ruby -ryaml -e 'YAML.load_file(".config/lazygit/config.yml")'
-      - command -v lazygit
-      - command -v delta
-      - command -v difft
-      - command -v gh
-
-  # Verify Neovim starts with this config
-  verify:nvim:
-    cmds:
-      - bash scripts/verify-nvim.sh
-
-  # Verify terminal app workflow (also a cross-repo bridge from private-config)
-  verify:terminal:
-    cmds:
-      - ./scripts/verify-terminal.sh
 
   verify:utilities:
     desc: Verify scratch ownership and provider-neutral tmux recovery
     cmds:
       - python3 scripts/test-utilities.py
-
-  # Verify zsh startup and plugin contract (also a cross-repo bridge from private-config)
-  verify:zsh:
-    preconditions:
-      - sh: command -v zsh >/dev/null 2>&1
-        msg: "zsh is required to verify shell startup"
-    cmds:
-      - ./scripts/verify-zsh.sh
-
-  # Scan tracked files and the staged index for identifiers listed in an
-  # optional private denylist (see scripts/verify-denylist.sh). Skips
-  # cleanly when the file is absent, so other clones of this repo are
-  # unaffected.
-  security:denylist:
-    cmds:
-      - ./scripts/verify-denylist.sh
-
-  # Scan staged public-dotfiles changes for secrets
-  secrets:staged:
-    cmds:
-      - gitleaks protect --staged --source . --redact --no-banner
-
-  # Scan the entire working tree (including history) for secrets
-  secrets:full:
-    cmds:
-      - gitleaks detect --source . --redact --no-banner
-
-  help:
-    desc: Show available tasks
-    cmds:
-      - task --list
 
   nvim-tmux:build:
     desc: Build the nvim-tmux URL handler binary

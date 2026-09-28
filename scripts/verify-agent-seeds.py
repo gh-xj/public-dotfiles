@@ -7,10 +7,12 @@ import subprocess
 import sys
 import tempfile
 
-generation, repo = map(Path, sys.argv[1:])
+generation = Path(sys.argv[1])
+repo = Path(sys.argv[2])
+config_attr = sys.argv[3]
 activation = (generation / "activate").read_text()
 for name, relative in [("seedClaudeSettings", ".claude/settings.json"), ("seedCodexConfig", ".codex/config.toml")]:
-    attr = ".#homeConfigurations.example.config.home.activation." + name + ".data"
+    attr = config_attr + ".config.home.activation." + name + ".data"
     block = subprocess.check_output(["nix", "--extra-experimental-features", "nix-command flakes", "eval", "--raw", attr], cwd=repo, text=True)
     assert name in activation and "/nix/store/" in block
     with tempfile.TemporaryDirectory(prefix="agent-seed-") as tmp:

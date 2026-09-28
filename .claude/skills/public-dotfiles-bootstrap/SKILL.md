@@ -57,13 +57,12 @@ Project-local router for restoring and auditing the public, reusable
 
 | Change | Gate |
 | --- | --- |
-| Bootstrap script or Nix host | `task verify:bootstrap-darwin` |
-| Display policy | inspect `scripts/apply-display-layout.sh`; `task display:apply` is mutating |
-| Raycast Store extensions | `task verify:raycast-extensions` |
+| Bootstrap script or Nix host | `task check` |
+| Display policy | inspect `scripts/apply-display-layout.sh`; `task apply` is mutating |
+| Raycast Store extensions | `task raycast:install` |
 | General repo health | `task check` |
 
-Run `task secrets:staged` before committing scripts, agent config, shell config,
-URLs, headers, generated config, or token-adjacent surfaces.
+`task check` runs the staged secret scan and public identifier denylist.
 
 ## Gaps
 

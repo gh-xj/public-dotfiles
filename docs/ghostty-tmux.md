@@ -116,10 +116,11 @@ After changing tmux prefix:
 Run this after changing Ghostty, tmux, or Karabiner terminal key rules:
 
 ```bash
-task verify:terminal
+task check
 ```
 
-This validates Ghostty config, Karabiner complex-modification assets, tmux config parsing, the Karabiner `Ctrl-h/l` no-rewrite policy, legacy selector mappings, root `M-*` migration guards, and the EasyJump `prefix + J` only policy.
+This validates Ghostty config, Karabiner complex-modification assets, generated
+tmux config loading, and the agent/Workmux pane integration.
 
 ## Theme policy
 

@@ -239,6 +239,15 @@ require_sudo_for_darwin_apply() {
   die "--darwin --apply requires sudo credentials; rerun from an interactive terminal/SSH session or pre-authorize sudo on the target machine"
 }
 
+guard_private_overlay_apply() {
+  [ "$mode" = "apply" ] || return 0
+  [ "$target_user" = "$initial_user" ] || return 0
+  [ "$target_home" = "$initial_home" ] || return 0
+  [ -f "$repo_root/../private-config/flake.nix" ] || return 0
+
+  die "an adjacent private-config composes this user's Home Manager profile; apply from that repo instead"
+}
+
 csv_to_array() {
   local csv="$1"
   local old_ifs="$IFS"
@@ -802,6 +811,7 @@ main() {
   local flake_dir
 
   parse_args "$@"
+  guard_private_overlay_apply
   enable_nix_flake_features
   cd "$repo_root"
   preflight

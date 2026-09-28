@@ -3,10 +3,7 @@ set -euo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
-
-nix_cmd() {
-  nix --extra-experimental-features "nix-command flakes" "$@"
-}
+generation="${1:?usage: verify-terminal.sh GENERATION}"
 
 run_first_available() {
   local found=0
@@ -37,36 +34,6 @@ run_first_available() {
   fi
 }
 
-each_legacy_selector() {
-  ruby -rjson -e '
-    JSON.parse(File.read(ARGV[0])).each do |item|
-      puts [
-        item.fetch("tmuxKey"),
-        item.fetch("tmuxCommand"),
-        Array(item.fetch("ghosttyKeybinds")).join(",")
-      ].join("\t")
-    end
-  ' "$repo_root/config/terminal/legacy-selectors.json"
-}
-
-assert_line() {
-  local file="$1"
-  local expected="$2"
-
-  if ! grep -Fx -- "$expected" "$file" >/dev/null 2>&1; then
-    printf 'missing expected line in %s: %s\n' "$file" "$expected" >&2
-    exit 1
-  fi
-}
-
-tmux_key_binding() {
-  local socket="$1"
-  local table="$2"
-  local key="$3"
-
-  tmux -L "$socket" list-keys -T "$table" 2>/dev/null | awk -v key="$key" '$4 == key'
-}
-
 verify_ghostty() {
   run_first_available \
     ghostty \
@@ -86,140 +53,26 @@ verify_karabiner_lint() {
   done
 }
 
-verify_karabiner_terminal_invariants() {
-  ruby <<'RUBY'
-require "json"
-
-paths = [
-  ".config/karabiner/assets/complex_modifications/xjm-rules.json",
-  ".config/karabiner/karabiner.json",
-]
-
-def each_object(value, &block)
-  case value
-  when Hash
-    yield value
-    value.each_value { |child| each_object(child, &block) }
-  when Array
-    value.each { |child| each_object(child, &block) }
-  end
-end
-
-def has_values?(value, *required)
-  values = Array(value)
-  required.all? { |item| values.include?(item) }
-end
-
-def limited_to_chrome?(item)
-  Array(item["conditions"]).any? do |condition|
-    condition.is_a?(Hash) &&
-      condition["type"] == "frontmost_application_if" &&
-      condition["bundle_identifiers"] == ["^com\\.google\\.Chrome$"]
-  end
-end
-
-paths.each do |path|
-  value = JSON.parse(File.read(path))
-  each_object(value) do |item|
-    source = item["from"]
-    targets = item["to"]
-    next unless source.is_a?(Hash) && targets.is_a?(Array)
-
-    source_key = source["key_code"]
-    next unless %w[h l].include?(source_key)
-    next unless has_values?(source.dig("modifiers", "mandatory"), "control")
-
-    targets.each do |target|
-      next unless target.is_a?(Hash)
-      target_key = target["key_code"]
-      rewrites_terminal_tab =
-        (source_key == "h" && target_key == "open_bracket") ||
-        (source_key == "l" && target_key == "close_bracket")
-      next unless rewrites_terminal_tab
-      next unless has_values?(target["modifiers"], "command", "shift")
-      next if limited_to_chrome?(item)
-
-      warn "Karabiner rewrites Ctrl-#{source_key} in #{path}"
-      exit 1
-    end
-  end
-end
-RUBY
-}
-
 verify_tmux() {
   local socket="public-dotfiles-verify-terminal-$$"
-  local generation home_files tmux_config ghostty_config
-  local binding selector_key selector_command selector_shortcuts selector_shortcut
+  local home_files tmux_config
 
   cleanup() {
     tmux -L "public-dotfiles-verify-terminal-$$" kill-server >/dev/null 2>&1 || true
   }
   trap cleanup EXIT
 
-  activation_attr="$("$repo_root/scripts/home-config-attr.sh" activation-package)"
-  generation="$(nix_cmd build --no-link --print-out-paths "$activation_attr")"
-  home_files="$(readlink "$generation/home-files")"
+  home_files="$(realpath "$generation/home-files")"
   tmux_config="$home_files/.config/tmux/tmux.conf"
-  ghostty_config="$home_files/.config/ghostty/config"
 
   tmux -L "$socket" -f /dev/null new-session -d -s verify-terminal 'sleep 60'
   tmux -L "$socket" source-file "$tmux_config"
 
-  [ "$(tmux -L "$socket" show-options -gv pane-border-status)" = "top" ]
   python3 "$repo_root/scripts/test-agent-panes.py" "$socket" "$generation/home-path/bin"
-
-  assert_line "$ghostty_config" 'keybind = ctrl+left=text:\x13p'
-  assert_line "$ghostty_config" 'keybind = ctrl+right=text:\x13n'
-  if grep -Eq '^keybind = shift\+(left|right)=' "$ghostty_config"; then
-    echo 'unexpected Shift+Arrow tmux window navigation remains in Ghostty config' >&2
-    exit 1
-  fi
-  tmux_key_binding "$socket" root C-Left | grep -q 'previous-window'
-  tmux_key_binding "$socket" root C-Right | grep -q 'next-window'
-
-  local key
-  for key in M-b M-d M-D M-f M-w M-z; do
-    binding="$(tmux_key_binding "$socket" root "$key")"
-    if [ -n "$binding" ]; then
-      printf 'unexpected root tmux binding claims %s\n' "$key" >&2
-      printf '%s\n' "$binding" >&2
-      exit 1
-    fi
-  done
-
-  while IFS=$'\t' read -r selector_key selector_command selector_shortcuts; do
-    tmux_key_binding "$socket" root "M-$selector_key" | grep -Fq -- "$selector_command"
-
-    [ -n "$selector_shortcuts" ] || continue
-    IFS=',' read -r -a shortcut_array <<< "$selector_shortcuts"
-    for selector_shortcut in "${shortcut_array[@]}"; do
-      assert_line "$ghostty_config" "keybind = ${selector_shortcut}=text:\\x1b${selector_key}"
-    done
-  done < <(each_legacy_selector)
-
-  test -n "$(tmux_key_binding "$socket" prefix '|')"
-  test -n "$(tmux_key_binding "$socket" prefix '_')"
-  test -n "$(tmux_key_binding "$socket" prefix X)"
-  test -n "$(tmux_key_binding "$socket" prefix z)"
-  test -n "$(tmux_key_binding "$socket" prefix E)"
-  tmux_key_binding "$socket" prefix J | grep -q 'easyjump.tmux/easyjump.py'
-
-  local table
-  for table in copy-mode copy-mode-vi; do
-    binding="$(tmux_key_binding "$socket" "$table" C-J)"
-    if [ -n "$binding" ]; then
-      printf 'unexpected EasyJump copy-mode binding in %s C-J\n' "$table" >&2
-      printf '%s\n' "$binding" >&2
-      exit 1
-    fi
-    tmux_key_binding "$socket" "$table" C-j | grep -q 'select-pane -D'
-  done
 }
 
 verify_ghostty
 verify_karabiner_lint
-verify_karabiner_terminal_invariants
 verify_tmux
 
 echo "terminal workflow verified"

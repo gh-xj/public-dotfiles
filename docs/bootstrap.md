@@ -59,23 +59,16 @@ instead of layering another install over partial APFS state.
 Build the host-native checked-in example without activating it:
 
 ```bash
-NIX_CONFIG='experimental-features = nix-command flakes' nix build "$(./scripts/home-config-attr.sh activation-package)"
+NIX_CONFIG='experimental-features = nix-command flakes' nix build .#
 ```
 
-The checked-in examples target the user `example`; `task apply` refuses to run
-for a different current user. Real users should use the generated bootstrap
-host above or intentionally adapt `hosts/example.nix` in their own clone.
+`task apply` generates a host for the current user and runs the Home Manager
+and nix-darwin phases. The checked-in `example` hosts remain build fixtures.
 
 After a user or Darwin apply, run:
 
 ```bash
 task check
-```
-
-For changes to bootstrap generation, also use the focused read-only gate:
-
-```bash
-task verify:bootstrap-darwin
 ```
 
 ## Package Sets
@@ -102,9 +95,8 @@ App Store purchases, login-item consent, auth tokens, or project trust lists.
 Raycast also owns Script Command directory registration, aliases, hotkeys, and
 Store install confirmation. After apply, register the clone's
 `.config/raycast/scripts` directory in Raycast Settings under
-`Extensions -> Script Commands`. Check Store extensions with
-`task verify:raycast-extensions`; open missing install intents with
-`task raycast:open-extension-installs` and approve them in Raycast.
+`Extensions -> Script Commands`. Run `task raycast:install` to verify the
+ledger, open missing install intents, and approve them in Raycast.
 
 Persisted macOS defaults can match while the GUI session or hardware state is
 stale. For display and input discrepancies, follow

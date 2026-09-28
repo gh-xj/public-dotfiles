@@ -96,11 +96,11 @@ here.
 Build the public Home Manager example without applying it:
 
 ```bash
-nix build "$(./scripts/home-config-attr.sh activation-package)"
+nix build .#
 ```
 
-To apply the public baseline directly, clone the repo, edit
-`hosts/example.nix` for the target macOS account, then run:
+To apply the public baseline directly on a standalone machine, clone the repo
+and run:
 
 ```bash
 task apply
@@ -118,11 +118,5 @@ only private overlay state:
 Run this gate after changing Codex config policy:
 
 ```bash
-task verify:codex-runtime-boundary
-```
-
-On a live machine, include the runtime writability check:
-
-```bash
-./scripts/verify-codex-runtime-boundary.sh --live
+task check
 ```
