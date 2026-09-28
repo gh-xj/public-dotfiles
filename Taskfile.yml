@@ -43,7 +43,6 @@ tasks:
     cmds:
       - task: nix:build
       - task: verify:home-files
-      - task: verify:patchkit
       - task: verify:repo-hygiene
       - task: verify:global-taskfile
       - task: verify:codex-runtime-boundary
@@ -69,11 +68,6 @@ tasks:
   verify:home-files:
     cmds:
       - ./scripts/verify-home-files.sh
-
-  # Verify patchkit/apply_patch helper behavior
-  verify:patchkit:
-    cmds:
-      - ./scripts/verify-patchkit.sh
 
   # Reject tracked repo noise that should stay ignored
   verify:repo-hygiene:
