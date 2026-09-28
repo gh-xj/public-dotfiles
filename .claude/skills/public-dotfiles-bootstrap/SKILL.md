@@ -14,8 +14,8 @@ Project-local router for restoring and auditing the public, reusable
 - Comparing source-Mac and target-Mac setup discrepancies.
 - Deciding whether macOS, display, Raycast, app, package, input, or terminal
   drift belongs in this repo.
-- Strengthening bootstrap scripts, Taskfile gates, or verification harness
-  after a discrepancy.
+- Strengthening bootstrap scripts, Taskfile gates, or verification after a
+  discrepancy.
 
 ## Do Not Use For
 
@@ -24,71 +24,50 @@ Project-local router for restoring and auditing the public, reusable
 - Cross-surface persistence proposals; use `harness-router`.
 - Generic skill design; use `skill-builder`.
 - Sensitive, account-bound, company/private, secret-adjacent, session, cache,
-  or credential state; route that to `private-config`.
+  or credential state; route that to the private owner.
 
 ## First Pass
 
 1. Start with `git status --short --branch`.
-2. Read `AGENTS.md`, then the relevant docs:
-   - `docs/bootstrap.md`
-   - `docs/current-machine-baseline.md`
-   - `docs/macos-convergence-model.md`
-3. Identify the reported discrepancy and the source/target machines.
+2. Read `AGENTS.md`, `README.md`, and the relevant section of
+   `docs/bootstrap.md` or `docs/macos-convergence-model.md`.
+3. Identify the discrepancy and the source and target machines.
 4. Inspect before changing:
-   - `defaults read` for the affected domain, compared against `modules/darwin/defaults.nix`
-   - target equivalent over SSH when available
-   - a narrow live-state command for the affected layer
-5. Check `references/known-failures.md` for an existing symptom pattern.
-6. Classify the owning layer using `docs/macos-convergence-model.md`.
-7. Encode desired public-safe state in repo source, not in live symlinks.
-8. Add or strengthen a verifier that fails on the observed drift.
-9. Apply narrowly, then run `task check`.
-10. Record durable skill lessons in `MAINTENANCE.md` when the workflow itself
-    changes.
-11. Commit and push according to `AGENTS.md`.
+   - compare `defaults read` with `modules/darwin/defaults.nix`
+   - inspect the target equivalent over SSH when available
+   - use a narrow live-state command for the affected layer
+5. Classify the owner with `docs/macos-convergence-model.md`.
+6. Encode public-safe desired state in repo source, not live symlinks.
+7. Add a verifier only when the declaration or build cannot prove the behavior.
+8. Run the narrow non-mutating gate, then `task check`.
+9. Apply only when the user requested it, using `docs/bootstrap.md`.
+10. Commit according to `AGENTS.md`.
 
 ## Layer Heuristics
 
 | Symptom | First Place To Look |
 | --- | --- |
-| Defaults show correct but behavior differs | live state such as `ioreg`, app cache, GUI session, or TCC |
-| Display resolution differs | `config/macos/display-layouts.tsv` and `task display:apply` |
-| Tap-to-click or gestures differ | `modules/darwin/defaults.nix`, then live `AppleMultitouchDevice`; a switch reapplies the declared values |
-| Raycast command/settings drift | `modules/darwin/defaults.nix`, `.config/raycast/scripts`, and the Raycast extension verifier |
-| Store extension missing | `config/raycast/extensions.tsv`; open install intents, do not copy caches |
-| Package/app drift | Nix package sets, `Brewfile`/Homebrew module, or npm globals ledger |
+| Defaults match but behavior differs | `ioreg`, app cache, GUI session, or TCC |
+| Display resolution differs | `config/macos/display-layouts.tsv` and `scripts/apply-display-layout.sh` |
+| Tap-to-click or gestures differ | `modules/darwin/defaults.nix`, then live `AppleMultitouchDevice` state |
+| Raycast drift | `modules/darwin/defaults.nix`, `.config/raycast/scripts`, and `config/raycast/extensions.tsv` |
+| Package/app drift | Nix package sets, `modules/darwin/homebrew.nix`, or `npm-globals.txt` |
 
 ## Verification
 
-Use the narrowest gate first, then the full gate:
-
-| Change | Narrow Gate |
+| Change | Gate |
 | --- | --- |
 | Bootstrap script or Nix host | `task verify:bootstrap-darwin` |
-| Display policy | `task display:apply` |
-| Input/trackpad and Raycast preferences | `task apply` in `private-config`; these are declared in `modules/darwin/defaults.nix` |
+| Display policy | inspect `scripts/apply-display-layout.sh`; `task display:apply` is mutating |
 | Raycast Store extensions | `task verify:raycast-extensions` |
 | General repo health | `task check` |
 
 Run `task secrets:staged` before committing scripts, agent config, shell config,
 URLs, headers, generated config, or token-adjacent surfaces.
 
-## References
-
-| File | Use For |
-| --- | --- |
-| `docs/bootstrap.md` | Supported bootstrap entrypoints and phases |
-| `docs/current-machine-baseline.md` | Current public-safe desired state |
-| `docs/macos-convergence-model.md` | Source-vs-target discrepancy loop and macOS layers |
-| `references/known-failures.md` | Symptom-to-action registry for repeated bootstrap failures |
-| `references/trigger-evals.md` | Trigger and non-trigger examples for this skill |
-| `MAINTENANCE.md` | Append-only lessons for keeping this skill aligned with repo harness |
-
 ## Gaps
 
-- Source-vs-target baseline diff is still manual; no JSON snapshot comparator
-  exists yet.
-- Raycast Store extension install, Script Command directory registration,
-  and command aliases/hotkeys remain interactive.
-- Trackpad changes may not take effect until the GUI session reloads them;
-  logout/login is the reliable path on some target Macs.
+- Source-vs-target baseline comparison is manual.
+- Raycast Store extension install, Script Command directory registration, and
+  aliases/hotkeys remain interactive.
+- Trackpad behavior may require a GUI-session reload after apply.
