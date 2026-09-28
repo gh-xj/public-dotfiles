@@ -42,6 +42,22 @@ Native Claude Code passthrough:
 
 - Shared tmux config enables `allow-passthrough all` so Claude Code desktop notifications and progress updates can reach Ghostty even when the agent pane/window is not currently visible.
 - Shared tmux config enables `extended-keys` plus `xterm*:extkeys` so Shift+Enter remains distinguishable from Enter inside tmux.
+- Pane borders show the owning tmux window name at the top. This is deliberately
+  `#{window_name}`, not `#{pane_title}`: the former is a durable workspace
+  label; the latter is controlled by the foreground terminal program.
+
+## Naming an agent workspace
+
+Tmux has `automatic-rename` disabled, so an explicit window name is stable and
+is displayed in the pane border. An agent in tmux can name its current window:
+
+```sh
+tmux rename-window -t "$TMUX_PANE" "Content Agent"
+```
+
+Use a concise role-oriented label (for example `Content Agent` or `Research`).
+`$TMUX_PANE` resolves the target to the current pane's window, avoiding an
+accidental rename of another active client window.
 
 Current pane shortcuts:
 
