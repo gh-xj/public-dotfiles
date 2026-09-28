@@ -46,8 +46,7 @@ When running over SSH, use an interactive session or pre-authorize sudo on the
 target machine before invoking the command.
 On first nix-darwin activation, the script backs up existing `/etc/bashrc` and
 `/etc/zshrc` to `.before-nix-darwin` so nix-darwin can own those generated
-system shell files. Use `--no-migrate-nix-darwin-etc` for a strict failure
-instead.
+system shell files.
 
 On a stock Mac without Nix, use `--install-nix --apply` if you want the script
 to run the official macOS daemon installer before Home Manager. On Intel Macs
@@ -57,8 +56,7 @@ script also prints the upstream install commands when Nix is missing.
 
 `--apply` backs up unmanaged files that already exist at Home Manager-owned
 paths with a `public-dotfiles-backup-<timestamp>` extension before linking the
-public baseline. Use `--no-backup` when you want Home Manager to fail on those
-conflicts instead.
+public baseline.
 
 You can still build the host-native public Home Manager example without
 touching your home directory:
@@ -124,12 +122,7 @@ Canonical local Home Manager entrypoint for a real macOS user:
 ./scripts/bootstrap-macos.sh --apply
 ```
 
-This backs up pre-existing unmanaged Home Manager link targets by default. For
-a strict conflict check:
-
-```bash
-./scripts/bootstrap-macos.sh --apply --no-backup
-```
+This backs up pre-existing unmanaged Home Manager link targets by default.
 
 For the GUI app/Homebrew ledger as well:
 
@@ -137,10 +130,10 @@ For the GUI app/Homebrew ledger as well:
 ./scripts/bootstrap-macos.sh --darwin --apply
 ```
 
-`task apply` remains a maintainer shortcut for the checked-in `.#example`
-configuration. Use it only from a clone whose `hosts/example.nix` matches the
-target macOS account. A private host may import this repo, but that private
-overlay should only add sensitive, account-bound, or runtime-adjacent state.
+`task apply` is the canonical standalone shortcut for both phases. It refuses
+to apply over the current user when an adjacent `private-config` composes that
+profile. A private host may import this repo, but that private overlay should
+only add sensitive, account-bound, or runtime-adjacent state.
 
 ## Nix Package Sets
 

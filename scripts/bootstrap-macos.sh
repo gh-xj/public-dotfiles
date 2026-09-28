@@ -12,22 +12,17 @@ home_state_version="25.11"
 mode="dry-run"
 darwin_phase=0
 nix_install_mode="never"
-nix_install_version="${XJ_PUBLIC_DOTFILES_NIX_VERSION:-auto}"
+nix_install_version="auto"
 host_platform=""
 homebrew_prefix=""
 macos_major=""
-homebrew_install_mode="auto"
-backup_extension="${XJ_PUBLIC_DOTFILES_BACKUP_EXTENSION:-public-dotfiles-backup-$(date +%Y%m%d%H%M%S)}"
-migrate_nix_darwin_etc=1
-display_layout_mode="auto"
+backup_extension="public-dotfiles-backup-$(date +%Y%m%d%H%M%S)"
 skip_build=0
 package_sets=("shell" "dev" "ops")
-hm_extra_args=()
-hm_extra_arg_count=0
 
 usage() {
   cat <<'EOF'
-Usage: scripts/bootstrap-macos.sh [options] [-- home-manager args...]
+Usage: scripts/bootstrap-macos.sh [options]
 
 Stock-macOS entrypoint for the public dotfiles baseline.
 
@@ -43,22 +38,7 @@ Options:
   --darwin                     Also build/apply the generated nix-darwin system host
   --install-nix[=official]     Install upstream Nix with the official macOS daemon installer if nix is missing
   --install-nix=determinate    Install Determinate Nix with its CLI installer if nix is missing
-  --nix-version VERSION        Pin the official Nix installer version (default: auto)
-  --no-install-homebrew        With --darwin --apply, fail instead of installing missing Homebrew
-  --host-platform SYSTEM       Override detected Nix Darwin system for dry-run testing
-                               (aarch64-darwin or x86_64-darwin)
-  --homebrew-prefix PATH       Homebrew prefix for nix-darwin
-                               (default: /opt/homebrew on Apple Silicon, /usr/local on Intel)
-  --backup-extension EXT       Backup unmanaged files before linking Home Manager paths
-                               (default: public-dotfiles-backup-<timestamp>)
-  --no-backup                  Fail instead of backing up unmanaged Home Manager link targets
-  --no-migrate-nix-darwin-etc  Fail instead of backing up first-run /etc shell rc files
-  --no-display-layout          Skip displayplacer layout policy after nix-darwin apply
   --skip-build                 Generate and inspect bootstrap config without Nix builds
-  --user NAME                  macOS user for Home Manager (default: current user)
-  --home PATH                  Home directory for that user (default: current HOME)
-  --state-version VERSION      Home Manager stateVersion (default: 25.11)
-  --package-sets LIST          Comma-separated package sets (default: shell,dev,ops)
   -h, --help                   Show this help
 
 Examples:
@@ -168,22 +148,7 @@ default_homebrew_prefix_for_system() {
   esac
 }
 
-validate_host_platform() {
-  case "$1" in
-    aarch64-darwin|x86_64-darwin)
-      ;;
-    *)
-      die "unsupported --host-platform: $1"
-      ;;
-  esac
-}
-
 macos_major_version() {
-  if [ -n "${XJ_PUBLIC_DOTFILES_MACOS_MAJOR_OVERRIDE:-}" ]; then
-    printf '%s\n' "$XJ_PUBLIC_DOTFILES_MACOS_MAJOR_OVERRIDE"
-    return
-  fi
-
   sw_vers -productVersion | awk -F. '{ print $1 }'
 }
 
@@ -241,20 +206,9 @@ require_sudo_for_darwin_apply() {
 
 guard_private_overlay_apply() {
   [ "$mode" = "apply" ] || return 0
-  [ "$target_user" = "$initial_user" ] || return 0
-  [ "$target_home" = "$initial_home" ] || return 0
   [ -f "$repo_root/../private-config/flake.nix" ] || return 0
 
   die "an adjacent private-config composes this user's Home Manager profile; apply from that repo instead"
-}
-
-csv_to_array() {
-  local csv="$1"
-  local old_ifs="$IFS"
-  IFS=,
-  # shellcheck disable=SC2206
-  package_sets=($csv)
-  IFS="$old_ifs"
 }
 
 nix_string() {
@@ -292,96 +246,12 @@ parse_args() {
       --install-nix=determinate)
         nix_install_mode="determinate"
         ;;
-      --nix-version)
-        shift
-        [ "$#" -gt 0 ] || die "--nix-version requires a value"
-        nix_install_version="$1"
-        ;;
-      --nix-version=*)
-        nix_install_version="${1#--nix-version=}"
-        ;;
-      --no-install-homebrew)
-        homebrew_install_mode="never"
-        ;;
-      --host-platform)
-        shift
-        [ "$#" -gt 0 ] || die "--host-platform requires a value"
-        host_platform="$1"
-        ;;
-      --host-platform=*)
-        host_platform="${1#--host-platform=}"
-        ;;
-      --homebrew-prefix)
-        shift
-        [ "$#" -gt 0 ] || die "--homebrew-prefix requires a value"
-        homebrew_prefix="$1"
-        ;;
-      --homebrew-prefix=*)
-        homebrew_prefix="${1#--homebrew-prefix=}"
-        ;;
-      --backup-extension)
-        shift
-        [ "$#" -gt 0 ] || die "--backup-extension requires a value"
-        [ -n "$1" ] || die "--backup-extension cannot be empty"
-        backup_extension="$1"
-        ;;
-      --backup-extension=*)
-        backup_extension="${1#--backup-extension=}"
-        [ -n "$backup_extension" ] || die "--backup-extension cannot be empty"
-        ;;
-      --no-backup)
-        backup_extension=""
-        ;;
-      --no-migrate-nix-darwin-etc)
-        migrate_nix_darwin_etc=0
-        ;;
-      --no-display-layout)
-        display_layout_mode="skip"
-        ;;
       --skip-build)
         skip_build=1
-        ;;
-      --user)
-        shift
-        [ "$#" -gt 0 ] || die "--user requires a value"
-        target_user="$1"
-        ;;
-      --user=*)
-        target_user="${1#--user=}"
-        ;;
-      --home)
-        shift
-        [ "$#" -gt 0 ] || die "--home requires a value"
-        target_home="$1"
-        ;;
-      --home=*)
-        target_home="${1#--home=}"
-        ;;
-      --state-version)
-        shift
-        [ "$#" -gt 0 ] || die "--state-version requires a value"
-        home_state_version="$1"
-        ;;
-      --state-version=*)
-        home_state_version="${1#--state-version=}"
-        ;;
-      --package-sets)
-        shift
-        [ "$#" -gt 0 ] || die "--package-sets requires a value"
-        csv_to_array "$1"
-        ;;
-      --package-sets=*)
-        csv_to_array "${1#--package-sets=}"
         ;;
       -h|--help)
         usage
         exit 0
-        ;;
-      --)
-        shift
-        hm_extra_arg_count="$#"
-        hm_extra_args=("$@")
-        break
         ;;
       *)
         die "unknown option: $1"
@@ -392,23 +262,13 @@ parse_args() {
 }
 
 preflight() {
-  local detected_platform uname_s uname_m
+  local uname_s uname_m
   uname_s="$(uname -s)"
   uname_m="$(uname -m)"
 
   [ "$uname_s" = "Darwin" ] || die "this bootstrap currently supports macOS only; found $uname_s"
-  detected_platform="$(darwin_system_from_uname "$uname_m")"
-  if [ -z "$host_platform" ]; then
-    host_platform="$detected_platform"
-  else
-    validate_host_platform "$host_platform"
-    if [ "$host_platform" != "$detected_platform" ] && [ "$mode" != "dry-run" ]; then
-      die "--host-platform can only differ from the detected platform in dry-run mode"
-    fi
-  fi
-  if [ -z "$homebrew_prefix" ]; then
-    homebrew_prefix="$(default_homebrew_prefix_for_system "$host_platform")"
-  fi
+  host_platform="$(darwin_system_from_uname "$uname_m")"
+  homebrew_prefix="$(default_homebrew_prefix_for_system "$host_platform")"
   macos_major="$(macos_major_version)"
   case "$macos_major" in
     ""|*[!0-9]*)
@@ -435,11 +295,7 @@ preflight() {
   info "target home: $target_home"
   info "package sets: ${package_sets[*]}"
   if [ "$mode" = "apply" ]; then
-    if [ -n "$backup_extension" ]; then
-      info "Home Manager conflict backups: *.$backup_extension"
-    else
-      info "Home Manager conflict backups: disabled"
-    fi
+    info "Home Manager conflict backups: *.$backup_extension"
   fi
   if [ "$darwin_phase" -eq 1 ]; then
     info "Darwin system phase: enabled"
@@ -681,10 +537,6 @@ ensure_homebrew_for_darwin() {
     return
   fi
 
-  if [ "$homebrew_install_mode" = "never" ]; then
-    die "Homebrew is missing at $homebrew_prefix/bin/brew; install it first or omit --no-install-homebrew"
-  fi
-
   info "installing Homebrew with the official installer"
   install_homebrew
 
@@ -697,7 +549,6 @@ prepare_nix_darwin_etc() {
 
   [ "$darwin_phase" -eq 1 ] || return 0
   [ "$mode" = "apply" ] || return 0
-  [ "$migrate_nix_darwin_etc" -eq 1 ] || return 0
 
   for file in /etc/bashrc /etc/zshrc; do
     [ -e "$file" ] || [ -L "$file" ] || continue
@@ -719,21 +570,8 @@ prepare_nix_darwin_etc() {
   done
 }
 
-hm_args_include_backup_extension() {
-  local arg
-  for arg in "$@"; do
-    case "$arg" in
-      -b|--backup-extension|--backup-extension=*)
-        return 0
-        ;;
-    esac
-  done
-  return 1
-}
-
 apply_home_manager() {
   local flake_dir="$1"
-  local hm_args_have_backup=0
   local switch_args
 
   [ "$mode" = "apply" ] || {
@@ -742,16 +580,7 @@ apply_home_manager() {
 
   have_cmd nix || die "--apply requires nix; rerun with --install-nix --apply or install nix first"
 
-  switch_args=(switch --flake "$flake_dir#$profile_name")
-  if [ "$hm_extra_arg_count" -gt 0 ] && hm_args_include_backup_extension "${hm_extra_args[@]}"; then
-    hm_args_have_backup=1
-  fi
-  if [ -n "$backup_extension" ] && [ "$hm_args_have_backup" -eq 0 ]; then
-    switch_args+=(-b "$backup_extension")
-  fi
-  if [ "$hm_extra_arg_count" -gt 0 ]; then
-    switch_args+=("${hm_extra_args[@]}")
-  fi
+  switch_args=(switch --flake "$flake_dir#$profile_name" -b "$backup_extension")
 
   info "running Home Manager switch"
   nix_cmd run "$flake_dir#home-manager" -- "${switch_args[@]}"
@@ -783,7 +612,6 @@ apply_darwin_system() {
 apply_display_layout() {
   [ "$darwin_phase" -eq 1 ] || return 0
   [ "$mode" = "apply" ] || return 0
-  [ "$display_layout_mode" = "auto" ] || return 0
 
   info "applying display layout policy"
   "$repo_root/scripts/apply-display-layout.sh" --apply

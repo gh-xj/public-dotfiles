@@ -34,16 +34,13 @@ the current option list; the script is the option source of truth.
 ## First-Run Safety
 
 - `--apply` backs up unmanaged Home Manager targets with a timestamped
-  extension. Use `--no-backup` to fail on conflicts instead.
+  extension.
 - `--darwin --apply` may use `sudo`. Over SSH, use an interactive session or
   pre-authorize sudo before the long build.
 - On first nix-darwin activation, the script backs up existing `/etc/bashrc`
-  and `/etc/zshrc` to `.before-nix-darwin`. Use
-  `--no-migrate-nix-darwin-etc` for a strict failure.
+  and `/etc/zshrc` to `.before-nix-darwin`.
 - Homebrew installation is opt-in through the Darwin apply path when Homebrew
-  is absent. Use `--no-install-homebrew` to require a pre-existing install.
-- Pass Home Manager arguments after `--`, for example
-  `./scripts/bootstrap-macos.sh --apply -- --show-trace`.
+  is absent.
 
 On a stock Mac without Nix, use `--install-nix --apply`. The default is the
 official daemon installer; `--install-nix=determinate` selects the Determinate
