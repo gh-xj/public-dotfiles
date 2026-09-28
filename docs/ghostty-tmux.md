@@ -96,7 +96,7 @@ agent-pane-title clear
 
 Claude statusline consumes the official `session_name` and `agent.name` fields;
 `/rename`, `--name`, and generated names propagate on the next statusline refresh
-(also refreshed every five seconds). Missing fields restore the native title.
+(event-driven, with no periodic polling by default). Missing fields restore the native title.
 Codex SessionStart uses only documented hook fields to set a repository fallback.
 No runtime database or transcript inspection is involved. SessionEnd and the
 interactive zsh prompt clear labels. Unchanged labels do not call tmux.
@@ -121,9 +121,20 @@ The environment override uses the official
 
 Workmux is pinned to 0.1.248: `@workmux_pane_status` is an internal contract
 covered by real working/waiting/done/clear tests. `@workmux_status` remains its
-window summary (last update, not a count of pane states). PostToolUse restores
-working after permission approval; subagent completion must not mark the parent
-pane done. Native Codex subagents remain within its TUI.
+window summary (last update, not a count of pane states). `agent-workmux-status`
+marks working on a prompt, waiting on a permission request, and done on Stop.
+PostToolUse restores working only after a pending permission wait; ordinary tool
+results perform one shell file test and invoke neither tmux nor Workmux. This
+keeps the permission-resume transition without multiplying Workmux processes by
+tool count. An interrupted turn can remain working until the next lifecycle
+event; there is no polling loop to guess state. Private reporting hooks remain
+downstream runtime state and are never removed by these public defaults.
+Native Codex subagents remain within its TUI.
+
+Claude statusline refresh is event-driven (including native naming changes).
+For an idle clock or similar need, opt into `statusLine.refreshInterval = 30`
+in the live settings. Existing mutable settings retain older intervals until
+explicitly reviewed; the doctor flags periodic polling rather than changing it.
 
 Claude Agent Teams defaults to `in-process`. Anthropic documents split panes as
 unsupported in Ghostty; no successful real Ghostty-inside-tmux team smoke test

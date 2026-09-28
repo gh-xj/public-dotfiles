@@ -3,6 +3,11 @@
 let
   cfg = config.xj.publicDotfiles.agents.hooks;
   inherit (publicDotfilesDelivery) mkImmutableFile mkMutableSeedActivation;
+  status = pkgs.writeShellApplication {
+    name = "agent-workmux-status";
+    runtimeInputs = [ (pkgs.callPackage ../../../packages/workmux.nix { }) ];
+    text = builtins.readFile ../../../scripts/agent-workmux-status.sh;
+  };
   paneTitle = pkgs.writeShellApplication {
     name = "agent-pane-title";
     runtimeInputs = [ pkgs.python3 pkgs.tmux ];
@@ -20,8 +25,9 @@ in
       ".claude/statusline-command.sh" = mkImmutableFile ".claude/statusline-command.sh";
       ".local/bin/agent-pane-title".source = "${paneTitle}/bin/agent-pane-title";
       ".local/bin/agent-session".source = "${session}/bin/agent-session";
+      ".local/bin/agent-workmux-status".source = "${status}/bin/agent-workmux-status";
     };
-    home.packages = [ paneTitle session ];
+    home.packages = [ paneTitle session status ];
     home.activation.seedClaudeSettings = mkMutableSeedActivation {
       target = "${config.home.homeDirectory}/.claude/settings.json";
       targetDir = "${config.home.homeDirectory}/.claude";
