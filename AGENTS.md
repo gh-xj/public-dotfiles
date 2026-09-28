@@ -70,6 +70,10 @@ for displays and `ioreg AppleMultitouchDevice` for trackpad behavior.
   name the repo, commit hash, pushed branch, exact files staged, and
   verification commands run.
 - Use imperative commit subjects that describe the behavior changed.
+- Only the session xj is talking to commits on `main`. Background agents and
+  sub-agents work in a `git worktree` on an `agent/*` branch; the lead reviews
+  and lands their commits. This is what keeps parallel sessions from sweeping
+  each other's staged files into one commit.
 - Never amend, rebase, reset, checkout away, or force-push existing work unless
   the user explicitly asks for that operation.
 - Keep `CLAUDE.md` as `@AGENTS.md` so Claude and Codex share the same commit
