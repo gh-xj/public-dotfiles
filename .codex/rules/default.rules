@@ -6,3 +6,32 @@ prefix_rule(pattern=["rg"], decision="allow")
 prefix_rule(pattern=["docker", "compose"], decision="allow")
 prefix_rule(pattern=["docker", "ps", "--format", "{{.Names}} {{.Status}} {{.Ports}}"], decision="allow")
 prefix_rule(pattern=["curl", "-sS"], decision="allow")
+
+# Bounded, runtime-verified prefixes; see docs/codex-rule-proof.md for coverage.
+prefix_rule(
+    pattern=[["rm", "/bin/rm", "/usr/bin/rm"], "-rf", "/"],
+    decision="forbidden",
+    justification="Never remove the filesystem root. Select a bounded verified target and prefer recoverable removal.",
+    match=["rm -rf /", "/bin/rm -rf /"],
+    not_match=["rm -rf /tmp/example"],
+)
+prefix_rule(
+    pattern=["git", "push", ["--force", "-f"]],
+    decision="prompt",
+    justification="Review the remote and ref first; prefer a normal push or explicitly reviewed force-with-lease.",
+    match=["git push --force", "git push -f origin main"],
+    not_match=["git push origin main"],
+)
+prefix_rule(
+    pattern=["git", "reset", "--hard"],
+    decision="prompt",
+    justification="Inspect status and diffs and preserve concurrent work before destructive recovery.",
+    match=["git reset --hard", "git reset --hard HEAD"],
+)
+prefix_rule(
+    pattern=["git", "clean", "-fd"],
+    decision="prompt",
+    justification="Preview with git clean -nd and inspect ownership before removing untracked work.",
+    match=["git clean -fd", "git clean -fd -- build"],
+    not_match=["git clean -nd"],
+)

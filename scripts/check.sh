@@ -36,6 +36,7 @@ python3 scripts/test-tmux-recovery.py
 python3 scripts/test-downstream.py "$generation"
 "$generation/home-path/bin/agent-workspace" doctor --help >/dev/null
 python3 scripts/verify-codex-strict.py
+python3 scripts/probe-codex-rules.py
 task --taskfile global/Taskfile.yml --list-all >/dev/null
 
 bootstrap_root="$(mktemp -d)"
