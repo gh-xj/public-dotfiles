@@ -2,92 +2,32 @@
 
 ## Scope
 
-This repository owns the public-safe version of xj's dotfile setup. It should
-be capable enough to restore the non-sensitive parts of xj's comfortable
-operating environment, including opinionated app, shell, editor, terminal, CLI,
-and agent defaults. Do not treat this repo as a teaching/demo layer or as a
-minimal baseline.
+This public repo owns the public-safe, opinionated app, shell, editor, terminal,
+CLI, and agent defaults needed to restore xj's comfortable environment.
+Never add sensitive/account-bound/company-private/secret-adjacent state or
+private identifiers such as employers, internal projects, private hosts/IPs,
+emails, or user-specific absolute paths; those belong in `private-config`.
 
-Keep only sensitive, account-bound, company/private, secret-adjacent,
-machine-local runtime, session, cache, and personal archive state in
-`private-config`.
+Public is independently consumed by another Mac without `private-config`, so
+its example profile and `task apply` / `task check` must remain standalone.
+Use the `config-manager` skill and edit repo sources, never live `$HOME` links.
 
-Use the `config-manager` skill for app configuration work. Edit source files in
-this repo, not the live symlinks under `$HOME`.
+## Git and Worktrees
 
-## Bootstrap Discrepancy Loop
+Before git operations, run `git status --short`; preserve unrelated changes.
+Treat public and private as separate repos and commits. Stage explicit paths
+only, and inspect `git diff --cached` immediately before every commit.
+Stage new flake-consumed files before Nix checks because untracked files are
+invisible to flake evaluation.
 
-When a new-machine bootstrap discrepancy is reported, do not treat a one-off
-target-machine fix as complete. Compare the source Mac and target Mac, identify
-the owning layer, encode the desired state in this repo, add or strengthen the
-verification surface, then rerun the bootstrap or narrow apply command.
-
-For macOS settings, verify the layer that actually controls behavior. Plain
-`defaults read` is not enough when the behavior is backed by ByHost preferences,
-GUI-session state, app runtime caches, TCC grants, display hardware, or live
-IOKit state. Prefer live-state checks where available, such as `displayplacer`
-for displays and `ioreg AppleMultitouchDevice` for trackpad behavior.
-
-## GitHub CLI Account Boundary
-
-- GitHub CLI auth for `github.com` is allowed only for approved local accounts.
-  The default approved account is `gh-xj`; set
-  `APPROVED_GITHUB_CLI_ACCOUNTS` to a space-separated allowlist when needed.
-- Do not authenticate unapproved GitHub accounts or commit tokens to repo,
-  shell, agent, or generated config.
-- `task check` includes `security:approved-gh-account`; keep that gate
-  aligned with the approved-account policy.
-
-## Commit Discipline
-
-- Treat `public-dotfiles` and `private-config` as separate repositories with
-  separate commits and pushes.
-- Start every git operation with `git status --short` in the target repo. Notice
-  unrelated dirty files and leave them unstaged.
-- Run dotfiles git commands sequentially. Do not overlap `git add`, `git rm`,
-  `git commit`, or other repo-mutating git operations in parallel; avoid
-  parallel git reads around those writes too, because transient `index.lock`
-  races are easy to trigger in this repo workflow.
-- Stage explicit paths only: `git add -- path/to/file ...`. Do not use broad
-  staging commands for dotfiles work.
-- If a new file will be read by Nix flakes or repo verification, stage it
-  before running `nix build`, `task`, or other flake-evaluated checks. Untracked
-  files are invisible to flake evaluation.
-- Inspect `git diff --cached` before committing.
-- Keep each commit atomic: one behavior, policy, package ledger update, or doc
-  update. Before staging, write the operation boundary in one sentence; if a
-  second concern appears, split it into a separate commit.
-- Treat an accepted atomic operation as incomplete until its intended changes
-  are committed in the owning repo, unless the user explicitly asks to defer the
-  commit. If a commit cannot be made because the scope is ambiguous, checks
-  fail, or unrelated dirty files overlap the same paths, stop and report the
-  blocker instead of silently leaving completed work uncommitted.
-- If a final report includes uncommitted changes, name the exact reason. The
-  reason this rule exists is that prior agent work sometimes stopped after
-  editing and verification, while the written discipline only emphasized
-  commit shape rather than requiring a commit for the completed operation.
-- Treat each commit as an audit record. The final log for an operation must
-  name the repo, commit hash, pushed branch, exact files staged, and
-  verification commands run.
-- Use imperative commit subjects that describe the behavior changed.
-- Only the session xj is talking to commits on `main`. Background agents and
-  sub-agents work in a `git worktree` on an `agent/*` branch; the lead reviews
-  and lands their commits. This is what keeps parallel sessions from sweeping
-  each other's staged files into one commit.
-- Never amend, rebase, reset, checkout away, or force-push existing work unless
-  the user explicitly asks for that operation.
-- Keep `CLAUDE.md` as `@AGENTS.md` so Claude and Codex share the same commit
-  discipline.
+Only the lead session commits on `main`. Background agents use clean worktrees
+on `agent/*`; the lead reviews and lands their atomic commits. Do not leave an
+accepted operation uncommitted unless a reported blocker prevents it.
+Keep `CLAUDE.md` as the one-line `@AGENTS.md` compatibility file.
 
 ## Verification
 
-- Run `task check` before committing public dotfile changes.
-- Run `task secrets:staged` before committing any change that touches scripts,
-  agent config, shell config, tokens, URLs, headers, or generated config.
-- If a check cannot run, state the exact command and failure reason in the final
-  report.
-
-## Daily Workflow
-
-Read `docs/daily-git-workflow.md` for the normal branch, commit, verification,
-and push path.
+Run `task check` before commits; it includes the staged gitleaks scan and the
+private-identifier denylist.
+Report exact commands and failures. See `docs/daily-git-workflow.md` for the
+normal branch, commit, verification, and push path.

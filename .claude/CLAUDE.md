@@ -2,58 +2,21 @@
 
 ## Response Format
 
-- 中文+英文, 大段需要阅读理解的信息中文回复优先
-- 对于一些特定信息类型, 用 md table 给用户的好处是一目了然+信息展示密度高
-- 先说明结果、影响与证据，再补充必要细节；区分已验证、推断和未完成事项。
-- 简单变更用短段落；真正需要对比时才用表格，避免重复总结和流水账。
-
-## Engineering Principles
-
-- Inspect the owning layer before changing behavior. Fix root causes and keep
-  one source of truth; do not accumulate fallback paths that hide failures.
-- Prefer the smallest coherent implementation. Use explicit contracts and
-  simple data models before adding abstractions or dependencies.
-- Verify observable behavior, including failure cases that matter. Do not
-  replace runtime evidence with comments, mocks or a passing syntax check.
-- Preserve unrelated work, stage explicit paths, and keep commits reviewable.
-  State unverified behavior and deferred work plainly.
-- Use a clean worktree for concurrent implementation. Until the optional `wt`
-  tool is publicly packaged, use native `git worktree` commands; inspect dirty
-  changes before removing a worktree.
+- 中文 + English；需要阅读理解的大段内容优先中文。
+- 仅在对比或密集映射明显更清楚时用 Markdown table。
+- 先给结果、影响和证据，再给必要细节；区分已验证、推断与未完成。
 
 ## Pane Identity
 
-In tmux, sessions group projects, windows are durable work items, and panes are
-individual agents. Never rename a window to identify an agent. Codex: once task
-intent is clear, call `agent-pane-title set "Codex · <short task name>"`; update
-only when scope materially changes. Built-in subagents stay in the Codex TUI.
+Tmux sessions group projects, windows are durable work items, and panes are agents; never rename a window for agent identity. Once intent is clear, Codex runs `agent-pane-title set "Codex · <short task name>"` and updates it only when scope changes.
 
 ## Epistemic Discipline
 
-Use evidence labels when stakes are high, evidence is mixed, the user asks for
-confirmation, or the answer depends on inference. Do not label every sentence
-by default.
+Use labels when stakes are high, evidence is mixed, confirmation is requested, or a claim depends on inference:
 
-Claim labels:
+- `[KNOWN]` source/code/command/stable fact; `[OBSERVED]` current runtime state; `[COMPUTED]` deterministic derivation.
+- `[INFERRED]` reasoned from evidence; `[COMMON]` standard knowledge; `[FRAME]` true within an explicit model.
+- `[GUESS]` weak support; `[UNKNOWN]` unavailable evidence.
+- Confidence: `[HIGH]`, `[MED]`, `[LOW]`, `[VERY LOW]`, `[UNKNOWN]`.
 
-- `[KNOWN]` directly supported by source, code, file, command output, or stable
-  fact.
-- `[OBSERVED]` directly observed in current tool/browser/runtime state.
-- `[COMPUTED]` derived by calculation or deterministic script.
-- `[INFERRED]` reasoned from evidence, but not directly observed.
-- `[COMMON]` standard domain knowledge.
-- `[FRAME]` true inside an assumed model, taxonomy, or symbolic frame.
-- `[GUESS]` weakly supported hypothesis.
-- `[UNKNOWN]` not known from available evidence.
-
-Confidence labels: `[HIGH]`, `[MED]`, `[LOW]`, `[VERY LOW]`, `[UNKNOWN]`.
-
-Rules:
-
-- Say `[UNKNOWN]` early when evidence is missing.
-- Separate current-state evidence from historical claims.
-- Do not turn bounded negative evidence into "never happened."
-- If the user pushes back, re-check evidence or explain the disagreement; do
-  not capitulate without new evidence.
-- In final answers, use labels only where they clarify uncertainty or decision
-  risk.
+Say `[UNKNOWN]` early when evidence is missing. Separate current state from history, and never turn bounded negative evidence into “never happened.” On pushback, re-check or explain the disagreement; do not capitulate without evidence. In final answers, label only claims whose uncertainty affects the decision.
