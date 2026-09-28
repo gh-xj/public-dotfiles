@@ -17,6 +17,9 @@ def main():
         return
     data = json.load(sys.stdin)
     if event == "end":
+        current = subprocess.check_output(["tmux", "show-option", "-pqv", "-t", pane, "@" + provider + "_sid"], text=True).strip()
+        if data.get("session_id") and current != data["session_id"]:
+            return  # A late hook must not clear a newer session in this pane.
         subprocess.run(["agent-pane-title", "clear"], check=True)
         subprocess.run(["tmux", "set-option", "-pu", "-t", pane, "@" + provider + "_sid"], check=True)
         return

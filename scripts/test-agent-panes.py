@@ -63,6 +63,10 @@ with tempfile.TemporaryDirectory(prefix="pane-contract-") as tmp:
     border = tmux("show-options", "-gv", "pane-border-format")
     assert value(p1, border) != value(p2, border)
     assert "Claude/reviewer" in value(p1, border) and "Codex" in value(p2, border)
+    tmux("set-hook", "-R", "-t", p2, "pane-focus-in")
+    assert not value(p2, "#{@workmux_pane_status}")
+    assert value(p1, "#{@workmux_pane_status}") == first
+    run(p2, ["workmux", "set-window-status", "done"])
     run(p2, ["workmux", "set-window-status", "clear"])
     assert not value(p2, "#{@workmux_pane_status}")
     assert value(p1, "#{@workmux_pane_status}") == first

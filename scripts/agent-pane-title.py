@@ -21,7 +21,16 @@ def main():
     if sys.argv[1] == "set":
         if len(sys.argv) != 3:
             raise SystemExit("set requires one label")
-        label = "".join(c for c in sys.argv[2] if not unicodedata.category(c).startswith("C"))[:80].strip()
+        width = 0
+        for char in sys.argv[2]:
+            if unicodedata.category(char).startswith("C"):
+                continue
+            cells = 0 if unicodedata.combining(char) else (2 if unicodedata.east_asian_width(char) in ("W", "F") else 1)
+            if width + cells > 80:
+                break
+            label += char
+            width += cells
+        label = label.strip()
     root = Path(os.getenv("XDG_RUNTIME_DIR", str(Path.home() / ".cache"))) / "agent-pane-title"
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
     key = hashlib.sha256((server + pane).encode()).hexdigest()

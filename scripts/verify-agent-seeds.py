@@ -32,4 +32,15 @@ for name, relative in [("seedClaudeSettings", ".claude/settings.json"), ("seedCo
         target.symlink_to("/nix/store/obsolete/config/" + relative)
         run()
         assert not target.is_symlink() and target.read_text() == seed
+        if name == "seedClaudeSettings":
+            target.unlink()
+            target.symlink_to(Path(tmp) / "public-dotfiles/.claude/settings.json")
+            run()
+            assert not target.is_symlink() and target.read_text() == seed
+        custom = Path(tmp) / "custom-settings"
+        custom.write_text("operator owned")
+        target.unlink()
+        target.symlink_to(custom)
+        run()
+        assert target.is_symlink() and custom.read_text() == "operator owned"
 print("mutable agent seeds: first install, writability, preservation, migration passed")
