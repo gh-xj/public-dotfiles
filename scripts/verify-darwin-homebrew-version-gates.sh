@@ -86,6 +86,12 @@ require_cmd ruby
 flake_13="$(generate_intel_darwin_flake 13)"
 casks_13="$(eval_homebrew_json "$flake_13" casks)"
 taps_13="$(eval_homebrew_json "$flake_13" taps)"
+hotkeys="$(nix_cmd eval --json "$flake_13#darwinConfigurations.bootstrap.config.system.defaults.CustomUserPreferences" \
+  --apply 'x: x."com.apple.symbolichotkeys".AppleSymbolicHotKeys')"
+printf '%s' "$hotkeys" | ruby -rjson -e '
+  keys = JSON.parse($stdin.read)
+  abort "Spaces shortcuts still enabled" unless %w[79 80 81 82].all? { |k| keys.fetch(k).fetch("enabled") == false }
+'
 assert_absent "$casks_13" "orbstack" "macOS 13 casks"
 assert_absent "$casks_13" "chatgpt" "macOS 13 casks"
 assert_absent "$casks_13" "typewhisper" "macOS 13 casks"

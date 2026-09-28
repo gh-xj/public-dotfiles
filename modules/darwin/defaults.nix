@@ -226,28 +226,28 @@ in
               };
             };
             "79" = {
-              enabled = true;
+              enabled = false;
               value = {
                 parameters = [ 65535 123 8650752 ];
                 type = "standard";
               };
             };
             "80" = {
-              enabled = true;
+              enabled = false;
               value = {
                 parameters = [ 65535 123 8781824 ];
                 type = "standard";
               };
             };
             "81" = {
-              enabled = true;
+              enabled = false;
               value = {
                 parameters = [ 65535 124 8650752 ];
                 type = "standard";
               };
             };
             "82" = {
-              enabled = true;
+              enabled = false;
               value = {
                 parameters = [ 65535 124 8781824 ];
                 type = "standard";
