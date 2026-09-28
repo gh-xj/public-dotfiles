@@ -56,7 +56,7 @@ realms:
     rule: "Contract, Nix module graph, and verification entry points."
 
 checks:
-  - "task verify exits 0 and delegates to dotfiles:verify."
-  - "task secrets:staged passes before committing scripts, agent config, shell config, tokens, URLs, headers, or generated config."
-  - "Nix build passes for Home Manager activation package."
+  - "task check exits 0 as the canonical repository gate; task verify is a compatibility alias."
+  - "task check scans staged changes with gitleaks and the public identifier denylist."
+  - "task check builds one host-native Home Manager activation package and runs behavioral probes against it."
   - "Public/private ownership boundary stays aligned with private-config."

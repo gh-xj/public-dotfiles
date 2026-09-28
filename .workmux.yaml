@@ -8,4 +8,4 @@ panes:
   - split: horizontal
 
 pre_merge:
-  - task dotfiles:verify
+  - task check
