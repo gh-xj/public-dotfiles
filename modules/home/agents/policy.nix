@@ -1,20 +1,20 @@
-{ config, lib, publicDotfilesDelivery, ... }:
+{ config, lib, pkgs, publicDotfilesDelivery, ... }:
 
 let
   cfg = config.xj.publicDotfiles.agents.policy;
   inherit (publicDotfilesDelivery)
-    mkImmutableFile
-    mkImmutableTree
     mkMutableSeedActivation
     ;
+  policy = pkgs.writeText "global-agent-policy.md" (builtins.readFile ../../../.claude/CLAUDE.md + "\n" + cfg.extraText);
+  rules = pkgs.writeTextDir "default.rules" (builtins.readFile ../../../.codex/rules/default.rules + "\n" + config.xj.publicDotfiles.agents.codexRules.extraText);
 in
 {
   config = lib.mkIf cfg.enable {
     home.file = {
-      "AGENTS.md" = mkImmutableFile ".claude/CLAUDE.md";
-      ".claude/CLAUDE.md" = mkImmutableFile ".claude/CLAUDE.md";
-      ".codex/AGENTS.md" = mkImmutableFile ".claude/CLAUDE.md";
-      ".codex/rules" = mkImmutableTree ".codex/rules";
+      "AGENTS.md".source = policy;
+      ".claude/CLAUDE.md".source = policy;
+      ".codex/AGENTS.md".source = policy;
+      ".codex/rules" = { source = rules; force = true; };
     };
 
     home.activation.seedCodexConfig = mkMutableSeedActivation {

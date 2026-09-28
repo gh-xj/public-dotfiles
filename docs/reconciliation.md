@@ -28,7 +28,7 @@ task reconcile -- --apply --flake "$HOME/.local/state/public-dotfiles/bootstrap/
 
 For an overlay, select that overlay's `homeConfigurations` profile instead.
 Reconcile refuses another user's/home's profile and refuses any selected
-generation that still declares mutable agent files as managed links. Selection
+generation that still declares public-owned mutable agent files as managed links. Selection
 and builds do not update a flake lock file. Pin updates remain an explicit source
 operation in the owning repository.
 
@@ -86,8 +86,10 @@ Manager cleans old links, known managed file symlinks are detached into mode-060
 files with the same bytes. Regular files and unknown external links are not
 overwritten. Parent directory symlinks require explicit ownership resolution.
 Missing files are seeded after normal linking. Downstream overlays must stop
-declaring these runtime files through `home.file` and keep their private entries
-in the live writable files instead.
+declaring public-owned runtime files through `home.file` and keep their private
+entries in writable files. A private Codex-hooks owner can set
+`agents.codexHooks.seed.enable = false`; its target is then excluded from public
+seeding, detachment and ownership assertions. See `docs/downstream-composition.md`.
 
 The live doctor produces a merge plan for missing `agent-session` start/end,
 statusline and Workmux lifecycle entries, and flags old public per-tool commands

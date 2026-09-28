@@ -28,12 +28,12 @@ in
       ".local/bin/agent-workmux-status".source = "${status}/bin/agent-workmux-status";
     };
     home.packages = [ paneTitle session status ];
-    home.activation.seedCodexHooks = mkMutableSeedActivation {
+    home.activation.seedCodexHooks = lib.mkIf config.xj.publicDotfiles.agents.codexHooks.seed.enable (mkMutableSeedActivation {
       target = "${config.home.homeDirectory}/.codex/hooks.json";
       targetDir = "${config.home.homeDirectory}/.codex";
       sourceRel = "config/codex/hooks.json";
       legacyStorePatterns = [ "/nix/store/*" "${config.xj.publicDotfiles.repoRoot}/config/codex/hooks.json" ];
-    };
+    });
     home.activation.seedClaudeSettings = mkMutableSeedActivation {
       target = "${config.home.homeDirectory}/.claude/settings.json";
       targetDir = "${config.home.homeDirectory}/.claude";

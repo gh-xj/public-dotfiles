@@ -49,7 +49,6 @@ in
       "raycast/scripts" = mkRepoTree ".config/raycast/scripts";
       "xj_public_raycast_scripts" = mkRepoTree ".config/raycast/scripts";
       "starship.toml" = mkImmutableFile ".config/starship.toml";
-      "workmux/config.yaml" = mkRepoFile ".config/workmux/config.yaml";
       "yazi" = mkImmutableTree ".config/yazi";
     };
   };

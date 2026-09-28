@@ -1,0 +1,71 @@
+# Downstream data, public implementation
+
+A separate flake imports `public.homeModules.default` and supplies local data.
+Start from `examples/downstream/flake.nix` and `host.nix` in your private owner.
+The fixture deliberately uses only synthetic identities and hardware data; do
+not put a real host, provider command or hardware serial back into this repo.
+Pin public in the downstream lock, then update that pin explicitly after rebase.
+Build with `nix build .#homeConfigurations.<profile>.activationPackage`; activate
+through the downstream's normal switch or the public explicit reconcile tool.
+
+| Input under `xj.publicDotfiles` | Ownership / behavior |
+| --- | --- |
+| `repoRoot` | Local checkout path; username/home remain normal Home Manager fields |
+| `agents.policy.extraText` | Private policy appended to the one shared Claude/Codex policy artifact |
+| `agents.codexHooks.seed.enable = false` | Public does not install, seed, detach, assert ownership of or otherwise claim Codex hooks |
+| `agents.codexRules.extraText` | Genuinely downstream-only rules; generic proven rules belong in main |
+| `workmux.agent`, `workmux.extraAgents.<name>.argv`, `.type` | Provider selection and trusted argv; no source-file patch required |
+| `workmux.extraConfig` | Additional YAML-compatible configuration; `status_format` remains false |
+| `displayLayoutsFile` | Private host TSV installed at `~/.config/xj/display-layouts.tsv`; null by default |
+| `tmuxRecovery.*` | Public engine, retention and optional schedule; trusted adapter file remains downstream |
+| `scratchGc.enable = false` | Public creates no scratch package/home target; private owner may claim it directly |
+| `scratchGc.package` with `.enable = true` | Optional delivery of a complete downstream package, not a public scratch implementation |
+
+The public Workmux base remains `.config/workmux/config.yaml`, expressed as JSON
+(valid YAML) so Nix can read it without an extra parser or duplicated defaults.
+Home Manager renders that base plus typed overrides to a store-backed config.
+Provider argv is shell-quoted by the public module. Keep credentials out of argv
+and settings literals; a private provider adapter should obtain them at runtime.
+
+The downstream fixture claims its own hooks and scratch target to prove that
+neither needs `home.file.<path>.enable = lib.mkForce false`. Real hook ownership
+must retain mutable account/plugin edits. Disabling the public hook seed means
+the private owner also owns merging the required public integration hooks; the
+doctor continues to offer its sanitized merge plan without applying it.
+
+Display data is never inferred from a shared physical panel. Use
+`task display:layout -- --dry-run`, `--verify` or explicit `--apply`, or the
+installed `apply-display-layout` command. Standalone bootstrap skips display
+changes when no host data exists. The data format is tab-separated serial,
+label, resolution, Hz, color depth, scaling, origin and rotation.
+
+## Migration checklist
+
+1. Move the local host into the private flake; import the public module rather
+   than adding a home configuration to the public flake. Keep local install/check
+   wrappers in that owner, not as public Taskfile patches.
+2. Move provider commands into Workmux data, policy into `extraText`, and provider
+   resume commands into the JSON/TOML recovery adapter file. Built-in overrides
+   and extra provider names are supported without editing the recovery engine.
+3. Disable public Codex-hook seeding if a private owner manages it. Remove the
+   old `home.file` disabling override. Keep required identity/status hooks when
+   merging private hooks; retain app hook trust review.
+4. Supply display TSV data from the host. Remove any local patch to the display
+   engine or the former shared `config/macos/display-layouts.tsv`.
+5. Keep scratch ownership disabled unless deliberately supplying a full private
+   package. No public scratch policy requires a machine-specific CLI.
+6. Enable `tmuxRecovery.schedule.enable = true` and interval 300 only when ready
+   to replace the old scheduler. Disable the old private job explicitly in its
+   owner to avoid duplicate scheduling. Keep the legacy checkpoint archive:
+   new retention never claims it, and old formats need explicit migration.
+7. Drop downstream patches to `.claude/CLAUDE.md`, `.codex/rules/default.rules`,
+   `.config/workmux/config.yaml`, `global/Taskfile.yml`, the public `Taskfile.yml`,
+   `flake.nix`, `scripts/tmux-recovery.py`, `scripts/apply-display-layout.sh`,
+   `modules/home/recovery.nix`, `modules/home/composition.nix`, the agent modules,
+   `modules/home/control.nix`, `modules/home/config-files.nix`, and recovery docs.
+   These files remain in main; remove the overlay patches, not the upstream files.
+
+The public checks build both the standalone example and a separate downstream
+flake (including an engine-disabled variant), without activating either. They
+verify shared policy identity, seed ownership, private target non-conflict,
+Workmux parsing, hardware-data injection and the launchd command composition.

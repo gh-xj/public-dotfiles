@@ -1,0 +1,4 @@
+{
+  "codex": {"option": "@codex_sid", "argv": ["custom-cli", "codex", "resume", "{session_id}"]},
+  "custom": {"option": "@custom_sid", "argv": ["custom-cli", "resume", "{session_id}"]}
+}

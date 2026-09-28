@@ -157,4 +157,11 @@ with tempfile.TemporaryDirectory(prefix="reconcile-test-") as tmp:
     except control.SafeError as error:
         assert "manages-mutable-agent-files" in str(error)
     assert snapshot(base) == before
+    manifest_path = new / "home-files/.config/public-dotfiles/generation.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["mutable_targets"] = [".claude/settings.json", ".codex/config.toml"]
+    manifest_path.write_text(json.dumps(manifest))
+    assert ".codex/hooks.json" not in fresh.mutable_targets()
+    assert all(item["target"] != ".codex/hooks.json" for item in fresh.detached())
+    fresh.plan()  # Explicit downstream ownership permits its generated hook target.
 print("source/generation/runtime drift, sanitized merge plans, safe dry-run and reconcile apply fixtures passed")

@@ -79,10 +79,12 @@ def metadata(generation):
     return read_json(generation / "home-files/.config/public-dotfiles/generation.json")
 
 
-def detach_mutable(home, repo, apply=False):
+def detach_mutable(home, repo, apply=False, skip=()):
     """Detach only known managed links, preserving bytes before HM cleans old links."""
     actions = []
     for name in MUTABLE:
+        if name in skip:
+            continue
         path = home / name
         if path.parent.is_symlink() or path.parent.resolve().is_relative_to(repo.resolve()):
             if apply:
@@ -368,6 +370,14 @@ class Control:
         return {"revision": revision(head.stdout.strip()), "origin_main_revision": revision(main.stdout.strip()),
                 "dirty": bool(dirty.stdout.strip()) if dirty.returncode == 0 else None}
 
+    def mutable_targets(self):
+        manifest = metadata(self.desired if self.desired and self.desired.exists() else self.active)
+        declared = manifest.get("mutable_targets", list(MUTABLE))
+        return tuple(name for name in MUTABLE if name in declared)
+
+    def detached(self, apply=False):
+        return detach_mutable(self.home, self.repo, apply, skip=set(MUTABLE) - set(self.mutable_targets()))
+
     def select(self, build=False):
         if not self.flake:
             return
@@ -438,7 +448,7 @@ class Control:
         if live:
             report.update(ghostty=self.ghostty(), tmux=self.tmux(), integrations=integration_plan(self.home, self.repo),
                           generated_links=link_health(self.home, self.active), disk=disk_health(Path("/System/Volumes/Data") if Path("/System/Volumes/Data").exists() else self.home),
-                          mutable_link_migrations=detach_mutable(self.home, self.repo))
+                          mutable_link_migrations=self.detached())
         return report
 
     def workspace(self, thresholds):
@@ -451,13 +461,13 @@ class Control:
             raise SafeError("reconcile requires an explicitly selected, built --flake PATH#HOME_PROFILE")
         if self.target_home is None or self.target_home.resolve() != self.home.resolve():
             raise SafeError("selected-profile-targets-another-home; refusing activation")
-        for name in MUTABLE:
+        for name in self.mutable_targets():
             if os.path.lexists(self.desired / "home-files" / name):
                 raise SafeError("selected-profile-still-manages-mutable-agent-files; remove those Home Manager file declarations first")
         migration = self.run(["zsh", self.repo / "scripts/migrate-ghostty-parent.zsh", "--home", self.home, "--repo", self.repo, "--dry-run"])
         if migration.returncode:
             raise SafeError("Ghostty-parent-migration-blocked; inspect its parent symlink with the migration tool")
-        mutable = detach_mutable(self.home, self.repo)
+        mutable = self.detached()
         if any(x["action"].startswith("manual-review") for x in mutable):
             raise SafeError("unmanaged-mutable-config-symlink; resolve ownership explicitly before reconcile")
         paths, truncated = leaves(self.desired / "home-files")
@@ -475,7 +485,7 @@ class Control:
         for name, path in old_paths.items():
             if name not in paths and name not in MUTABLE and (self.home / name).is_symlink() and resolve(self.home / name) == resolve(path):
                 changes.append({"target": target_label(name), "operation": "remove-obsolete-managed-link"})
-        seed_missing = [name for name in MUTABLE if not (self.home / name).exists()]
+        seed_missing = [name for name in self.mutable_targets() if not (self.home / name).exists()]
         needs_activation = self.active != self.desired or bool(changes or mutable or seed_missing or migration.stdout.strip())
         steps = []
         if migration.stdout.strip():
@@ -511,7 +521,7 @@ class Control:
             if result.returncode:
                 raise SafeError("Ghostty-migration-failed; activation-not-started")
         if "detach-known-mutable-agent-links-preserving-bytes" in steps:
-            detach_mutable(self.home, self.repo, apply=True)
+            self.detached(apply=True)
         if "activate-selected-Home-Manager-generation" in steps:
             result = self.run([self.desired / "activate"], timeout=1800)
             if result.returncode:
@@ -548,10 +558,11 @@ def main():
     detach_mode = detach.add_mutually_exclusive_group(required=True)
     detach_mode.add_argument("--dry-run", action="store_true")
     detach_mode.add_argument("--apply", action="store_true")
+    detach.add_argument("--skip", action="append", choices=MUTABLE, default=[])
     args = parser.parse_args()
     try:
         if args.command == "detach-agent-configs":
-            report = detach_mutable(args.home, args.repo.resolve(), apply=args.apply)
+            report = detach_mutable(args.home, args.repo.resolve(), apply=args.apply, skip=args.skip)
         else:
             if args.command == "reconcile" and args.home.resolve() != Path.home().resolve():
                 raise SafeError("reconcile-only-applies-to-current-home; alternate-home is read-only diagnosis")

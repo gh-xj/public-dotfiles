@@ -24,7 +24,7 @@ that state into the repo owner instead of keeping an undocumented repair step.
 | --- | --- | --- |
 | Typed macOS defaults | `modules/darwin/defaults.nix` | nix-darwin evaluation and switch |
 | Untyped durable preferences | `system.defaults.CustomUserPreferences` in the same module | nix-darwin evaluation and switch |
-| Display hardware layout | `config/macos/display-layouts.tsv` | `displayplacer list`; applied by the standalone bootstrap |
+| Display hardware layout | Host `xj.publicDotfiles.displayLayoutsFile` | `displayplacer list`; no shared physical-panel default |
 | Raycast Store extension intent | `config/raycast/extensions.tsv` | `task raycast:install` plus interactive approval |
 | App-owned or permission-gated state | the app, macOS, or a downstream private owner | live inspection or human confirmation |
 
@@ -39,7 +39,7 @@ declarations drift.
 ## Live-State Checks
 
 - Display symptoms: compare `displayplacer list` with
-  `config/macos/display-layouts.tsv`.
+  the host-injected `~/.config/xj/display-layouts.tsv`; see `docs/downstream-composition.md`.
 - Trackpad symptoms: compare `modules/darwin/defaults.nix`, persisted defaults,
   and `ioreg -r -c AppleMultitouchDevice`. A logout/login, sleep/wake, or
   reconnect may be required before the device reflects applied preferences.

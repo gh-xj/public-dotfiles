@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-layouts_file="$repo_root/config/macos/display-layouts.tsv"
-mode="apply"
+layouts_file="${PUBLIC_DOTFILES_DISPLAY_LAYOUTS:-${XDG_CONFIG_HOME:-$HOME/.config}/xj/display-layouts.tsv}"
+explicit_layout=0
+mode="dry-run"
 
 usage() {
   cat <<'EOF'
-Usage: scripts/apply-display-layout.sh [--apply|--verify|--dry-run]
+Usage: apply-display-layout [--apply|--verify|--dry-run] [--layouts HOST_TSV]
 
-Apply or verify known public display layouts from config/macos/display-layouts.tsv.
-Unknown displays are skipped so the task stays portable across machines.
+Apply or verify host-injected layouts. Without host data, do nothing.
 EOF
 }
 
@@ -48,6 +47,12 @@ find_cmd() {
 parse_args() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
+      --layouts)
+        [ "$#" -ge 2 ] || die "--layouts requires a file"
+        layouts_file="$2"
+        explicit_layout=1
+        shift
+        ;;
       --apply)
         mode="apply"
         ;;
@@ -110,7 +115,11 @@ main() {
     echo "display layout skipped on non-Darwin host"
     exit 0
   }
-  [ -f "$layouts_file" ] || die "missing layout file: $layouts_file"
+  if [ ! -f "$layouts_file" ]; then
+    [ "$explicit_layout" -eq 0 ] || die "selected host layout file is missing"
+    echo "display layout skipped; no host data configured"
+    exit 0
+  fi
 
   displayplacer_cmd="$(find_cmd displayplacer || true)"
   [ -n "$displayplacer_cmd" ] || die "displayplacer is required; run the nix-darwin/Homebrew phase first"
