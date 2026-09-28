@@ -15,6 +15,19 @@ tasks:
   apply:
     desc: Make this machine match the repo (Home Manager switch)
     aliases: [install]
+    vars:
+      CONFIG_NAME:
+        sh: ./scripts/home-config-attr.sh name
+      TARGET_USER:
+        sh: nix {{.NIX_FLAGS}} eval --raw ".#homeConfigurations.$(./scripts/home-config-attr.sh name).config.home.username"
+      CURRENT_USER:
+        sh: id -un
+    # The public profiles are examples for their own user. On a machine whose
+    # home is composed by a private overlay, a switch here would register the
+    # example generation in the real profile before activation refuses it.
+    preconditions:
+      - sh: test "{{.TARGET_USER}}" = "{{.CURRENT_USER}}"
+        msg: "public profile {{.CONFIG_NAME}} targets user '{{.TARGET_USER}}', not '{{.CURRENT_USER}}'; apply from the repo that composes this home (e.g. task apply in your private overlay)"
     cmds:
       - |
         config_name="$(./scripts/home-config-attr.sh name)"
