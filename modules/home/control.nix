@@ -2,7 +2,7 @@
 let
   cfg = config.xj.publicDotfiles;
   mutableTargets = lib.optionals cfg.agents.policy.enable [ ".codex/config.toml" ]
-    ++ lib.optionals cfg.agents.hooks.enable [ ".claude/settings.json" ]
+    ++ lib.optionals (cfg.agents.hooks.enable && cfg.agents.claudeSettings.seed.enable) [ ".claude/settings.json" ]
     ++ lib.optionals (cfg.agents.hooks.enable && cfg.agents.codexHooks.seed.enable) [ ".codex/hooks.json" ];
   excludedTargets = builtins.filter (name: !(builtins.elem name mutableTargets))
     [ ".claude/settings.json" ".codex/config.toml" ".codex/hooks.json" ];

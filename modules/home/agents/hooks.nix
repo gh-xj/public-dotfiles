@@ -34,7 +34,7 @@ in
       sourceRel = "config/codex/hooks.json";
       legacyStorePatterns = [ "/nix/store/*" "${config.xj.publicDotfiles.repoRoot}/config/codex/hooks.json" ];
     });
-    home.activation.seedClaudeSettings = mkMutableSeedActivation {
+    home.activation.seedClaudeSettings = lib.mkIf config.xj.publicDotfiles.agents.claudeSettings.seed.enable (mkMutableSeedActivation {
       target = "${config.home.homeDirectory}/.claude/settings.json";
       targetDir = "${config.home.homeDirectory}/.claude";
       sourceRel = "config/claude/settings.json";
@@ -43,6 +43,6 @@ in
         "${config.xj.publicDotfiles.repoRoot}/.claude/settings.json"
         "${config.xj.publicDotfiles.repoRoot}/config/claude/settings.json"
       ];
-    };
+    });
   };
 }

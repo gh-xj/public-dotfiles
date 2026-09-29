@@ -13,6 +13,7 @@ through the downstream's normal switch or the public explicit reconcile tool.
 | `repoRoot` | Local checkout path; username/home remain normal Home Manager fields |
 | `agents.policy.extraText` | Private policy appended to the one shared Claude/Codex policy artifact |
 | `agents.codexHooks.seed.enable = false` | Public does not install, seed, detach, assert ownership of or otherwise claim Codex hooks |
+| `agents.claudeSettings.seed.enable = false` | Public does not seed, migrate, detach or claim mutable Claude settings; public statusline and helper delivery remains enabled |
 | `agents.codexRules.extraText` | Genuinely downstream-only rules; generic proven rules belong in main |
 | `workmux.agent`, `workmux.extraAgents.<name>.argv`, `.type` | Provider selection and trusted argv; no source-file patch required |
 | `workmux.extraConfig` | Additional YAML-compatible configuration; `status_format` remains false |
@@ -32,6 +33,16 @@ neither needs `home.file.<path>.enable = lib.mkForce false`. Real hook ownership
 must retain mutable account/plugin edits. Disabling the public hook seed means
 the private owner also owns merging the required public integration hooks; the
 doctor continues to offer its sanitized merge plan without applying it.
+
+When a private owner retains Claude settings and reporter/account hooks (including
+a `.claude` parent symlink into its repository), set
+`xj.publicDotfiles.agents.claudeSettings.seed.enable = false;` while keeping
+`agents.hooks.enable = true;`. This excludes `.claude/settings.json` from generation
+`mutable_targets` and pre-link detachment, without disabling
+`.claude/statusline-command.sh`, `agent-pane-title`, `agent-session`, or
+`agent-workmux-status`. The default is true for standalone installs. The private
+owner preserves the live settings and merges required public integration itself;
+reconcile never automatically merges hooks. Do not disable all helper delivery.
 
 Display data is never inferred from a shared physical panel. Use
 `task display:layout -- --dry-run`, `--verify` or explicit `--apply`, or the

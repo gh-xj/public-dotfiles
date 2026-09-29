@@ -147,6 +147,39 @@ with tempfile.TemporaryDirectory(prefix="reconcile-test-") as tmp:
     assert fresh.plan()["steps"] == []
     assert not any(word in {"kill", "kill-server", "kill-session", "kill-pane", "pkill", "rebase", "pull"} for a in calls for word in a)
 
+    # A private parent symlink is allowed only when settings ownership is excluded.
+    private_claude = base / "private-settings"
+    (home / ".claude").rename(private_claude)
+    (home / ".claude").symlink_to(private_claude)
+    before = snapshot(base)
+    try:
+        fresh.plan()
+        raise AssertionError("owned mutable parent symlink was accepted")
+    except control.SafeError as error:
+        assert "unmanaged-mutable-config-symlink" in str(error)
+    assert snapshot(base) == before
+    manifest_path = new / "home-files/.config/public-dotfiles/generation.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["mutable_targets"] = [name for name in control.MUTABLE if name != ".claude/settings.json"]
+    manifest_path.write_text(json.dumps(manifest))
+    profile.unlink()
+    profile.symlink_to(old)
+    fresh = control.Control(repo, home, "fixture#test", runner=runner)
+    fresh.select()
+    before = snapshot(base)
+    private_plan = fresh.plan()
+    assert snapshot(base) == before
+    assert all(item["target"] != ".claude/settings.json" for item in fresh.detached())
+    assert "activate-selected-Home-Manager-generation" in private_plan["steps"]
+    fresh.apply(private_plan)
+    assert (home / ".claude").is_symlink()
+    assert live_claude.read_bytes() == before_mutable[".claude/settings.json"]
+    assert not live_claude.is_symlink()
+    assert private_marker not in json.dumps(fresh.doctor(live=True))
+    # Restore the regular parent for the independent existing Codex checks.
+    (home / ".claude").unlink()
+    private_claude.rename(home / ".claude")
+
     # A selected profile that would overwrite runtime settings is blocked.
     bad = new / "home-files/.codex/hooks.json"
     bad.parent.mkdir()

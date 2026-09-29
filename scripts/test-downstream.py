@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import platform
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -28,11 +29,33 @@ with tempfile.TemporaryDirectory(prefix="downstream-composition-") as tmp:
     files = (built / "home-files").resolve()
     config = evaluate("example" + suffix, '''h: {
       seed = builtins.hasAttr "seedCodexHooks" h.config.home.activation;
+      claudeSeed = builtins.hasAttr "seedClaudeSettings" h.config.home.activation;
+      hooks = h.config.xj.publicDotfiles.agents.hooks.enable;
+      detach = h.config.home.activation.detachMutableAgentConfigs.data;
       recovery = builtins.hasAttr ".local/bin/tmux-recovery" h.config.home.file;
       schedule = h.config.launchd.agents.tmux-recovery.config;
       packages = map (p: p.name) h.config.home.packages;
     }''')
     assert config["seed"] is False and config["recovery"] is True
+    assert config["hooks"] is True and config["claudeSeed"] is False
+    assert "seedClaudeSettings" not in (built / "activate").read_text()
+    assert "--skip .claude/settings.json" in shlex.join(shlex.split(config["detach"]))
+    private_home = Path(tmp) / "private-owner-home"
+    private_home.mkdir()
+    private_settings = Path(tmp) / "private-owner-settings"
+    private_settings.mkdir()
+    settings_bytes = b'{"private_owner_fixture":true}\n'
+    (private_settings / "settings.json").write_bytes(settings_bytes)
+    (private_home / ".claude").symlink_to(private_settings)
+    detach = config["detach"].replace("/Users/example", str(private_home))
+    subprocess.run(["bash", "-eu", "-c", detach], env=dict(os.environ, DRY_RUN=""), check=True, capture_output=True)
+    assert (private_home / ".claude").is_symlink()
+    assert (private_settings / "settings.json").read_bytes() == settings_bytes
+    assert (files / ".claude/statusline-command.sh").is_file()
+    for helper in ("agent-pane-title", "agent-session", "agent-workmux-status"):
+        assert (files / ".local/bin" / helper).is_file()
+        assert os.access(built / "home-path/bin" / helper, os.X_OK)
+    assert json.loads((files / ".claude/settings.json").read_text())["downstream_settings_fixture"]
     assert config["schedule"]["ProgramArguments"] == ["/Users/example/.local/bin/tmux-recovery", "checkpoint-all"]
     assert config["schedule"]["StartInterval"] == 300 and config["schedule"]["Umask"] == 63
     assert "scratch-gc" not in config["packages"]
@@ -46,6 +69,7 @@ with tempfile.TemporaryDirectory(prefix="downstream-composition-") as tmp:
     assert "downstream-scratch-fixture" in (files / ".local/bin/scratch-gc").read_text()
     metadata = json.loads((files / ".config/public-dotfiles/generation.json").read_text())
     assert ".codex/hooks.json" not in metadata["mutable_targets"]
+    assert ".claude/settings.json" not in metadata["mutable_targets"]
     wrapper = (files / ".local/bin/tmux-recovery").read_text()
     assert "--keep-newest 8" in wrapper and "--keep-days 3" in wrapper and "--adapters" in wrapper
     layout = files / ".config/xj/display-layouts.tsv"
@@ -76,6 +100,8 @@ with tempfile.TemporaryDirectory(prefix="downstream-composition-") as tmp:
     assert not off["link"] and "tmux-recovery" not in off["packages"] and not off["job"]
     assert not (disabled / "home-files/.local/bin/tmux-recovery").exists()
     public = (generation / "home-files").resolve()
+    assert ".claude/settings.json" in json.loads((public / ".config/public-dotfiles/generation.json").read_text())["mutable_targets"]
+    assert "seedClaudeSettings" in (generation / "activate").read_text()
     assert not (public / ".local/bin/scratch-gc").exists()
     assert not (public / ".config/xj/display-layouts.tsv").exists()
     assert "Downstream fixture policy" not in (public / "AGENTS.md").read_text()
