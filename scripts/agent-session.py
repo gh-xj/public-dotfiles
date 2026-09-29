@@ -18,7 +18,7 @@ def main():
     data = json.load(sys.stdin)
     if event == "end":
         current = subprocess.check_output(["tmux", "show-option", "-pqv", "-t", pane, "@" + provider + "_sid"], text=True).strip()
-        if data.get("session_id") and current != data["session_id"]:
+        if not data.get("session_id") or current != data["session_id"]:
             return  # A late hook must not clear a newer session in this pane.
         subprocess.run(["agent-pane-title", "clear"], check=True)
         subprocess.run(["tmux", "set-option", "-pu", "-t", pane, "@" + provider + "_sid"], check=True)
@@ -30,11 +30,12 @@ def main():
     other = "claude" if provider == "codex" else "codex"
     subprocess.run(["tmux", "set-option", "-pu", "-t", pane, "@" + other + "_sid"], check=True)
     subprocess.run(["agent-pane-title", "clear"], check=True)
-    if provider == "codex":
-        cwd = data.get("cwd") or os.getcwd()
-        result = subprocess.run(["git", "-C", cwd, "rev-parse", "--show-toplevel"], capture_output=True, text=True)
-        repo = Path(result.stdout.strip() if result.returncode == 0 else cwd).name or "session"
-        subprocess.run(["agent-pane-title", "set", "Codex · " + repo], check=True)
+    # Presentation only: never return Claude sessionTitle, which would replace
+    # its native first-prompt title. Official statusLine names supersede this.
+    cwd = data.get("cwd") or os.getcwd()
+    result = subprocess.run(["git", "-C", cwd, "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+    repo = Path(result.stdout.strip() if result.returncode == 0 else cwd).name or "session"
+    subprocess.run(["agent-pane-title", "set", provider.capitalize() + " · " + repo], check=True)
 
 
 if __name__ == "__main__":

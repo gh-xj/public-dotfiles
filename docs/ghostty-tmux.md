@@ -96,10 +96,32 @@ agent-pane-title clear
 
 Claude statusline consumes the official `session_name` and `agent.name` fields;
 `/rename`, `--name`, and generated names propagate on the next statusline refresh
-(event-driven, with no periodic polling by default). Missing fields restore the native title.
-Codex SessionStart uses only documented hook fields to set a repository fallback.
+(event-driven, with no periodic polling by default). Identity precedence is:
+
+```text
+explicit Claude name / native AI title
+    > agent-specific label
+    > temporary repo fallback
+    > native tmux pane title
+```
+
+Claude's native AI-generated first-prompt title is the semantic naming engine.
+SessionStart sets only `@agent_label` to `Claude · <repo-or-cwd-basename>`;
+nameless statusline updates leave it intact. Once `session_name` arrives it
+replaces the fallback, optionally prefixed with `Claude/<agent.name>`.
+Agent-only payloads show `Claude/<agent.name>`. Explicit names, generated titles,
+and accepted-plan titles all use this same official field.
+`SessionStart.sessionTitle` is appropriate only when the desired Claude name is
+already known at launch: it acts like `/rename`, so this baseline never sets it.
+`@agent_label` remains authoritative even if an application changes the native
+pane title through OSC. Native titles are only a display fallback without a label.
+Window naming belongs to durable work-item workflows such as `new-human-req-doc`,
+not agent hooks. Lifecycle state stays separate and event-driven through hooks.
+Claude and Codex SessionStart use only documented hook fields for repo fallbacks.
 No runtime database or transcript inspection is involved. SessionEnd and the
-interactive zsh prompt clear labels. Unchanged labels do not call tmux.
+interactive zsh prompt clear labels. SessionEnd requires a matching current
+provider session ID; missing or stale IDs cannot clear a newer identity.
+Unchanged labels do not call tmux.
 
 Inside tmux, the zsh `codex` function passes the launching `TMUX` and `TMUX_PANE`
 through per-invocation `shell_environment_policy.set` overrides. The shared
@@ -142,6 +164,8 @@ has established otherwise. Use Workmux or manual panes for independent sessions.
 Do not enable `auto` globally without that smoke test.
 
 References: [Claude statusline](https://code.claude.com/docs/en/statusline),
+[session naming](https://code.claude.com/docs/en/sessions#name-your-sessions),
+[Claude hooks](https://code.claude.com/docs/en/hooks),
 [Agent Teams](https://code.claude.com/docs/en/agent-teams),
 [Codex hooks](https://learn.chatgpt.com/docs/hooks).
 

@@ -68,7 +68,7 @@ verify_tmux() {
   tmux -L "$socket" -f /dev/null new-session -d -s verify-terminal 'sleep 60'
   tmux -L "$socket" source-file "$tmux_config"
 
-  python3 "$repo_root/scripts/test-agent-panes.py" "$socket" "$generation/home-path/bin"
+  python3 "$repo_root/scripts/test-agent-panes.py" "$socket" "$generation/home-path/bin" "$home_files/.claude/statusline-command.sh"
 }
 
 verify_ghostty

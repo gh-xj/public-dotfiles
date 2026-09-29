@@ -12,10 +12,10 @@ label=$(printf '%s' "$input" | jq -r '
 if command -v agent-pane-title >/dev/null 2>&1; then
     if [[ -n "$label" ]]; then
         agent-pane-title set "$label" 2>/dev/null || true
-    else
-        agent-pane-title clear 2>/dev/null || true
     fi
 fi
+# No name yet: preserve SessionStart's pane-only fallback. Native pane_title
+# may change via OSC and is never read back as Claude's identity.
 
 cwd=$(echo "$input" | jq -r '.cwd // .workspace.current_dir // ""')
 model=$(echo "$input" | jq -r '.model.display_name // ""')
