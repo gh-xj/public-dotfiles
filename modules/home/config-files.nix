@@ -49,6 +49,11 @@ in
       "raycast/scripts" = mkRepoTree ".config/raycast/scripts";
       "xj_public_raycast_scripts" = mkRepoTree ".config/raycast/scripts";
       "starship.toml" = mkImmutableFile ".config/starship.toml";
+      "zed/settings.json" = mkRepoFile ".config/zed/settings.json";
+      "zed/keymap.json" = mkRepoFile ".config/zed/keymap.json";
+      "zed/tasks.json" = mkRepoFile ".config/zed/tasks.json";
+      "zed/snippets/markdown.json" = mkRepoFile ".config/zed/snippets/markdown.json";
+      "zed/themes/xj-one-theme.json" = mkRepoFile ".config/zed/themes/xj-one-theme.json";
       "yazi" = mkImmutableTree ".config/yazi";
     };
   };

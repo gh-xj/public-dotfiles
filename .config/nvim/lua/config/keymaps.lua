@@ -125,6 +125,8 @@ vim.api.nvim_create_user_command("Format", function()
 end, { desc = "Format current buffer via conform.nvim (LSP fallback)" })
 
 map("n", "<leader>gg", function() Snacks.lazygit() end, { silent = true, desc = "Lazygit" })
+map("n", "<leader>gd", function() Snacks.picker.git_diff() end,
+  { silent = true, desc = "Review Git diff (Zed-aligned)" })
 map("n", "<C-e>", "<cmd>Yazi<cr>", { silent = true, desc = "Open yazi" })
 map("n", "<leader>e", "<cmd>Yazi<cr>", { silent = true, desc = "Open yazi" })
 map("n", "<leader>yp", ":let @+=expand('%:p')<CR>:echo 'Copied: ' . expand('%:p')<CR>",

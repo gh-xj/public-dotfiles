@@ -23,7 +23,9 @@ in
       casks = [
         "font-symbols-only-nerd-font"
         "font-recursive-code"
+        "font-monaspace"
         "ghostty"
+        "zed"
         "google-chrome"
         "karabiner-elements"
         "amethyst"
