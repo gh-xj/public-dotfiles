@@ -8,6 +8,7 @@ in
     ./agents
     ./delivery.nix
     ./config-files.nix
+    ./default-openers.nix
     ./packages.nix
     ./shell.nix
     ./terminal.nix

@@ -1,0 +1,5 @@
+# Public file-opening preferences. Format: bundle_id extension all
+# Only explicitly chosen defaults belong here; paths and LS databases do not.
+abnerworks.Typora .md all
+abnerworks.Typora .markdown all
+com.apple.Preview .pdf all

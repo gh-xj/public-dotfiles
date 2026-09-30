@@ -14,6 +14,7 @@ gitleaks protect --staged --source . --redact --no-banner
 generation="$(nix_cmd build --no-link --print-out-paths .#)"
 home_files="$(realpath "$generation/home-files")"
 python3 scripts/verify-generated-links.py "$home_files" "$repo_root"
+"$generation/home-path/bin/default-openers" validate
 
 case "$(uname -m)" in
   arm64) home_config="example" ;;

@@ -32,6 +32,7 @@ in
         "codex-app"
         "claude"
         "setapp"
+        "typora"
         "mimestream"
         "1password"
         "1password-cli"

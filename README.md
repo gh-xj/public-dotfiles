@@ -74,6 +74,8 @@ NIX_CONFIG='experimental-features = nix-command flakes' nix run github:nix-commu
 
 See [docs/bootstrap.md](docs/bootstrap.md) for the direct public bootstrap path
 and package set selection.
+See [docs/default-openers.md](docs/default-openers.md) for durable Markdown/PDF
+opening preferences and `task openers:list` / `task openers:check`.
 
 ## Ownership
 
