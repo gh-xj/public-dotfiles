@@ -21,6 +21,40 @@ def snapshot(root):
             ("dir",) if p.is_dir() else ("file", p.read_bytes()) for p in root.rglob("*")}
 
 
+with tempfile.TemporaryDirectory(prefix="tmux-options-test-") as tmp:
+    fixture = Path(tmp)
+    config = fixture / ".tmux.conf"
+    expected = {"pane-border-status": "top", "pane-border-format": " #P #{@agent_label} "}
+    runtime = dict(expected)
+
+    def tmux_runner(argv, **kwargs):
+        assert argv[0] == "tmux"
+        out = "3.7" if argv[1] == "display-message" else runtime[argv[-1]]
+        return subprocess.CompletedProcess(argv, 0, out + "\n", "")
+
+    app = control.Control(fixture, fixture, "fixture#test", runner=tmux_runner)
+    for command in ("set", "setw", "set-option", "set-window-option"):
+        config.write_text('bind -N "description" \\\n  send-prefix\n\n'
+                          f'{command} -g pane-border-status top\n'
+                          f"{command} -g pane-border-format ' #P #{{@agent_label}} '\n")
+        assert control.tmux_options(config) == expected
+        # Malformed unrelated declarations cannot discard earlier or later options.
+        config.write_text(config.read_text().replace(
+            f"{command} -g pane-border-format",
+            'bind "unterminated\nset -g unrelated "unterminated\n' + f"{command} -g pane-border-format"))
+        assert control.tmux_options(config) == expected
+        report = app.tmux()
+        assert report["pane_border_matches"] is True and report["reload_needed"] is False
+    runtime["pane-border-format"] = expected["pane-border-format"].strip()
+    report = app.tmux()
+    assert report["pane_border_matches"] is False and report["reload_needed"] is True
+    config.write_text('bind "unterminated\nset -g unrelated value\n')
+    assert control.tmux_options(config) == {}
+    report = app.tmux()
+    assert report["pane_border_matches"] is False and report["reload_needed"] is True
+print("tmux parser: multiline bind, per-line errors, exact comparison and absent options verified")
+
+
 with tempfile.TemporaryDirectory(prefix="reconcile-test-") as tmp:
     base = Path(tmp).resolve()
     repo, home, old, new = [base / name for name in ("checkout", "home", "old-generation", "new-generation")]

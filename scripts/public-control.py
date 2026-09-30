@@ -203,13 +203,21 @@ def link_health(home, generation):
 def tmux_options(config):
     options = {}
     try:
-        for line in config.read_text().splitlines():
+        lines = config.read_text().splitlines()
+    except OSError:
+        return options
+    for line in lines:
+        # Inspect only simple option declarations, not unrelated tmux syntax
+        # such as Home Manager's backslash-continued bind commands.
+        command = line.split(maxsplit=1)
+        if not command or command[0] not in ("set", "setw", "set-option", "set-window-option"):
+            continue
+        try:
             args = shlex.split(line, comments=True)
-            if args and args[0] in ("set", "setw", "set-option", "set-window-option") and len(args) >= 3:
-                if args[-2] in ("pane-border-format", "pane-border-status"):
-                    options[args[-2]] = args[-1]
-    except (OSError, ValueError):
-        pass
+        except ValueError:
+            continue
+        if len(args) >= 3 and args[-2] in ("pane-border-format", "pane-border-status"):
+            options[args[-2]] = args[-1]
     return options
 
 
