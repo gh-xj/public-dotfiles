@@ -10,7 +10,7 @@ nix_cmd() {
 
 gitleaks protect --staged --source . --redact --no-banner
 ./scripts/verify-denylist.sh
-python3 -c 'import json, pathlib; [json.loads(p.read_text()) for p in pathlib.Path(".config/zed").rglob("*.json")]; print("Zed JSON configuration syntax verified")'
+python3 scripts/verify-zed.py
 
 generation="$(nix_cmd build --no-link --print-out-paths .#)"
 home_files="$(realpath "$generation/home-files")"

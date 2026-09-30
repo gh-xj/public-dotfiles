@@ -19,6 +19,8 @@ app-owned or private; none are restored from historical public config.
 History provenance: preferences, One theme and Markdown snippets were recovered
 from the parent of `752843c` (2026-04-17 removal). Keyboard alignment follows
 the current Neovim sources rather than the obsolete agent/config guide.
+Three malformed white color values in the historical theme were normalized
+to valid RGBA. `task check` validates the Zed JSON and theme colors.
 
 ## Shared editing habits
 

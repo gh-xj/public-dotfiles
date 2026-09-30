@@ -426,7 +426,7 @@
         "scrollbar.thumb.border": "#363c46ff",
         "scrollbar.track.background": "#00000000",
         "scrollbar.track.border": "#2e333cff",
-        "editor.foreground": "#FFFff",
+        "editor.foreground": "#ffffffff",
         "editor.background": "#191830",
         "editor.gutter.background": "#191830",
         "editor.subheader.background": "#191830",
@@ -654,7 +654,7 @@
             "font_weight": null
           },
           "primary": {
-            "color": "#FFFff",
+            "color": "#ffffffff",
             "font_style": null,
             "font_weight": null
           },
@@ -664,7 +664,7 @@
             "font_weight": null
           },
           "punctuation": {
-            "color": "#FFFff",
+            "color": "#ffffffff",
             "font_style": null,
             "font_weight": null
           },
