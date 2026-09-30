@@ -30,16 +30,16 @@ ueberzug_offset = [ 0, 0, 0, 0 ]
 
 [opener]
 nvim = [
-	{ run = 'nvim "$@"', block = true, desc = "Open in Neovim", for = "unix" },
+	{ run = 'nvim %s', block = true, desc = "Open in Neovim", for = "unix" },
 ]
 edit = [
-	{ run = '${EDITOR:-vi} "$@"', desc = "$EDITOR", block = true, for = "unix" },
+	{ run = '${EDITOR:-vi} %s', desc = "$EDITOR", block = true, for = "unix" },
 ]
 open = [
-	{ run = 'open "$@"', desc = "Open", for = "macos" },
+	{ run = 'open %s', desc = "Open", for = "macos" },
 ]
 reveal = [
-	{ run = 'open -R "$1"', desc = "Reveal", for = "macos" },
+	{ run = 'open -R %s1', desc = "Reveal", for = "macos" },
 ]
 
 [open]
@@ -132,5 +132,5 @@ sort_reverse   = false
 sort_translit  = false
 
 [[opener.bulk-rename]]
-run   = 'nvim "$@"'
+run   = 'nvim %s'
 block = true
