@@ -23,6 +23,9 @@
 --
 
 local json = { _version = "0.1.2" }
+-- Preserve null array elements so Projects validation cannot silently drop
+-- malformed slots/tabs. The sentinel also round-trips unknown null fields.
+json.null = {}
 
 -------------------------------------------------------------------------------
 -- Encode
@@ -121,6 +124,7 @@ local type_func_map = {
 
 
 encode = function(val, stack)
+    if val == json.null then return "null" end
     local t = type(val)
     local f = type_func_map[t]
     if f then
@@ -156,7 +160,7 @@ local literals     = create_set("true", "false", "null")
 local literal_map  = {
     ["true"] = true,
     ["false"] = false,
-    ["null"] = nil,
+    ["null"] = json.null,
 }
 
 
@@ -381,6 +385,7 @@ function json.decode(str)
 end
 
 return {
+    null = json.null,
     encode = json.encode,
     decode = json.decode,
 }

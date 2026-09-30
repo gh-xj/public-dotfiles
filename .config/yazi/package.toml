@@ -3,10 +3,8 @@ use = "yazi-rs/plugins:full-border"
 rev = "68f7d48"
 hash = "3996fc74044bc44144b323686f887e1"
 
-[[plugin.deps]]
-use = "yazi-rs/plugins:git"
-rev = "68f7d48"
-hash = "36a484acf6a0a0219c543ccb4cee218f"
+# git.yazi is locally maintained until package ownership/version is unified.
+# See plugins/git.yazi/README.md for its dual-version fetch contract.
 
 [[plugin.deps]]
 use = "yazi-rs/plugins:vcs-files"
@@ -28,10 +26,8 @@ use = "yazi-rs/plugins:smart-filter"
 rev = "68f7d48"
 hash = "407d19bc4fb46eff5fa8ff8337644847"
 
-[[plugin.deps]]
-use = "MasouShizuka/projects"
-rev = "eed0657"
-hash = "ca79de2b3bb2247906e01b2261e5d2bb"
+# projects.yazi is a local fork; its checked persistence must not be
+# overwritten by ya pkg upgrade. See plugins/projects.yazi/README.md.
 
 [[flavor.deps]]
 use = "yazi-rs/flavors:catppuccin-latte"

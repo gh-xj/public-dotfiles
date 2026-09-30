@@ -200,13 +200,29 @@ local function setup(st, opts)
 	end, opts.order)
 end
 
+-- The bundled noop fetcher exposes the release's completion contract.
+-- 26.5.6 uses booleans; 26.8.15+ yields each file's fetch result.
+local function finish(job, retry)
+    local result = require("noop"):fetch(job)
+    if type(result) ~= "function" then
+        return not retry
+    elseif not retry then
+        return result
+    end
+    return ya.co(function()
+        for _, file in ipairs(job.files) do
+            coroutine.yield(file, { retry = true })
+        end
+    end)
+end
+
 ---@type UnstableFetcher
 local function fetch(_, job)
 	local cwd = job.files[1].url.base or job.files[1].url.parent
 	local repo = root(cwd)
 	if not repo then
 		remove(tostring(cwd))
-		return true
+		return finish(job, false)
 	end
 
 	local paths = {}
@@ -222,7 +238,8 @@ local function fetch(_, job)
 		:stdout(Command.PIPED)
 		:output()
 	if not output then
-		return true, Err("Cannot spawn `git` command, error: %s", err)
+		ya.err("Cannot spawn git: " .. tostring(err))
+		return finish(job, false)
 	end
 
 	local changed, excluded = {}, {}
@@ -249,7 +266,7 @@ local function fetch(_, job)
 
 	add(tostring(cwd), repo, changed)
 
-	return false
+	return finish(job, true)
 end
 
 return { setup = setup, fetch = fetch }

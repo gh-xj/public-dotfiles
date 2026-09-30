@@ -1,5 +1,11 @@
 # git.yazi
 
+Local fork of `yazi-rs/plugins:git` at `68f7d48`. The fetch completion adapter
+uses the bundled noop contract to support both 26.5.6 and 26.9.1. This tree is
+repo-owned rather than package-manager owned, so upgrades cannot discard that
+fix. Replace the adapter with the matching upstream implementation when the
+installed and declared Yazi versions are unified.
+
 Show the status of Git file changes as linemode in the file list.
 
 https://github.com/user-attachments/assets/34976be9-a871-4ffe-9d5a-c4cdd0bf4576
@@ -22,13 +28,13 @@ And register it as fetchers in your `~/.config/yazi/yazi.toml`:
 
 ```toml
 [[plugin.prepend_fetchers]]
-id  = "git"
-url = "*"
+group = "git"
+url = "local://**"
 run = "git"
 
 [[plugin.prepend_fetchers]]
-id  = "git"
-url = "*/"
+group = "git"
+url = "local://**/"
 run = "git"
 ```
 

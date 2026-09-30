@@ -3,6 +3,27 @@
 A [Yazi](https://github.com/sxyazi/yazi) plugin that adds the functionality to save, load and merge projects.
 A project means all `tabs` and their status, including `cwd` and so on.
 
+## Local maintenance fork
+
+This copy is based on upstream revision `eed0657`. The repository owns the
+Unix/macOS `lua` persistence fixes; keep it outside `package.toml` so
+`ya pkg upgrade` cannot replace those changes. Review upstream updates manually.
+
+The saved JSON format and keybindings are preserved. Saves create missing
+parent directories and write an adjacent temporary file before renaming it
+over the destination. Failed reads, invalid project data, and failed writes
+produce an error and preserve the original file. Repair an invalid file after
+making a backup; the next action reads it again without requiring a restart.
+The bundled JSON decoder keeps null array elements for validation rather than
+silently dropping them; `last: null` retains its previous absent-last meaning.
+Two open sessions refresh before actions, but truly simultaneous saves are
+not locked and may overwrite one another. Atomic rename protects against
+partial writes; it does not guarantee durability through a power failure.
+
+Validate with `python3 scripts/test-yazi-projects.py /path/to/yazi` from the
+repository root. Native Yazi tests use a disposable configuration and state;
+the companion Lua harness injects write, close, and rename failures.
+
 > [!NOTE]
 > The latest release of Yazi is required at the moment.
 

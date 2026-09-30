@@ -5,9 +5,13 @@ local state = ya.sync(function()
 end)
 
 function M:entry()
+    ya.emit("escape", { visual = true })
     local cwd = state()
-    
-    local _permit = ui.hide()
+    if (cwd.spec or cwd.scheme).is_virtual then
+        return ya.notify { title = "Deep search", content = "Requires a local directory", timeout = 5, level = "warn" }
+    end
+
+    local permit = ui.hide()
 
     local FZF_DEFAULT_COMMAND = 'rg --files --no-ignore --hidden --follow --glob "!{.git,node_modules}/*" 2> /dev/null'
 
@@ -19,10 +23,12 @@ function M:entry()
         :spawn()
 
     if not child then
+        permit:drop()
         return ya.notify { title = "Fzf", content = "Failed to start fzf: " .. tostring(err), timeout = 5, level = "error" }
     end
 
     local output, err = child:wait_with_output()
+    permit:drop()
     if not output then
         return ya.notify { title = "Fzf", content = "Cannot read fzf output: " .. tostring(err), timeout = 5, level = "error" }
     elseif not output.status.success and output.status.code ~= 130 then
@@ -33,7 +39,8 @@ function M:entry()
     if target ~= "" then
         local url = Url(target)
         if url.is_absolute then
-            ya.emit(fs.cha(url) and fs.cha(url).is_dir and "cd" or "reveal", { url, raw = true })
+            local cha = fs.cha(url)
+            ya.emit(cha and cha.is_dir and "cd" or "reveal", { url, raw = true })
         else
             local full_url = cwd:join(url)
             local cha = fs.cha(full_url)

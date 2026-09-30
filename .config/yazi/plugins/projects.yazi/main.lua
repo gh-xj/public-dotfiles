@@ -144,18 +144,120 @@ local _get_default_projects = ya.sync(function(state)
     }
 end)
 
-local _get_projects = ya.sync(function(state)
-    return not state.projects and _get_default_projects() or state.projects
-end)
+-- The lua backend is a local Unix/macOS fork. Always read the latest file
+-- before an action, and never turn unreadable or malformed data into an empty
+-- project list that a later save could overwrite.
+local function valid_project(project)
+    if type(project) ~= "table" or type(project.tabs) ~= "table" then
+        return false
+    end
+    local count = #project.tabs
+    local active = project.active_idx
+    if count == 0 or type(active) ~= "number" or active % 1 ~= 0 or active < 1 or active > count then
+        return false
+    end
+    local indexes, seen = {}, 0
+    for key, tab in pairs(project.tabs) do
+        if type(key) ~= "number" or key % 1 ~= 0 or key < 1 or key > count then
+            return false
+        end
+        if type(tab) ~= "table" or type(tab.cwd) ~= "string" or tab.cwd == "" then
+            return false
+        end
+        local idx = tonumber(tab.idx)
+        if not idx or idx % 1 ~= 0 or idx < 1 or idx > count or indexes[idx] then
+            return false
+        end
+        indexes[idx] = true
+        seen = seen + 1
+    end
+    return seen == count
+end
 
-local _get_real_idx = ya.sync(function(state, idx)
-    for real_idx, value in ipairs(_get_projects().list) do
-        if value.on == SUPPORTED_KEYS[idx].on then
-            return real_idx
+local function valid_projects(projects)
+    if type(projects) ~= "table" or type(projects.list) ~= "table" then
+        return false
+    end
+    local slots, seen = {}, 0
+    for key, item in pairs(projects.list) do
+        if type(key) ~= "number" or key % 1 ~= 0 or key < 1 or key > #projects.list then
+            return false
+        end
+        if type(item) ~= "table" or not SUPPORTED_KEYS_MAP[item.on] or slots[item.on]
+            or type(item.desc) ~= "string" or not valid_project(item.project) then
+            return false
+        end
+        slots[item.on] = true
+        seen = seen + 1
+    end
+    return seen == #projects.list and (projects.last == nil or valid_project(projects.last))
+end
+
+local function persistence_error(state, message)
+    ya.notify({
+        title = state.notify.title,
+        content = "Projects file unchanged: " .. state.save.lua_save_path .. "\n"
+            .. tostring(message) .. "\nCheck permissions, or back up and repair the file, then retry.",
+        timeout = 10,
+        level = "error",
+    })
+end
+
+local function read_projects(state)
+    local f, err, code = io.open(state.save.lua_save_path, "r")
+    if not f then
+        if code == 2 then -- ENOENT: a new installation has no saved file yet.
+            return { list = {} }
+        end
+        return nil, err
+    end
+    local data, read_err = f:read("*a")
+    local closed, close_err = f:close()
+    if not data or not closed then
+        return nil, read_err or close_err
+    end
+    local ok, projects = pcall(state.json.decode, data)
+    if ok and type(projects) == "table" then
+        -- Historically the decoder treated last:null as an absent last.
+        if projects.last == state.json.null then
+            projects.last = nil
+        end
+        if projects.list == state.json.null then
+            return nil, "Invalid JSON or project structure"
         end
     end
-    return nil
+    if not ok or not valid_projects(projects) then
+        return nil, "Invalid JSON or project structure"
+    end
+    return projects
+end
+
+local _get_projects = ya.sync(function(state)
+    local projects = state.projects or _get_default_projects()
+    if state.save.method == "lua" then
+        local err
+        projects, err = read_projects(state)
+        if not projects then
+            persistence_error(state, err)
+            return nil
+        end
+        state.projects = projects
+    end
+    -- Mutations remain detached from cached state until persistence succeeds.
+    local copy = { list = {}, last = projects.last }
+    for idx, item in ipairs(projects.list) do
+        copy.list[idx] = item
+    end
+    return copy
 end)
+
+local function get_real_idx(projects, slot)
+    for idx, item in ipairs(projects.list) do
+        if item.on == slot then
+            return idx
+        end
+    end
+end
 
 local _get_current_project = ya.sync(function(state)
     local tabs = cx.tabs
@@ -177,24 +279,62 @@ local _get_current_project = ya.sync(function(state)
 end)
 
 local _save_projects = ya.sync(function(state, projects)
-    state.projects = projects
-
     if state.save.method == "yazi" then
         ps.pub_to(0, state.save.yazi_load_event, projects)
     elseif state.save.method == "lua" then
-        local f = io.open(state.save.lua_save_path, "w")
-        if not f then
-            return
+        local encoded, data = pcall(state.json.encode, projects)
+        if not encoded then
+            persistence_error(state, "Could not encode projects")
+            return false
         end
-        f:write(state.json.encode(projects))
-        io.close(f)
+
+        local path = state.save.lua_save_path
+        local parent = Url(path).parent
+        -- fs.create is async-only; this plugin's small persistence operation
+        -- runs in sync callbacks. Quote the path and check mkdir's exit status.
+        local created = os.execute("mkdir -p -- " .. ya.quote(tostring(parent or ".")))
+        if created ~= true and created ~= 0 then
+            persistence_error(state, "Could not create the parent directory")
+            return false
+        end
+
+        -- Adjacent temporary files keep rename on the same filesystem. A
+        -- timestamp plus random suffix separates concurrent Yazi instances.
+        local temporary = path .. ".tmp-" .. tostring(ya.time()) .. "-" .. tostring(math.random(0, 2147483647))
+        local f, err = io.open(temporary, "w")
+        if not f then
+            persistence_error(state, err)
+            return false
+        end
+        local written, write_err = f:write(data)
+        local closed, close_err = f:close()
+        if not written or not closed then
+            os.remove(temporary)
+            persistence_error(state, write_err or close_err)
+            return false
+        end
+        local renamed, rename_err = os.rename(temporary, path)
+        if not renamed then
+            os.remove(temporary)
+            persistence_error(state, rename_err)
+            return false
+        end
+    else
+        persistence_error(state, "Unknown save method")
+        return false
     end
+
+    state.projects = projects
+    return true
 end)
 
 local save_project = ya.sync(function(state, idx, desc)
     local projects = _get_projects()
+    if not projects then
+        return
+    end
 
-    local real_idx = _get_real_idx(idx)
+    local real_idx = get_real_idx(projects, SUPPORTED_KEYS[idx].on)
     if not real_idx then
         real_idx = #projects.list + 1
     end
@@ -210,7 +350,9 @@ local save_project = ya.sync(function(state, idx, desc)
         projects.last = project
     end
 
-    _save_projects(projects)
+    if not _save_projects(projects) then
+        return
+    end
 
     if state.event.save.enable then
         ps.pub_to(0, state.event.save.name, project)
@@ -223,6 +365,17 @@ local save_project = ya.sync(function(state, idx, desc)
 end)
 
 local load_project = ya.sync(function(state, project, desc)
+    if state.last.update_after_load then
+        local projects = _get_projects()
+        if not projects then
+            return
+        end
+        projects.last = project
+        if not _save_projects(projects) then
+            return
+        end
+    end
+
     -- TODO: add more tab properties to restore
 
     -- when cx is nil, it is called in setup
@@ -242,12 +395,6 @@ local load_project = ya.sync(function(state, project, desc)
 
     ya.emit("tab_close", { 0 })
     ya.emit("tab_switch", { project.active_idx - 1 })
-
-    if state.last.update_after_load then
-        local projects = _get_projects()
-        projects.last = project
-        _save_projects(projects)
-    end
 
     if state.event.load.enable then
         ps.pub_to(0, state.event.load.name, project)
@@ -269,28 +416,19 @@ local _load_projects = ya.sync(function(state)
         ps.sub_remote(state.save.yazi_load_event, function(body)
             state.projects = body
         end)
-    elseif state.save.method == "lua" then
-        local f = io.open(state.save.lua_save_path, "r")
-        if f then
-            state.projects = state.json.decode(f:read("*a"))
-            io.close(f)
-        end
     end
 
-    if not state.projects then
-        state.projects = _get_default_projects()
-    end
-
-    if state.last.load_after_start then
-        local last_project = _get_projects().last
-        if last_project then
-            load_project(last_project)
-        end
+    local projects = _get_projects()
+    if projects and state.last.load_after_start and projects.last then
+        load_project(projects.last)
     end
 end)
 
 local delete_all_projects = ya.sync(function(state)
-    _save_projects(_get_default_projects())
+    -- Even delete-all must refuse to overwrite an unreadable existing file.
+    if not _get_projects() or not _save_projects(_get_default_projects()) then
+        return
+    end
 
     local msg = "All projects deleted"
 
@@ -303,14 +441,23 @@ local delete_all_projects = ya.sync(function(state)
     end
 end)
 
-local delete_project = ya.sync(function(state, idx)
+local delete_project = ya.sync(function(state, slot)
     local projects = _get_projects()
+    if not projects then
+        return
+    end
+    local idx = get_real_idx(projects, slot)
+    if not idx then
+        return
+    end
 
     local message = string.format([["%s" deleted]], tostring(projects.list[idx].desc))
 
     local deleted_project = projects.list[idx]
     table.remove(projects.list, idx)
-    _save_projects(projects)
+    if not _save_projects(projects) then
+        return
+    end
 
     if state.event.delete.enable then
         ps.pub_to(0, state.event.delete.name, deleted_project)
@@ -515,9 +662,14 @@ local _load_config = ya.sync(function(state, opts)
     if state.last.update_before_quit then
         ps.sub("key-quit", function(body)
             local projects = _get_projects()
+            if not projects then
+                return true
+            end
             local current_project = _get_current_project()
             projects.last = current_project
-            _save_projects(projects)
+            if not _save_projects(projects) then
+                return true
+            end
 
             if state.event.save.enable then
                 ps.pub_to(0, state.event.save.name, current_project)
@@ -588,6 +740,9 @@ return {
         end
 
         local projects = _get_projects()
+        if not projects then
+            return
+        end
 
         if action == "load_last" then
             local last_project = projects.last
@@ -600,6 +755,9 @@ return {
         local list = projects.list
 
         if action == "save" then
+            for _, candidate in ipairs(SUPPORTED_KEYS) do
+                candidate.desc = nil
+            end
             -- load the desc of saved projects
             for _, value in pairs(list) do
                 local idx = SUPPORTED_KEYS_MAP[value.on]
@@ -646,7 +804,7 @@ return {
             local selected = list[selected_idx]
             load_project(selected.project, selected.desc)
         elseif action == "delete" then
-            delete_project(selected_idx)
+            delete_project(list[selected_idx].on)
         end
     end,
 }

@@ -13,9 +13,9 @@ local function entry(st, job)
     end
 
     if st.view == nil then
-        st.old_parent = R.parent
-        st.old_current = R.current
-        st.old_preview = R.preview
+        st.old_parent = R[1]
+        st.old_current = R[2]
+        st.old_preview = R[3]
 
         -- Get current tab ratios
         local all_old = st.old_parent + st.old_current + st.old_preview

@@ -30,6 +30,8 @@ python3 scripts/test-ghostty-migration.py "$generation" ".#homeConfigurations.$h
 ./scripts/verify-zsh.sh "$generation"
 bash ./scripts/verify-nvim.sh
 ./scripts/verify-terminal.sh "$generation"
+python3 scripts/test-yazi-runtime.py "$generation"
+python3 scripts/test-yazi-projects.py "$generation/home-path/bin/yazi"
 python3 scripts/test-agent-status.py
 python3 scripts/test-public-control.py
 python3 scripts/test-workspace-health.py
