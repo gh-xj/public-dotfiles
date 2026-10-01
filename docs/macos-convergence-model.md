@@ -26,7 +26,7 @@ that state into the repo owner instead of keeping an undocumented repair step.
 | Untyped durable preferences | `system.defaults.CustomUserPreferences` in the same module | nix-darwin evaluation and switch |
 | Display hardware layout | Host `xj.publicDotfiles.displayLayoutsFile` | `displayplacer list`; no shared physical-panel default |
 | Raycast Store extension intent | `config/raycast/extensions.tsv` | `task raycast:install` plus interactive approval |
-| Default file openers | `config/macos/default-openers.duti` | `task openers:check` queries LaunchServices |
+| Default file openers | `config/macos/default-openers.duti` | `duti -x <extension>` queries LaunchServices |
 | App-owned or permission-gated state | the app, macOS, or a downstream private owner | live inspection or human confirmation |
 
 Prefer typed nix-darwin defaults. Use `CustomUserPreferences` for durable keys
@@ -48,9 +48,8 @@ declarations drift.
   currently selected source is runtime state.
 - Raycast symptoms: preferences may be declared, while Script Command
   registration, aliases, hotkeys, and Store confirmation remain app-owned.
-- File opener symptoms: `task openers:list` inventories common extensions;
-  `task openers:plan` shows managed drift and `task openers:apply` repairs it.
-  See [default-openers.md](default-openers.md) for application prerequisites.
+- File opener symptoms: query the affected extension with `duti -x`; `task apply`
+  reapplies [the declaration](default-openers.md) after installing the app ledger.
 
 Remote-control software can substitute the client Mac's pointer behavior. When
 diagnosing input, confirm the physical target before changing repo policy.

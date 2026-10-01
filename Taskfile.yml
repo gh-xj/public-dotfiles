@@ -35,23 +35,3 @@ tasks:
     desc: Plan, apply or verify host-injected display layouts
     cmds:
       - bash scripts/apply-display-layout.sh {{.CLI_ARGS}}
-
-  openers:list:
-    desc: List common file openers and managed preferences
-    cmds:
-      - python3 scripts/default-openers.py list
-
-  openers:plan:
-    desc: Inspect default opener drift without changes
-    cmds:
-      - python3 scripts/default-openers.py plan
-
-  openers:apply:
-    desc: Apply and verify the public file-opening preferences
-    cmds:
-      - python3 scripts/default-openers.py apply
-
-  openers:check:
-    desc: Fail when managed file openers drift or an app is missing
-    cmds:
-      - python3 scripts/default-openers.py check

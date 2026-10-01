@@ -657,7 +657,8 @@ main() {
   apply_darwin_system "$flake_dir"
   if [ "$darwin_phase" -eq 1 ] && [ "$mode" = "apply" ]; then
     info "applying default file openers after the Homebrew app install"
-    "$target_home/.local/bin/default-openers" apply
+    "$target_home/.local/state/nix/profiles/home-manager/home-path/bin/duti" \
+      "$repo_root/config/macos/default-openers.duti"
   fi
   apply_display_layout
   finish_message
