@@ -18,6 +18,14 @@
             "command": "agent-workmux-status waiting"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agent-notify codex permission"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -36,6 +44,14 @@
           {
             "type": "command",
             "command": "agent-workmux-status done"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agent-notify codex done"
           }
         ]
       }
