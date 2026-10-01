@@ -21,22 +21,10 @@ tasks:
       - ./scripts/check.sh --deep
 
   doctor:
-    desc: Diagnose source and generation drift (-- --live includes running state)
+    desc: Diagnose generated output and runtime drift (-- --live includes running state)
     silent: true
     cmds:
       - python3 scripts/public-control.py doctor {{.CLI_ARGS}}
-
-  reconcile:
-    desc: Explicitly plan or apply a selected Home Manager profile
-    silent: true
-    cmds:
-      - python3 scripts/public-control.py reconcile {{.CLI_ARGS}}
-
-  workspace:health:
-    desc: Read-only bounded terminal, agent, workload and disk snapshot
-    silent: true
-    cmds:
-      - python3 scripts/public-control.py workspace doctor {{.CLI_ARGS}}
 
   raycast:install:
     desc: Verify and open install intents for missing Raycast extensions

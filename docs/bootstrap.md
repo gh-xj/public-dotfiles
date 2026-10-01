@@ -91,9 +91,9 @@ After a user or Darwin apply, run:
 task check
 ```
 
-For subsequent source/generation/runtime diagnosis and an explicit user-level
-apply, use [doctor and reconcile](reconciliation.md). Pulling or rebasing source
-never invokes them. Reconcile does not replace the opt-in Darwin system phase.
+For read-only source/generation/runtime diagnosis, run `task doctor`; add
+`-- --flake PATH#PROFILE` to compare generated output and `-- --live` for
+runtime checks. Apply changes only through `task apply`.
 
 ## Package Sets
 

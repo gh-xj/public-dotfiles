@@ -25,10 +25,7 @@
     exampleHomes = forAllSystems mkExampleHome;
   in
   {
-    homeModules.default = { lib, ... }: {
-      imports = [ ./modules/home ];
-      xj.publicDotfiles.sourceRevision = lib.mkDefault (self.rev or self.dirtyRev or "unversioned");
-    };
+    homeModules.default = import ./modules/home;
     homeModule = self.homeModules.default;
 
     darwinModules.default = import ./modules/darwin;

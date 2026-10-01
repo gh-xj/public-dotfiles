@@ -6,7 +6,7 @@ The fixture deliberately uses only synthetic identities and hardware data; do
 not put a real host, provider command or hardware serial back into this repo.
 Pin public in the downstream lock, then update that pin explicitly after rebase.
 Build with `nix build .#homeConfigurations.<profile>.activationPackage`; activate
-through the downstream's normal switch or the public explicit reconcile tool.
+through the downstream's normal switch.
 
 | Input under `xj.publicDotfiles` | Ownership / behavior |
 | --- | --- |
@@ -41,8 +41,8 @@ a `.claude` parent symlink into its repository), set
 `mutable_targets` and pre-link detachment, without disabling
 `.claude/statusline-command.sh`, `agent-pane-title`, `agent-session`, or
 `agent-workmux-status`. The default is true for standalone installs. The private
-owner preserves the live settings and merges required public integration itself;
-reconcile never automatically merges hooks. Do not disable all helper delivery.
+owner preserves the live settings and merges required public integration itself.
+The read-only doctor reports missing integration; do not disable all helper delivery.
 
 Display data is never inferred from a shared physical panel. Use
 `task display:layout -- --dry-run`, `--verify` or explicit `--apply`, or the

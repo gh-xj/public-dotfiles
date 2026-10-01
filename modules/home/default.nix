@@ -19,11 +19,6 @@ in
 
   options.xj.publicDotfiles = {
     enable = lib.mkEnableOption "xj public dotfiles Home Manager baseline";
-    sourceRevision = lib.mkOption {
-      type = lib.types.str;
-      default = "unversioned";
-      description = "Revision of the public module source, captured by the public flake module wrapper.";
-    };
     repoRoot = lib.mkOption {
       type = lib.types.str;
       default = "${config.home.homeDirectory}/public-dotfiles";

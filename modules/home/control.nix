@@ -6,19 +6,10 @@ let
     ++ lib.optionals (cfg.agents.hooks.enable && cfg.agents.codexHooks.seed.enable) [ ".codex/hooks.json" ];
   excludedTargets = builtins.filter (name: !(builtins.elem name mutableTargets))
     [ ".claude/settings.json" ".codex/config.toml" ".codex/hooks.json" ];
-  workspace = pkgs.writeShellApplication {
-    name = "agent-workspace";
-    runtimeInputs = [ pkgs.python3 pkgs.tmux pkgs.git ];
-    text = ''exec python3 ${../../scripts/public-control.py} --repo ${lib.escapeShellArg cfg.repoRoot} workspace "$@"'';
-  };
 in {
   config = lib.mkIf cfg.enable {
-    home.packages = [ workspace ];
-    home.file.".local/bin/agent-workspace".source = "${workspace}/bin/agent-workspace";
     xdg.configFile."public-dotfiles/generation.json".text = builtins.toJSON {
       schema = 1;
-      source_revision = cfg.sourceRevision;
-      source_fingerprint = builtins.hashString "sha256" (toString ../..);
       mutable_targets = mutableTargets;
     };
     # Detach while the old managed links still exist, before cleanOldGen can
