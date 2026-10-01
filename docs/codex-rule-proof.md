@@ -23,7 +23,7 @@ does not silently allow the operation.
 python3 scripts/probe-codex-rules.py
 ```
 
-`task check` runs this probe as a regression gate. It uses the real installed
+`task check:deep` runs this probe as a regression gate. It uses the real installed
 Codex CLI, a fresh config and temporary Git repository per case, and a loopback
 Responses fixture server that requests one predetermined shell-tool invocation.
 There are no external model requests and no account credentials are required.

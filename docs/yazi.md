@@ -50,7 +50,7 @@ with package ownership rather than breaking the declared baseline.
 
 ## Verification and versions
 
-`task check` runs native isolated Yazi tests against the built generation.
+`task check:deep` runs native isolated Yazi tests against the built generation.
 Additional runtime versions can be checked explicitly:
 
 ```sh

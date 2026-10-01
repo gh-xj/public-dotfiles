@@ -33,6 +33,7 @@ app ledger, opt in explicitly:
 
 After the user-level apply, run `task check`. After the Darwin
 phase has installed the public GUI/app ledger, run `task check`.
+Use `task check:deep` for slow cross-profile, Yazi PTY/plugin and Codex runtime probes.
 
 The bootstrap supports both Apple Silicon and Intel Macs. `--darwin --apply`
 uses `sudo` for `darwin-rebuild switch`. If Homebrew is missing from the

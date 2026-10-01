@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ "$#" -gt 1 ] || { [ "$#" -eq 1 ] && [ "$1" != "--deep" ]; }; then
+  printf 'usage: %s [--deep]\n' "$0" >&2
+  exit 2
+fi
+deep=0
+if [ "${1:-}" = "--deep" ]; then
+  deep=1
+fi
+
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
@@ -25,35 +34,37 @@ case "$(uname -m)" in
     exit 1
     ;;
 esac
-python3 scripts/verify-agent-seeds.py "$generation" "$repo_root" ".#homeConfigurations.$home_config"
-python3 scripts/test-ghostty-migration.py "$generation" ".#homeConfigurations.$home_config"
-
 ./scripts/verify-zsh.sh "$generation"
 bash ./scripts/verify-nvim.sh
 ./scripts/verify-terminal.sh "$generation"
-python3 scripts/test-yazi-runtime.py "$generation"
-python3 scripts/test-yazi-projects.py "$generation/home-path/bin/yazi"
 python3 scripts/test-agent-status.py
 python3 scripts/test-public-control.py
 python3 scripts/test-workspace-health.py
-PATH="$generation/home-path/bin:$PATH" python3 scripts/test-tmux-recovery.py
 PATH="$generation/home-path/bin:$PATH" python3 scripts/test-human-req-doc.py
 "$generation/home-path/bin/tmux-recovery" --help >/dev/null
-python3 scripts/test-downstream.py "$generation"
 "$generation/home-path/bin/agent-workspace" doctor --help >/dev/null
 python3 scripts/verify-codex-strict.py
-python3 scripts/probe-codex-rules.py
 task --taskfile global/Taskfile.yml --list-all >/dev/null
 
-bootstrap_root="$(mktemp -d)"
-cleanup() {
-  rm -rf "$bootstrap_root"
-}
-trap cleanup EXIT
-XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR="$bootstrap_root" \
-  ./scripts/bootstrap-macos.sh --darwin --dry-run --skip-build
-nix_cmd eval --raw \
-  "$bootstrap_root/${USER:-$(id -un)}#darwinConfigurations.bootstrap.config.system.build.toplevel.drvPath" \
-  >/dev/null
+if [ "$deep" -eq 1 ]; then
+  python3 scripts/verify-agent-seeds.py "$generation" "$repo_root" ".#homeConfigurations.$home_config"
+  python3 scripts/test-ghostty-migration.py "$generation" ".#homeConfigurations.$home_config"
+  python3 scripts/test-yazi-runtime.py "$generation"
+  python3 scripts/test-yazi-projects.py "$generation/home-path/bin/yazi"
+  PATH="$generation/home-path/bin:$PATH" python3 scripts/test-tmux-recovery.py
+  python3 scripts/test-downstream.py "$generation"
+  python3 scripts/probe-codex-rules.py
+
+  bootstrap_root="$(mktemp -d)"
+  cleanup() {
+    rm -rf "$bootstrap_root"
+  }
+  trap cleanup EXIT
+  XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR="$bootstrap_root" \
+    ./scripts/bootstrap-macos.sh --darwin --dry-run --skip-build
+  nix_cmd eval --raw \
+    "$bootstrap_root/${USER:-$(id -un)}#darwinConfigurations.bootstrap.config.system.build.toplevel.drvPath" \
+    >/dev/null
+fi
 
 printf 'public dotfiles check passed\n'

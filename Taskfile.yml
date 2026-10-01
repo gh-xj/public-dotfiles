@@ -15,6 +15,11 @@ tasks:
     cmds:
       - ./scripts/check.sh
 
+  check:deep:
+    desc: Run routine checks plus slow runtime and cross-profile probes
+    cmds:
+      - ./scripts/check.sh --deep
+
   doctor:
     desc: Diagnose source and generation drift (-- --live includes running state)
     silent: true
