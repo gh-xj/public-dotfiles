@@ -48,8 +48,8 @@ declarations drift.
   currently selected source is runtime state.
 - Raycast symptoms: preferences may be declared, while Script Command
   registration, aliases, hotkeys, and Store confirmation remain app-owned.
-- File opener symptoms: query the affected extension with `duti -x`; `task apply`
-  reapplies [the declaration](default-openers.md) after installing the app ledger.
+- File opener symptoms: query the affected extension with `duti -x`; Home Manager
+  activation reapplies [the declaration](default-openers.md).
 
 Remote-control software can substitute the client Mac's pointer behavior. When
 diagnosing input, confirm the physical target before changing repo policy.
