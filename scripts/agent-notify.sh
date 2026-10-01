@@ -9,7 +9,7 @@ url_file="${XDG_CONFIG_HOME:-$HOME/.config}/agent-notify/ntfy-url"
 url="$(<"$url_file")"
 [[ "$url" == https://* ]] || exit 0
 
-idle_ns="$(/usr/sbin/ioreg -c IOHIDSystem | awk '/HIDIdleTime/ { print $NF; exit }')"
+idle_ns="$(/usr/sbin/ioreg -c IOHIDSystem | awk '/HIDIdleTime/ { v = $NF } END { print v }')"
 (( ${idle_ns:-0} / 1000000000 >= ${AGENT_NOTIFY_IDLE_SECS:-120} )) || exit 0
 
 payload="$(cat || true)"
