@@ -13,7 +13,7 @@ let
   };
 in {
   options.xj.publicDotfiles.tmuxRecovery = {
-    enable = lib.mkOption { type = lib.types.bool; default = true; description = "Install the public topology recovery engine."; };
+    enable = lib.mkEnableOption "tmux topology recovery engine";
     outputDirectory = lib.mkOption { type = lib.types.strMatching "/.*"; default = "${config.home.homeDirectory}/.local/state/tmux-agents-recovery"; };
     keepNewest = lib.mkOption { type = lib.types.ints.positive; default = 32; description = "Global cap on owned snapshots, including the current protected snapshot."; };
     keepDays = lib.mkOption { type = lib.types.ints.positive; default = 7; };

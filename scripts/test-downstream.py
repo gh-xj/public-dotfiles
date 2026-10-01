@@ -91,19 +91,12 @@ with tempfile.TemporaryDirectory(prefix="downstream-composition-") as tmp:
     shutil.copyfile(workmux_file, native_home / ".config/workmux/config.yaml")
     subprocess.run([str(built / "home-path/bin/workmux"), "set-window-status", "working"], cwd=native_home,
                    env={"HOME": str(native_home), "XDG_CONFIG_HOME": str(native_home / ".config"), "PATH": "/usr/bin:/bin"}, check=True, capture_output=True)
-    disabled = build("disabled" + suffix)
-    off = evaluate("disabled" + suffix, '''h: {
-      link = builtins.hasAttr ".local/bin/tmux-recovery" h.config.home.file;
-      packages = map (p: p.name) h.config.home.packages;
-      job = h.config.launchd.agents.tmux-recovery.enable or false;
-    }''')
-    assert not off["link"] and "tmux-recovery" not in off["packages"] and not off["job"]
-    assert not (disabled / "home-files/.local/bin/tmux-recovery").exists()
     public = (generation / "home-files").resolve()
     assert ".claude/settings.json" in json.loads((public / ".config/public-dotfiles/generation.json").read_text())["mutable_targets"]
     assert "seedClaudeSettings" in (generation / "activate").read_text()
     assert not (public / ".local/bin/scratch-gc").exists()
     assert not (public / ".config/xj/display-layouts.tsv").exists()
+    assert not (public / ".local/bin/tmux-recovery").exists()
     assert "Downstream fixture policy" not in (public / "AGENTS.md").read_text()
     assert not list((public / "Library/LaunchAgents").glob("*tmux-recovery*")) if (public / "Library/LaunchAgents").exists() else True
     print("standalone/downstream builds, ownership switches, policy/rules, Workmux argv, display data and recovery schedule verified")

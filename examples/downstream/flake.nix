@@ -7,15 +7,12 @@
   };
   outputs = { public, nixpkgs, home-manager, ... }:
     let
-      make = system: extra: home-manager.lib.homeManagerConfiguration {
+      make = system: home-manager.lib.homeManagerConfiguration {
         pkgs = import nixpkgs { inherit system; };
-        modules = [ public.homeModules.default ./host.nix ] ++ extra;
+        modules = [ public.homeModules.default ./host.nix ];
       };
-      disabled = { xj.publicDotfiles.tmuxRecovery.enable = false; };
     in {
-      homeConfigurations.example = make "aarch64-darwin" [ ];
-      homeConfigurations.example-x86_64 = make "x86_64-darwin" [ ];
-      homeConfigurations.disabled = make "aarch64-darwin" [ disabled ];
-      homeConfigurations.disabled-x86_64 = make "x86_64-darwin" [ disabled ];
+      homeConfigurations.example = make "aarch64-darwin";
+      homeConfigurations.example-x86_64 = make "x86_64-darwin";
     };
 }

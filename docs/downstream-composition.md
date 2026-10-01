@@ -18,7 +18,7 @@ through the downstream's normal switch.
 | `workmux.agent`, `workmux.extraAgents.<name>.argv`, `.type` | Provider selection and trusted argv; no source-file patch required |
 | `workmux.extraConfig` | Additional YAML-compatible configuration; `status_format` remains false |
 | `displayLayoutsFile` | Private host TSV installed at `~/.config/xj/display-layouts.tsv`; null by default |
-| `tmuxRecovery.*` | Public engine, retention and optional schedule; trusted adapter file remains downstream |
+| `tmuxRecovery.*` | Opt-in public engine, retention and optional schedule; trusted adapter file remains downstream |
 | `scratchGc.enable = false` | Public creates no scratch package/home target; private owner may claim it directly |
 | `scratchGc.package` with `.enable = true` | Optional delivery of a complete downstream package, not a public scratch implementation |
 
@@ -65,7 +65,7 @@ label, resolution, Hz, color depth, scaling, origin and rotation.
    engine or the former shared `config/macos/display-layouts.tsv`.
 5. Keep scratch ownership disabled unless deliberately supplying a full private
    package. No public scratch policy requires a machine-specific CLI.
-6. Enable `tmuxRecovery.schedule.enable = true` and interval 300 only when ready
+6. Set `tmuxRecovery.enable = true`, enable its schedule and interval 300 only when ready
    to replace the old scheduler. Disable the old private job explicitly in its
    owner to avoid duplicate scheduling. Keep the legacy checkpoint archive:
    new retention never claims it, and old formats need explicit migration.
@@ -77,6 +77,6 @@ label, resolution, Hz, color depth, scaling, origin and rotation.
    These files remain in main; remove the overlay patches, not the upstream files.
 
 The public checks build both the standalone example and a separate downstream
-flake (including an engine-disabled variant), without activating either. They
+flake, without activating either. They
 verify shared policy identity, seed ownership, private target non-conflict,
 Workmux parsing, hardware-data injection and the launchd command composition.

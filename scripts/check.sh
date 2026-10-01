@@ -40,7 +40,6 @@ bash ./scripts/verify-nvim.sh
 python3 scripts/test-agent-status.py
 python3 scripts/test-public-control.py
 PATH="$generation/home-path/bin:$PATH" python3 scripts/test-human-req-doc.py
-"$generation/home-path/bin/tmux-recovery" --help >/dev/null
 python3 scripts/verify-codex-strict.py
 task --taskfile global/Taskfile.yml --list-all >/dev/null
 

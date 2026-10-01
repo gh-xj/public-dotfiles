@@ -1,8 +1,10 @@
 # Tmux topology recovery
 
 Recovery is a public engine with private runtime state and optional provider
-data. It is installed by default; scheduling is off by default. It never reads
-agent databases, captures scrollback or records arbitrary foreground commands.
+data. Both installation and scheduling are off by default. The downstream host
+with 126 existing checkpoints and a scheduler opts in with
+`tmuxRecovery.enable = true`; standalone public profiles remain off. It never
+reads agent databases, captures scrollback or records arbitrary foreground commands.
 
 ```sh
 tmux-recovery checkpoint --session project

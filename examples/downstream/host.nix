@@ -16,6 +16,7 @@
     };
     displayLayoutsFile = ./display-layouts.tsv;
     tmuxRecovery = {
+      enable = true;
       schedule.enable = true;
       schedule.interval = 300;
       keepNewest = 8;
