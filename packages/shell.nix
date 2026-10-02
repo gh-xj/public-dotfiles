@@ -15,7 +15,7 @@ pkgs: [
   pkgs.starship
   pkgs.tealdeer
   pkgs.trash-cli
-  pkgs.yazi
+  (pkgs.callPackage ./yazi.nix { })
   pkgs.yq
   pkgs.zoxide
   pkgs.zsh

@@ -15,7 +15,8 @@ Header:children_add(function()
 end, 500, Header.LEFT)
 
 th.git = th.git or {}
-th.git.modified_sign = "M"
+th.git.unstaged_sign = "M"
+th.git.staged_sign = "M"
 th.git.deleted_sign = "D"
 require("git"):setup()
 

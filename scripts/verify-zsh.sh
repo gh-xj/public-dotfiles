@@ -18,21 +18,27 @@ cleanup() {
 trap cleanup EXIT
 
 home_dir="$tmpdir/home"
-mkdir -p "$home_dir/.cache" "$home_dir/.config/zsh"
+mkdir -p "$home_dir/.cache" "$home_dir/.config/zsh" "$home_dir/.local/state/nix/profiles"
+ln -s "$generation" "$home_dir/.local/state/nix/profiles/home-manager"
 printf 'export PRIVATE_ENV_FIXTURE=loaded\n' >"$home_dir/.config/zsh/private.zshenv"
 
 REPO_ROOT="$repo_root" \
 HOME="$home_dir" \
 XDG_CONFIG_HOME="$home_dir/.config" \
+XDG_STATE_HOME="$home_dir/.local/state" \
 XJ_ZSH_PLUGIN_PATHS_FILE="$plugin_paths" \
 XJ_ZSH_DISABLE_LEGACY_PLUGIN_CACHE=1 \
 PATH="$generation/home-path/bin:$PATH" \
 TERM="xterm-256color" \
 zsh -dfi -c '
+  # Keep the absolute macOS hook isolated from the real GUI session.
+  function /bin/launchctl() { return 0; }
   source "$REPO_ROOT/.zshenv"
   source "$REPO_ROOT/.zprofile"
   source "$REPO_ROOT/.zshrc"
   [[ "$PRIVATE_ENV_FIXTURE" == loaded ]]
+  [[ "$(command -v yazi)" == "$HOME/.local/state/nix/profiles/home-manager/home-path/bin/yazi" ]]
+  [[ "$(command -v ya)" == "$HOME/.local/state/nix/profiles/home-manager/home-path/bin/ya" ]]
   [[ ":$PATH:" == *":$HOME/.local/share/npm-global/bin:"* ]]
   [[ "$XJ_ZSH_PLUGIN_PATHS_GENERATED" == 1 ]]
   (( $+functions[zvm_select_vi_mode] ))
@@ -43,4 +49,10 @@ zsh -dfi -c '
   print -P -- "$PROMPT" >/dev/null
 '
 
-printf 'zsh startup verified\n'
+REPO_ROOT="$repo_root" HOME="$home_dir" XDG_STATE_HOME="$home_dir/.local/state" \
+  zsh -df -c '
+    source "$REPO_ROOT/.zshenv"
+    [[ "$(command -v yazi)" == "$HOME/.local/state/nix/profiles/home-manager/home-path/bin/yazi" ]]
+    [[ "$(command -v ya)" == "$HOME/.local/state/nix/profiles/home-manager/home-path/bin/ya" ]]
+  '
+printf 'zsh startup and active Home Manager CLI precedence verified\n'

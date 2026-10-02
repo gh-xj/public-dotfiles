@@ -3,8 +3,10 @@ use = "yazi-rs/plugins:full-border"
 rev = "68f7d48"
 hash = "3996fc74044bc44144b323686f887e1"
 
-# git.yazi is locally maintained until package ownership/version is unified.
-# See plugins/git.yazi/README.md for its dual-version fetch contract.
+[[plugin.deps]]
+use = "yazi-rs/plugins:git"
+rev = "=7200d7374462ba11c0fa5662115a96dd6ef8c9ab"
+hash = "347cc6b190eb0c2fd60513cc7ae37412"
 
 [[plugin.deps]]
 use = "yazi-rs/plugins:vcs-files"

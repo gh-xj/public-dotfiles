@@ -45,7 +45,8 @@ setup_environment() {
     fi
 
     # Dev tool bins (.local/bin is prepended in .zshenv)
-    export PATH="$HOME/go/bin:$HOME/.cargo/bin:$NPM_CONFIG_PREFIX/bin:$BUN_INSTALL/bin:$PATH"
+    # Restore declared CLI precedence after brew shellenv, keeping developer bins.
+    export PATH="$HOME/go/bin:$HOME/.cargo/bin:$NPM_CONFIG_PREFIX/bin:$BUN_INSTALL/bin:$HOME/.local/bin:${XDG_STATE_HOME:-$HOME/.local/state}/nix/profiles/home-manager/home-path/bin:$PATH"
 
     # Remove duplicates (covers all PATH additions across zsh init files).
     # -g required so the tied-unique attribute sticks to the global PATH
