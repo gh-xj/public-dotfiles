@@ -46,14 +46,6 @@
             "command": "agent-workmux-status done"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "agent-notify codex done"
-          }
-        ]
       }
     ],
     "SessionStart": [
