@@ -3,8 +3,27 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "permissions": {
-    "defaultMode": "default"
+    "defaultMode": "default",
+    "allow": [
+      "Bash(jq *)",
+      "Bash(rg *)",
+      "Bash(imsg chats *)",
+      "Bash(imsg history *)",
+      "Bash(imsg search *)",
+      "Bash(imsg group *)",
+      "Bash(gws calendar +agenda *)",
+      "Bash(gws calendar events list *)",
+      "Bash(gws calendar events get *)",
+      "Bash(gws calendar freebusy query *)"
+    ],
+    "deny": [
+      "Bash(rg --pre*)",
+      "Bash(rg * --pre*)",
+      "Bash(gws calendar * -o*)",
+      "Bash(gws calendar * --output*)"
+    ]
   },
+  "cleanupPeriodDays": 365,
   "hooks": {
     "UserPromptSubmit": [
       {
