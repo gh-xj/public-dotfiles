@@ -25,6 +25,22 @@ def wait_for(predicate, description: str, timeout: float = 5) -> None:
     raise AssertionError(f"Timed out: {description}")
 
 
+def wait_for_exit(pid):
+    # tmux's server can stop before its pane process finishes flushing state.
+    # Only wait/terminate the PID captured from this owned fixture.
+    if pid is None:
+        return
+    deadline = time.monotonic() + 12
+    while time.monotonic() < deadline:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return
+        time.sleep(.05)
+    os.kill(pid, 9)
+    time.sleep(.1)
+
+
 class Session:
     def __init__(self, base: Path, binary: str, saved: Path):
         self.base = base
@@ -72,6 +88,7 @@ prepend_keymap = [
             f"PROJECT_TEST_NOTIFICATIONS={self.notifications}", f"PROJECT_TEST_EVENTS={self.events}",
             binary, str(files),
         ], check=True, capture_output=True)
+        self.pid = int(subprocess.check_output(self.tmux + ["display-message", "-t", "probe", "-p", "#{pane_pid}"], text=True))
         try:
             wait_for(lambda: "fixture.txt" in self.screen(), "native Yazi startup")
         except Exception:
@@ -105,6 +122,7 @@ prepend_keymap = [
 
     def close(self) -> None:
         subprocess.run(self.tmux + ["kill-server"], capture_output=True)
+        wait_for_exit(self.pid)
 
 
 def native_tests(binary: str, fixture: Path) -> None:

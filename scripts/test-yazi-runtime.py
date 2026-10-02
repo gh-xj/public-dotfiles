@@ -12,6 +12,22 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def wait_for_exit(pid):
+    # tmux's server can stop before its pane process finishes flushing state.
+    # Only wait/terminate the PID captured from this owned fixture.
+    if pid is None:
+        return
+    deadline = time.monotonic() + 12
+    while time.monotonic() < deadline:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return
+        time.sleep(.05)
+    os.kill(pid, 9)
+    time.sleep(.1)
+
+
 class Session:
     def __init__(self, binary, root):
         self.root = root
@@ -64,12 +80,14 @@ end }
         self.socket = f'yazi-test-{os.getpid()}-{root.name}'
         self.tmux = ['tmux', '-L', self.socket]
         self.binary = binary
+        self.pid = None
 
     def start(self):
         # tmux server receives only the isolated environment; no user session is selected.
         subprocess.run(self.tmux + ['-f', '/dev/null', 'new-session', '-d', '-s', 'probe',
                                     '-x', '110', '-y', '32', self.binary, str(self.files)],
                        env=self.env, check=True, capture_output=True)
+        self.pid = int(subprocess.check_output(self.tmux + ['display-message', '-t', 'probe', '-p', '#{pane_pid}'], text=True))
         self.wait(lambda: 'fixture' in self.capture(), 'Yazi file list')
 
     def key(self, *keys):
@@ -110,6 +128,7 @@ end }
 
     def close(self):
         subprocess.run(self.tmux + ['kill-server'], capture_output=True)
+        wait_for_exit(self.pid)
         pid = self.root / 'quicklook.pid'
         if pid.exists():
             try:
