@@ -96,3 +96,100 @@ with tempfile.TemporaryDirectory(prefix="detach-agent-config-") as tmp:
     assert live.is_file() and not live.is_symlink() and live.read_bytes() == before
     assert source.read_bytes() == before and live.stat().st_mode & 0o777 == 0o600
 print("activation helper preserves mutable managed-link bytes")
+
+
+# Package lookup must detect PATH drift without exposing native stdout or paths.
+from unittest.mock import patch
+with tempfile.TemporaryDirectory(prefix="doctor-programs-") as tmp:
+    base = Path(tmp)
+    repo, home, generation = [base / name for name in ("repo", "home", "generation")]
+    repo.mkdir(); home.mkdir()
+    make_generation(generation, "config")
+    owned = generation / "home-files/.config/public-dotfiles/generation.json"
+    owned.parent.mkdir(parents=True)
+    owned.write_text(json.dumps({"owned_programs": {
+        "yazi": {"owner": "nix", "version": "26.9.1"},
+        "ya": {"owner": "nix", "version": "26.9.1"},
+    }}))
+    binaries = generation / "home-path/bin"
+    binaries.mkdir(parents=True)
+    for name in ("yazi", "ya"):
+        (binaries / name).write_text("fixture")
+    foreign = base / "sensitive-fixture-binary"
+    foreign.write_text("fixture")
+    marker = "private-native-output-do-not-print"
+
+    def runner(argv, **kwargs):
+        text = "" if "status" in argv else "b" * 40 if str(argv[0]) == "git" else "Yazi 26.9.1 " + marker
+        return subprocess.CompletedProcess(argv, 0, text, "")
+
+    app = control.Control(repo, home, generation=generation, runner=runner)
+    with patch.object(control.shutil, "which", side_effect=lambda name: str(binaries / name)):
+        report = app.programs()
+        assert all(item["matches_generation"] is True for item in report["commands"].values())
+        assert report["paired_runtime_versions_match"] is True
+    with patch.object(control.shutil, "which", return_value=str(foreign)):
+        report = app.programs()
+        assert all(item["matches_generation"] is False for item in report["commands"].values())
+        assert marker not in json.dumps(report) and str(base) not in json.dumps(report)
+    with patch.object(control.shutil, "which", return_value=None):
+        report = app.programs()
+        assert report["paired_runtime_versions_match"] is None
+        assert all(item["matches_generation"] is None for item in report["commands"].values())
+print("paired CLI drift, missing state and private-output suppression verified")
+
+
+with tempfile.TemporaryDirectory(prefix="native-plan-") as tmp:
+    base = Path(tmp)
+    repo, home, generation = [base / name for name in ("repo", "home", "generation")]
+    repo.mkdir(); home.mkdir()
+    make_generation(generation, "new bytes")
+    yazi = generation / "home-files/.config/yazi/yazi.toml"
+    yazi.parent.mkdir(); yazi.write_text("new config")
+    live = home / ".config/yazi/yazi.toml"
+    live.parent.mkdir(parents=True); live.write_text("old config")
+    calls = []
+
+    def runner(argv, **kwargs):
+        calls.append(list(map(str, argv)))
+        return subprocess.CompletedProcess(argv, 0, "" if "status" in argv else "c" * 40, "")
+
+    app = control.Control(repo, home, generation=generation, runner=runner)
+    with patch.object(control.shutil, "which", return_value=None):
+        report = app.plan("home", "committed-head")
+    assert "Restart Yazi" in report["after_apply"]
+    assert report["files"]["changed"] == 1 and report["files"]["new"] == 1
+    assert live.read_text() == "old config"
+    assert all(call[0] == "git" for call in calls), "planning must not build or activate"
+    assert report["apply_command"] == "task -g dotfiles:apply:home"
+print("plan describes built file changes and reloads without activating or changing live state")
+
+
+for options, message in (
+    (("--plan", "--apply"), "cannot be combined"),
+    (("--plan", "--install-nix"), "cannot install"),
+    (("--plan", "--skip-build"), "requires a built generation"),
+):
+    rejected = subprocess.run([str(root / "scripts/bootstrap-macos.sh"), *options], capture_output=True, text=True)
+    assert rejected.returncode != 0 and message in rejected.stderr
+print("standalone plan rejects activation, installation and incomplete-build flags")
+
+
+if len(sys.argv) > 1:
+    generation = Path(sys.argv[1])
+    text = (generation / "home-files/Taskfile.yml").read_text()
+    includes = [json.loads(line.split(":", 1)[1].strip()) for line in text.splitlines()
+                if line.strip().startswith("taskfile:")]
+    public_root = str(Path(includes[0]).parent.parent)
+    with tempfile.TemporaryDirectory(prefix="global-operator-shim-") as tmp:
+        # The standalone example targets an imaginary home; remap its declared
+        # repository for this invocation, without changing the generated file.
+        path = Path(tmp) / "Taskfile.yml"
+        path.write_text(text.replace(public_root, str(root)))
+        task = generation / "home-path/bin/task"
+        listed = subprocess.run([str(task), "--taskfile", str(path), "--list-all"],
+                                cwd=tmp, capture_output=True, text=True)
+        assert listed.returncode == 0, listed.stderr
+        assert "dotfiles:plan" in listed.stdout and "dotfiles:apply:home" in listed.stdout
+        assert "new-human-req-doc" in listed.stdout
+    print("generated global Task shim preserves common tasks and routes owning operations")

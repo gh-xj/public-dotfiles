@@ -4,6 +4,11 @@ let
   mutableTargets = lib.optionals cfg.agents.policy.enable [ ".codex/config.toml" ]
     ++ lib.optionals (cfg.agents.hooks.enable && cfg.agents.claudeSettings.seed.enable) [ ".claude/settings.json" ]
     ++ lib.optionals (cfg.agents.hooks.enable && cfg.agents.codexHooks.seed.enable) [ ".codex/hooks.json" ];
+  yaziPackage = lib.findFirst (package: lib.getName package == "yazi") null config.home.packages;
+  ownedPrograms = lib.optionalAttrs (yaziPackage != null) {
+    yazi = { owner = "nix"; version = yaziPackage.version; };
+    ya = { owner = "nix"; version = yaziPackage.version; };
+  };
   excludedTargets = builtins.filter (name: !(builtins.elem name mutableTargets))
     [ ".claude/settings.json" ".codex/config.toml" ".codex/hooks.json" ];
 in {
@@ -11,6 +16,7 @@ in {
     xdg.configFile."public-dotfiles/generation.json".text = builtins.toJSON {
       schema = 1;
       mutable_targets = mutableTargets;
+      owned_programs = ownedPrograms;
     };
     # Detach while the old managed links still exist, before cleanOldGen can
     # remove them. This preserves account/private hook bytes during migration.

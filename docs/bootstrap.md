@@ -93,7 +93,9 @@ task check
 
 For read-only source/generation/runtime diagnosis, run `task doctor`; add
 `-- --flake PATH#PROFILE` to compare generated output and `-- --live` for
-runtime checks. Apply changes only through `task apply`.
+runtime checks. Daily configured-owner commands are described in
+[Daily dotfiles operations](dotfiles-operations.md); `task apply` remains the
+system-scope alias for standalone bootstrap.
 
 ## Package Sets
 

@@ -18,6 +18,9 @@ homebrew_prefix=""
 macos_major=""
 backup_extension="public-dotfiles-backup-$(date +%Y%m%d%H%M%S)"
 skip_build=0
+show_plan=0
+plan_json=0
+activation_generation=""
 package_sets=("shell" "dev" "ops")
 
 usage() {
@@ -33,8 +36,11 @@ Use --darwin --apply for the sudo-backed nix-darwin system phase that manages
 the public Homebrew GUI/app ledger.
 
 Options:
+  --plan                       Build and summarize changes without activation
+  --json                       Machine-readable plan output (with --plan)
   --dry-run                    Preflight and build only when nix exists (default)
   --apply                      Run home-manager switch after preflight
+  --system                     Also build/apply the nix-darwin scope (--darwin is an alias)
   --darwin                     Also build/apply the generated nix-darwin system host
   --install-nix[=official]     Install upstream Nix with the official macOS daemon installer if nix is missing
   --install-nix=determinate    Install Determinate Nix with its CLI installer if nix is missing
@@ -228,13 +234,19 @@ nix_list_strings() {
 parse_args() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
+      --plan)
+        show_plan=1
+        ;;
+      --json)
+        plan_json=1
+        ;;
       --dry-run)
         mode="dry-run"
         ;;
       --apply)
         mode="apply"
         ;;
-      --darwin)
+      --darwin|--system)
         darwin_phase=1
         ;;
       --install-nix)
@@ -486,7 +498,7 @@ build_activation() {
   fi
 
   info "building Home Manager activation package"
-  nix_cmd build --no-link "$flake_dir#homeConfigurations.$profile_name.activationPackage"
+  activation_generation="$(nix_cmd build --no-link --print-out-paths "$flake_dir#homeConfigurations.$profile_name.activationPackage")"
 }
 
 build_darwin_system() {
@@ -640,17 +652,36 @@ main() {
   local flake_dir
 
   parse_args "$@"
+  if [ "$show_plan" -eq 1 ]; then
+    [ "$mode" != "apply" ] || die "--plan cannot be combined with --apply"
+    [ "$nix_install_mode" = "never" ] || die "--plan cannot install Nix"
+    [ "$skip_build" -eq 0 ] || die "--plan requires a built generation; omit --skip-build"
+  elif [ "$plan_json" -eq 1 ]; then
+    die "--json requires --plan"
+  fi
   guard_private_overlay_apply
   enable_nix_flake_features
   cd "$repo_root"
   preflight
-  zsh "$repo_root/scripts/migrate-ghostty-parent.zsh" --home "$target_home" --repo "$repo_root" --dry-run
+  if [ "$show_plan" -eq 0 ]; then
+    zsh "$repo_root/scripts/migrate-ghostty-parent.zsh" --home "$target_home" --repo "$repo_root" --dry-run
+  fi
   require_sudo_for_darwin_apply
   install_nix_if_requested
   prepare_nix_darwin_etc
   flake_dir="$(write_bootstrap_flake)"
   build_activation "$flake_dir"
   build_darwin_system "$flake_dir"
+  if [ "$show_plan" -eq 1 ]; then
+    [ -n "$activation_generation" ] || die "--plan needs an available Nix installation"
+    plan_args=(--generation "$activation_generation" --source-mode working-tree --scope home)
+    if [ "$darwin_phase" -eq 1 ]; then
+      plan_args=(--generation "$activation_generation" --source-mode working-tree --scope system)
+    fi
+    if [ "$plan_json" -eq 1 ]; then plan_args+=(--json); fi
+    python3 "$repo_root/scripts/public-control.py" --repo "$repo_root" --home "$target_home" plan "${plan_args[@]}"
+    return
+  fi
   ensure_homebrew_for_darwin
   apply_home_manager "$flake_dir"
   install_public_npm_globals

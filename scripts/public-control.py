@@ -55,6 +55,8 @@ def generation_label(path):
 
 
 def resolve(path):
+    if path is None:
+        return None
     try:
         return path.resolve(strict=True)
     except (OSError, RuntimeError):
@@ -325,10 +327,119 @@ class Control:
         report = self.generations()
         report["selection"] = "explicit" if self.flake or self.desired else "provide --flake or --generation to compare generated output"
         if live:
-            report.update(ghostty=self.ghostty(), tmux=self.tmux(), integrations=integration_plan(self.home, self.repo),
+            report.update(programs=self.programs(), ghostty=self.ghostty(), tmux=self.tmux(), integrations=integration_plan(self.home, self.repo),
                           generated_links=link_health(self.home, self.active), mutable_link_migrations=self.detached())
         return report
 
+
+
+    def programs(self):
+        """Compare the paired Yazi commands with the selected/active generation."""
+        generation = self.desired if self.desired and self.desired.exists() else self.active
+        declared = metadata(generation).get("owned_programs", {})
+        result = {}
+        for name in ("yazi", "ya"):
+            expected = generation / "home-path/bin" / name if generation else None
+            runtime = Path(shutil.which(name)) if shutil.which(name) else None
+            expected_path = resolve(expected) if expected else None
+            runtime_path = resolve(runtime) if runtime else None
+            specification = declared.get(name, {}) if isinstance(declared, dict) else {}
+            if not isinstance(specification, dict):
+                specification = {}
+            version = specification.get("version")
+            version = version if isinstance(version, str) and re.fullmatch(r"\d+\.\d+\.\d+", version) else None
+
+            def probe(binary):
+                if not binary:
+                    return None
+                output = self.run([binary, "--version"], timeout=5)
+                match = re.search(r"\b\d+\.\d+\.\d+\b", output.stdout) if output.returncode == 0 else None
+                return match.group(0) if match else None
+
+            owner = None
+            if runtime_path:
+                text = str(runtime_path)
+                owner = "nix" if text.startswith("/nix/store/") else "homebrew" if text.startswith(("/opt/homebrew/", "/usr/local/Cellar/")) else "other"
+            result[name] = {
+                "declared_owner": "nix" if specification.get("owner") == "nix" else None,
+                "declared_version": version,
+                "generation_version": probe(expected_path),
+                "runtime_version": probe(runtime_path),
+                "runtime_owner": owner,
+                "matches_generation": expected_path == runtime_path if expected_path and runtime_path else None,
+            }
+        versions = [item["runtime_version"] for item in result.values()]
+        return {"commands": result, "paired_runtime_versions_match": len(set(versions)) == 1 if all(versions) else None}
+
+    def plan(self, scope="home", source_mode="working-tree"):
+        if self.desired is None or not self.desired.exists():
+            raise SafeError("plan-requires-built-generation; build the owning profile first")
+        desired, truncated = leaves(self.desired / "home-files")
+        active, _ = leaves(self.active / "home-files") if self.active else ({}, False)
+        new = changed = same = repository = 0
+        reloads = set()
+        rules = {
+            ".config/yazi": "Restart Yazi",
+            ".config/nvim": "Restart Neovim",
+            ".config/ghostty": "Reload Ghostty; use a new surface for startup-only settings",
+            ".config/tmux": "Reload tmux config; check binary drift before restarting a server",
+            ".zsh": "Open a new shell",
+        }
+        for relative, path in desired.items():
+            target = resolve(path)
+            live = resolve(self.home / relative)
+            if target and not str(target).startswith("/nix/store/"):
+                repository += 1
+            differs = target != live
+            if target and live and target.is_file() and live.is_file():
+                differs = target.read_bytes() != live.read_bytes()
+            if live is None:
+                new += 1
+            elif differs:
+                changed += 1
+            else:
+                same += 1
+            if live is None or differs:
+                for prefix, message in rules.items():
+                    if relative.startswith(prefix):
+                        reloads.add(message)
+        removed = len(set(active) - set(desired))
+        programs = self.programs()
+        if any(state["matches_generation"] is False for state in programs["commands"].values()):
+            reloads.add("Open a new shell or rehash commands; restart Yazi after package changes")
+        return {
+            "scope": scope,
+            "source_mode": source_mode,
+            "source": self.source(),
+            "files": {"new": new, "changed": changed, "same": same, "removed_from_declaration": removed,
+                      "repo_links": repository, "truncated": truncated},
+            "programs": programs,
+            "activation_hooks": "Native activation hooks run only on apply; the file summary is not a simulation of their effects",
+            "runtime_seeds": "Existing app-owned settings are preserved; review doctor integration suggestions separately",
+            "repository_files": "Repo links can already reflect uncommitted edits; static snapshots use the selected source",
+            "after_apply": sorted(reloads),
+            "apply_command": "task -g dotfiles:apply:" + scope,
+            "generation_changed": resolve(self.active) != resolve(self.desired),
+        }
+
+
+def print_plan(report):
+    print("Scope: " + report["scope"] + (" (includes system settings; sudo is required for apply)" if report["scope"] == "system" else " (Home Manager; no sudo)"))
+    print("Source: " + report["source_mode"])
+    if report["source"]["dirty"]:
+        print("Checkout has pending edits: " + ("snapshots ignore them; commit before apply" if report["source_mode"] == "committed-head" else "this standalone preview includes them"))
+    files = report["files"]
+    print(f"Files: {files['new']} new, {files['changed']} changed, {files['same']} already match, {files['removed_from_declaration']} removed from declarations")
+    print(report["repository_files"])
+    print(report["runtime_seeds"])
+    print(report["activation_hooks"])
+    for name, state in report["programs"]["commands"].items():
+        print(f"{name}: declared {state['declared_version'] or 'unknown'}; runtime {state['runtime_version'] or 'unknown'} via {state['runtime_owner'] or 'unknown'}; matches generation={state['matches_generation']}")
+    if report["after_apply"]:
+        print("After apply: " + "; ".join(report["after_apply"]))
+    else:
+        print("After apply: config reload needs are app-specific; unchanged file bytes do not prove running apps reloaded")
+    print("Apply: " + report["apply_command"])
 
 def main():
     parser = PublicParser(description=__doc__)
@@ -339,6 +450,11 @@ def main():
     doctor.add_argument("--live", action="store_true")
     doctor.add_argument("--generation", type=Path, help="already built comparison generation (read-only)")
     doctor.add_argument("--flake", default=os.getenv("PUBLIC_DOTFILES_HOME_FLAKE"))
+    plan = sub.add_parser("plan", help="Preview a built native generation; never activate it")
+    plan.add_argument("--generation", type=Path, required=True)
+    plan.add_argument("--scope", choices=("home", "system"), default="home")
+    plan.add_argument("--source-mode", choices=("working-tree", "committed-head"), default="working-tree")
+    plan.add_argument("--json", action="store_true")
     detach = sub.add_parser("detach-agent-configs", help=argparse.SUPPRESS)
     detach_mode = detach.add_mutually_exclusive_group(required=True)
     detach_mode.add_argument("--dry-run", action="store_true")
@@ -349,10 +465,13 @@ def main():
         if args.command == "detach-agent-configs":
             report = detach_mutable(args.home, args.repo.resolve(), apply=args.apply, skip=args.skip)
         else:
-            control = Control(args.repo, args.home, args.flake, args.generation)
+            control = Control(args.repo, args.home, getattr(args, "flake", None), args.generation)
             control.select()
-            report = control.doctor(args.live)
-        print(json.dumps(report, indent=2, ensure_ascii=False))
+            report = control.plan(args.scope, args.source_mode) if args.command == "plan" else control.doctor(args.live)
+        if args.command == "plan" and not args.json:
+            print_plan(report)
+        else:
+            print(json.dumps(report, indent=2, ensure_ascii=False))
     except SafeError as error:
         parser.exit(1, str(error) + "\n")
     except (OSError, ValueError, TypeError, KeyError, RuntimeError):

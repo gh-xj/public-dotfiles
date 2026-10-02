@@ -59,6 +59,9 @@ script also prints the upstream install commands when Nix is missing.
 paths with a `public-dotfiles-backup-<timestamp>` extension before linking the
 public baseline.
 
+For daily plan, diagnosis, and scoped apply commands from any directory, see
+[Daily dotfiles operations](docs/dotfiles-operations.md).
+
 You can still build the host-native public Home Manager example without
 touching your home directory:
 

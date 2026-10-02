@@ -24,6 +24,11 @@ in
       default = "${config.home.homeDirectory}/public-dotfiles";
       description = "Absolute path to the checked-out public-dotfiles repository for direct live config symlinks.";
     };
+    operationsTaskfile = lib.mkOption {
+      type = lib.types.str;
+      default = "${cfg.repoRoot}/Taskfile.yml";
+      description = "Absolute Taskfile path for the host's dotfiles owner, exposed by task -g dotfiles:COMMAND.";
+    };
     zshEnvExtra = lib.mkOption {
       type = lib.types.lines;
       default = "";
