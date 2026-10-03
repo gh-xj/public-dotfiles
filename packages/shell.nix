@@ -1,5 +1,4 @@
 pkgs: [
-  pkgs.atuin
   pkgs.bat
   pkgs.btop
   pkgs.coreutils

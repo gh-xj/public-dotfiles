@@ -15,6 +15,9 @@ in
       ];
 
       brews = [
+        # Homebrew, not nixpkgs: the history DB is already migrated by atuin
+        # 18.23, newer than nixpkgs-unstable ships, and older binaries refuse it.
+        "atuin"
         "displayplacer"
         "mole"
         "pngpaste"
