@@ -5,25 +5,23 @@ Use one configured owner from any working directory:
 ```sh
 task -g dotfiles:doctor
 task -g dotfiles:plan
-task -g dotfiles:apply:home
-task -g dotfiles:plan -- --system
-task -g dotfiles:apply:system
+task -g dotfiles:apply
+task -g dotfiles:apps
 ```
 
 The generated home Taskfile includes common tasks plus the owner's Taskfile.
 A standalone public profile owns itself by default. A downstream profile sets
 `xj.publicDotfiles.operationsTaskfile` once to its native Taskfile. The Task
 include supplies the owning directory; it does not infer a private profile or
-execute a second activation framework. Existing `task apply` remains an alias
-for system scope because bootstrap and other callers still use it.
+execute a second activation framework. `task apply` runs the standalone Home
+Manager switch.
 
 ## Read the plan before applying
 
 `plan` builds without activation or sudo. It summarizes managed home entries,
-package source/version drift, and app reloads. `--system` additionally builds
-the native system closure; the file/package summary still describes Home
-Manager. It does not simulate arbitrary activation hooks or promise that GUI
-caches have reloaded. `--json` emits one machine-readable report.
+package source/version drift, and app reloads. It does not simulate arbitrary
+activation hooks or promise that GUI caches have reloaded. `--json` emits one
+machine-readable report.
 
 The standalone bootstrap plans its working tree. Composed owners can choose a
 stricter source policy; the private owner uses committed public/private HEADs.
@@ -31,11 +29,10 @@ The plan prints that policy and warns about pending edits. Repository-backed
 links may already reflect edits even when immutable snapshots use committed
 sources. Keep those two effects distinct.
 
-`apply:home` activates the owning Home Manager generation without sudo.
-`apply:system` runs the native nix-darwin switch with sudo and includes its
-Home Manager phase. Rebuilds do not update lock files; dependency updates are a
-separate reviewed change. The configured owner retains responsibility for its
-host selection and private data.
+`apply` activates the owning Home Manager generation without sudo. `apps`
+applies the Brewfile without cleanup. Rebuilds do not update lock files;
+dependency updates are a separate reviewed change. The configured owner retains
+responsibility for its host selection and private data.
 
 ## Check what actually runs
 

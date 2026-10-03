@@ -4,18 +4,12 @@ env:
   NIX_CONFIG: experimental-features = nix-command flakes
 
 tasks:
-  apply:system:
-    aliases: [apply]
-    desc: Apply the standalone public macOS baseline
-    cmds:
-      - ./scripts/bootstrap-macos.sh --darwin --apply {{.CLI_ARGS}}
-
   plan:
-    desc: Build and preview home changes (-- --darwin also previews system scope)
+    desc: Build and preview standalone Home Manager changes
     cmds:
       - ./scripts/bootstrap-macos.sh --plan {{.CLI_ARGS}}
 
-  apply:home:
+  apply:
     desc: Apply the standalone public Home Manager profile
     cmds:
       - ./scripts/bootstrap-macos.sh --apply {{.CLI_ARGS}}

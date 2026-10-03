@@ -2,6 +2,8 @@
 
 A separate flake imports `public.homeModules.default` and supplies local data.
 Start from `examples/downstream/flake.nix` and `host.nix` in your private owner.
+Existing nix-darwin consumers should follow
+[the standalone migration](migrate-work-mac.md).
 The fixture deliberately uses only synthetic identities and hardware data; do
 not put a real host, provider command or hardware serial back into this repo.
 Pin public in the downstream lock, then update that pin explicitly after rebase.

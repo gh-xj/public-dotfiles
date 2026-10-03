@@ -9,55 +9,28 @@ and machine-local runtime state stay out of this repo.
 
 ## Quick Start
 
-From a fresh macOS clone, run the stock bootstrap entrypoint first:
+Install Determinate Nix and Homebrew, then clone this repo. From the clone:
 
 ```bash
-./scripts/bootstrap-macos.sh
+task apply
+task apps
+mise install --locked
 ```
 
-The default mode is a non-mutating preflight. It checks the machine, generates a
-local Home Manager host under `~/.local/state/public-dotfiles/bootstrap/`, and
-builds the activation package if Nix is already installed. To apply the public
-baseline:
+`task apply` creates a machine-local standalone Home Manager host under
+`~/.local/state/public-dotfiles/bootstrap/`. It installs Determinate Nix and
+Homebrew when missing, then switches only the user profile. `task apps` applies
+the Brewfile without cleanup. Neither command manages macOS system settings.
+
+Preview the Home Manager generation without activating it:
 
 ```bash
-./scripts/bootstrap-macos.sh --apply
+task plan
 ```
 
-To include the macOS system phase that applies the public nix-darwin/Homebrew
-app ledger, opt in explicitly:
-
-```bash
-./scripts/bootstrap-macos.sh --darwin --apply
-```
-
-After the user-level apply, run `task check`. After the Darwin
-phase has installed the public GUI/app ledger, run `task check`.
-Use `task check:deep` for slow cross-profile, Yazi PTY/plugin and Codex runtime probes.
-
-The bootstrap supports both Apple Silicon and Intel Macs. `--darwin --apply`
-uses `sudo` for `darwin-rebuild switch`. If Homebrew is missing from the
-platform default prefix (`/opt/homebrew` on Apple Silicon, `/usr/local` on
-Intel), it runs the official Homebrew installer first because nix-darwin's
-Homebrew module manages Homebrew packages but does not install Homebrew itself.
-The generated bootstrap host passes the detected macOS major version into the
-Homebrew ledger so casks that require newer macOS releases are skipped on older
-targets.
-When running over SSH, use an interactive session or pre-authorize sudo on the
-target machine before invoking the command.
-On first nix-darwin activation, the script backs up existing `/etc/bashrc` and
-`/etc/zshrc` to `.before-nix-darwin` so nix-darwin can own those generated
-system shell files.
-
-On a stock Mac without Nix, use `--install-nix --apply` if you want the script
-to run the official macOS daemon installer before Home Manager. On Intel Macs
-running macOS older than 14, the bootstrap pins the official installer to Nix
-`2.29.4` because newer x86_64-darwin binaries can require macOS 14 symbols. The
-script also prints the upstream install commands when Nix is missing.
-
-`--apply` backs up unmanaged files that already exist at Home Manager-owned
-paths with a `public-dotfiles-backup-<timestamp>` extension before linking the
-public baseline.
+After apply, run `task check`. The bootstrap supports Apple Silicon and Intel;
+the Brewfile retains its macOS-version gates for newer casks. Existing unmanaged
+Home Manager targets receive a timestamped backup extension.
 
 For daily plan, diagnosis, and scoped apply commands from any directory, see
 [Daily dotfiles operations](docs/dotfiles-operations.md).
@@ -126,18 +99,13 @@ runtime-owned local state, not here.
 Canonical local Home Manager entrypoint for a real macOS user:
 
 ```bash
-./scripts/bootstrap-macos.sh --apply
+task apply
 ```
 
 This backs up pre-existing unmanaged Home Manager link targets by default.
 
-For the GUI app/Homebrew ledger as well:
-
-```bash
-./scripts/bootstrap-macos.sh --darwin --apply
-```
-
-`task apply` is the canonical standalone shortcut for both phases. It refuses
+Apply the GUI app/Homebrew ledger separately with `task apps`. `task apply`
+refuses
 to apply over the current user when an adjacent `private-config` composes that
 profile. A private host may import this repo, but that private overlay should
 only add sensitive, account-bound, or runtime-adjacent state.
@@ -209,12 +177,10 @@ The public repo should be enough to restore the public-safe parts of xj's
 operating environment on a clean machine.
 
 - build the host-native example with `NIX_CONFIG='experimental-features = nix-command flakes' nix build .#`
-- run `./scripts/bootstrap-macos.sh` first on a new macOS machine
-- use `./scripts/bootstrap-macos.sh --apply` for a real target user
-- use `./scripts/bootstrap-macos.sh --darwin --apply` when the public
-  nix-darwin/Homebrew app ledger should be applied too
+- install Determinate Nix and Homebrew, clone the repo, then run `task apply`
+- run `task apps` for the Brewfile and `mise install --locked` for runtimes
 - edit `hosts/example.nix` only when intentionally testing the checked-in example host
-- use `task apply` as the standalone Home Manager plus nix-darwin path
+- use `task apply` as the standalone Home Manager path
 - use `private-config` only when the machine needs sensitive, account-bound,
   company/private, secret-adjacent, or runtime-adjacent overlays
 - the public repo owns reusable public-safe comfort config; the private repo is

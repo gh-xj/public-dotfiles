@@ -2,57 +2,28 @@
 set -euo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-initial_user="${USER:-$(id -un)}"
-initial_home="${HOME:-/Users/$initial_user}"
-bootstrap_root="${XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR:-${XDG_STATE_HOME:-$initial_home/.local/state}/public-dotfiles/bootstrap}"
+target_user="${USER:-$(id -un)}"
+target_home="${HOME:-/Users/$target_user}"
+bootstrap_root="${XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR:-${XDG_STATE_HOME:-$target_home/.local/state}/public-dotfiles/bootstrap}"
 profile_name="bootstrap"
-target_user="$initial_user"
-target_home="$initial_home"
 home_state_version="25.11"
 mode="dry-run"
-darwin_phase=0
-nix_install_mode="never"
-nix_install_version="auto"
-host_platform=""
-homebrew_prefix=""
-macos_major=""
-backup_extension="public-dotfiles-backup-$(date +%Y%m%d%H%M%S)"
-skip_build=0
 show_plan=0
 plan_json=0
+skip_build=0
+host_platform=""
+homebrew_prefix=""
 activation_generation=""
+backup_extension="public-dotfiles-backup-$(date +%Y%m%d%H%M%S)"
 package_sets=("shell" "dev" "ops")
 
 usage() {
   cat <<'EOF'
-Usage: scripts/bootstrap-macos.sh [options]
+Usage: scripts/bootstrap-macos.sh [--dry-run|--plan [--json]|--apply] [--skip-build]
 
-Stock-macOS entrypoint for the public dotfiles baseline.
-
-Default behavior is a non-mutating preflight. It generates a machine-local
-flake under the user state directory and builds the Home Manager activation
-package when nix is already available. Use --apply to run home-manager switch.
-Use --darwin --apply for the sudo-backed nix-darwin system phase that manages
-the public Homebrew GUI/app ledger.
-
-Options:
-  --plan                       Build and summarize changes without activation
-  --json                       Machine-readable plan output (with --plan)
-  --dry-run                    Preflight and build only when nix exists (default)
-  --apply                      Run home-manager switch after preflight
-  --system                     Also build/apply the nix-darwin scope (--darwin is an alias)
-  --darwin                     Also build/apply the generated nix-darwin system host
-  --install-nix[=official]     Install upstream Nix with the official macOS daemon installer if nix is missing
-  --install-nix=determinate    Install Determinate Nix with its CLI installer if nix is missing
-  --skip-build                 Generate and inspect bootstrap config without Nix builds
-  -h, --help                   Show this help
-
-Examples:
-  scripts/bootstrap-macos.sh
-  scripts/bootstrap-macos.sh --apply
-  scripts/bootstrap-macos.sh --darwin
-  scripts/bootstrap-macos.sh --darwin --apply
-  scripts/bootstrap-macos.sh --install-nix --apply
+Build or apply the standalone Home Manager profile. Apply mode installs
+Determinate Nix and Homebrew when missing; it never manages system settings.
+After apply, run `task apps` and `mise install --locked`.
 EOF
 }
 
@@ -73,150 +44,6 @@ nix_cmd() {
   nix --extra-experimental-features "nix-command flakes" "$@"
 }
 
-public_nixpkgs_release() {
-  local release_expr
-
-  have_cmd nix || return 1
-
-  release_expr=$(cat <<EOF
-(let
-  flake = builtins.getFlake $(nix_string "path:$repo_root");
-  pkgs = import flake.inputs.nixpkgs { system = $(nix_string "$host_platform"); };
-in pkgs.lib.trivial.release)
-EOF
-)
-
-  nix_cmd eval --impure --raw --expr "$release_expr"
-}
-
-bootstrap_nix_darwin_ref() {
-  local release=""
-  local major_minor=""
-
-  release="$(public_nixpkgs_release 2>/dev/null || true)"
-  major_minor="$(printf '%s\n' "$release" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')"
-
-  case "$major_minor" in
-    [0-9][0-9].[0-9][0-9])
-      printf 'nix-darwin-%s\n' "$major_minor"
-      ;;
-    *)
-      printf '%s\n' "master"
-      ;;
-  esac
-}
-
-enable_nix_flake_features() {
-  local features_config="experimental-features = nix-command flakes"
-
-  case "${NIX_CONFIG:-}" in
-    *nix-command*flakes*|*flakes*nix-command*)
-      return
-      ;;
-    "")
-      export NIX_CONFIG="$features_config"
-      ;;
-    *)
-      export NIX_CONFIG="${NIX_CONFIG}"$'\n'"$features_config"
-      ;;
-  esac
-}
-
-require_cmd() {
-  have_cmd "$1" || die "missing required command: $1"
-}
-
-darwin_system_from_uname() {
-  case "$1" in
-    arm64)
-      printf '%s\n' "aarch64-darwin"
-      ;;
-    x86_64)
-      printf '%s\n' "x86_64-darwin"
-      ;;
-    *)
-      die "this bootstrap supports arm64 and x86_64 macOS only; found $1"
-      ;;
-  esac
-}
-
-default_homebrew_prefix_for_system() {
-  case "$1" in
-    aarch64-darwin)
-      printf '%s\n' "/opt/homebrew"
-      ;;
-    x86_64-darwin)
-      printf '%s\n' "/usr/local"
-      ;;
-    *)
-      die "unsupported Darwin host platform: $1"
-      ;;
-  esac
-}
-
-macos_major_version() {
-  sw_vers -productVersion | awk -F. '{ print $1 }'
-}
-
-resolve_nix_install_version() {
-  local major
-
-  [ "$nix_install_version" = "auto" ] || return 0
-
-  major="${macos_major:-$(macos_major_version)}"
-  if [ "$host_platform" = "x86_64-darwin" ] && [ "$major" -lt 14 ]; then
-    # Current upstream x86_64-darwin Nix binaries require macOS 14+.
-    nix_install_version="2.29.4"
-  else
-    nix_install_version="latest"
-  fi
-}
-
-official_nix_install_url() {
-  if [ "$nix_install_version" = "latest" ]; then
-    printf '%s\n' "https://nixos.org/nix/install"
-  else
-    printf 'https://releases.nixos.org/nix/nix-%s/install\n' "$nix_install_version"
-  fi
-}
-
-guard_partial_nix_install() {
-  [ "$nix_install_mode" != "never" ] || return 0
-  [ -d /nix/store ] || return 0
-  [ ! -r /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ] || return 0
-
-  cat >&2 <<'EOF'
-bootstrap: detected a partial Nix install at /nix/store, but no usable Nix profile.
-bootstrap: clean the failed macOS Nix volume/launchd/fstab/synthetic.conf state before retrying.
-bootstrap: see docs/bootstrap.md "Recover A Failed macOS Nix Install".
-EOF
-  exit 1
-}
-
-require_sudo_for_darwin_apply() {
-  [ "$darwin_phase" -eq 1 ] || return 0
-  [ "$mode" = "apply" ] || return 0
-
-  if sudo -n true >/dev/null 2>&1; then
-    return 0
-  fi
-
-  if [ -t 0 ]; then
-    info "requesting sudo credentials for nix-darwin apply"
-    sudo -v || die "--darwin --apply requires sudo"
-    return 0
-  fi
-
-  die "--darwin --apply requires sudo credentials; rerun from an interactive terminal/SSH session or pre-authorize sudo on the target machine"
-}
-
-guard_private_overlay_apply() {
-  [ "$mode" = "apply" ] || return 0
-  [ -f "$repo_root/../private-config/flake.nix" ] || return 0
-
-  die "an adjacent private-config composes this user's Home Manager profile; apply from that repo instead"
-}
-
 nix_string() {
   local value="$1"
   value="${value//\\/\\\\}"
@@ -234,86 +61,50 @@ nix_list_strings() {
 parse_args() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
-      --plan)
-        show_plan=1
-        ;;
-      --json)
-        plan_json=1
-        ;;
-      --dry-run)
-        mode="dry-run"
-        ;;
-      --apply)
-        mode="apply"
-        ;;
-      --darwin|--system)
-        darwin_phase=1
-        ;;
-      --install-nix)
-        nix_install_mode="official"
-        ;;
-      --install-nix=official)
-        nix_install_mode="official"
-        ;;
-      --install-nix=determinate)
-        nix_install_mode="determinate"
-        ;;
-      --skip-build)
-        skip_build=1
-        ;;
-      -h|--help)
-        usage
-        exit 0
-        ;;
-      *)
-        die "unknown option: $1"
-        ;;
+      --plan) show_plan=1 ;;
+      --json) plan_json=1 ;;
+      --dry-run) mode="dry-run" ;;
+      --apply) mode="apply" ;;
+      --skip-build) skip_build=1 ;;
+      -h|--help) usage; exit 0 ;;
+      *) die "unknown option: $1" ;;
     esac
     shift
   done
+
+  if [ "$show_plan" -eq 1 ]; then
+    [ "$mode" != "apply" ] || die "--plan cannot be combined with --apply"
+    [ "$skip_build" -eq 0 ] || die "--plan requires a built generation"
+  elif [ "$plan_json" -eq 1 ]; then
+    die "--json requires --plan"
+  fi
+}
+
+host_system() {
+  case "$(uname -m)" in
+    arm64) printf '%s\n' aarch64-darwin ;;
+    x86_64) printf '%s\n' x86_64-darwin ;;
+    *) die "unsupported macOS architecture: $(uname -m)" ;;
+  esac
 }
 
 preflight() {
-  local uname_s uname_m
-  uname_s="$(uname -s)"
-  uname_m="$(uname -m)"
-
-  [ "$uname_s" = "Darwin" ] || die "this bootstrap currently supports macOS only; found $uname_s"
-  host_platform="$(darwin_system_from_uname "$uname_m")"
-  homebrew_prefix="$(default_homebrew_prefix_for_system "$host_platform")"
-  macos_major="$(macos_major_version)"
-  case "$macos_major" in
-    ""|*[!0-9]*)
-      die "invalid macOS major version: $macos_major"
-      ;;
+  [ "$(uname -s)" = Darwin ] || die "this bootstrap supports macOS only"
+  host_platform="$(host_system)"
+  case "$host_platform" in
+    aarch64-darwin) homebrew_prefix=/opt/homebrew ;;
+    x86_64-darwin) homebrew_prefix=/usr/local ;;
   esac
-  resolve_nix_install_version
+  have_cmd git || die "missing required command: git"
+  have_cmd curl || die "missing required command: curl"
+  have_cmd zsh || die "missing required command: zsh"
+  info "Home Manager target: $target_user at $target_home ($host_platform)"
+}
 
-  require_cmd git
-  require_cmd curl
-  require_cmd zsh
-
-  [ -n "$target_user" ] || die "target user is empty"
-  [ -n "$target_home" ] || die "target home is empty"
-  [ -n "$homebrew_prefix" ] || die "homebrew prefix is empty"
-  [ "${#package_sets[@]}" -gt 0 ] || die "at least one package set is required"
-
-  info "macOS: $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
-  info "detected arch: $uname_m"
-  info "Nix host platform: $host_platform"
-  info "Nix installer version: $nix_install_version"
-  info "repo: $repo_root"
-  info "target Home Manager user: $target_user"
-  info "target home: $target_home"
-  info "package sets: ${package_sets[*]}"
-  if [ "$mode" = "apply" ]; then
-    info "Home Manager conflict backups: *.$backup_extension"
-  fi
-  if [ "$darwin_phase" -eq 1 ]; then
-    info "Darwin system phase: enabled"
-    info "Darwin Homebrew macOS major: $macos_major"
-    info "Homebrew prefix: $homebrew_prefix"
-  fi
+guard_private_overlay_apply() {
+  [ "$mode" = apply ] || return 0
+  [ -f "$repo_root/../private-config/flake.nix" ] || return 0
+  die "an adjacent private-config composes this user; apply from that repo instead"
 }
 
 load_nix_profile() {
@@ -329,131 +120,53 @@ load_nix_profile() {
   done
 }
 
-install_nix_if_requested() {
+ensure_nix() {
   load_nix_profile
-
   if have_cmd nix; then
     info "nix: $(nix --version)"
-    return
+    return 0
   fi
-
-  if [ "$nix_install_mode" = "never" ]; then
-    info "nix is missing; skipping install in dry preflight"
-    cat <<EOF
-
-Install options:
-  official macOS daemon installer:
-    bash <(curl -L $(official_nix_install_url)) --daemon
-
-  Determinate CLI installer:
-    curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-
-Then open a new shell or rerun this script with --install-nix.
-EOF
-    return
+  if [ "$mode" != apply ]; then
+    info "Nix is missing; apply mode would install Determinate Nix"
+    return 0
   fi
-
-  guard_partial_nix_install
-
-  case "$nix_install_mode" in
-    official)
-      info "installing Nix with the official macOS daemon installer from $(official_nix_install_url)"
-      bash <(curl -L "$(official_nix_install_url)") --daemon
-      ;;
-    determinate)
-      info "installing Determinate Nix with its CLI installer"
-      curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-      ;;
-    *)
-      die "unsupported nix install mode: $nix_install_mode"
-      ;;
-  esac
-
+  info "installing Determinate Nix"
+  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
+    | sh -s -- install
   load_nix_profile
-  have_cmd nix || die "nix was installed, but this shell cannot find it yet; open a new shell and rerun"
-  info "nix: $(nix --version)"
+  have_cmd nix || die "Nix installed but is not available; open a new shell and retry"
+}
+
+ensure_homebrew() {
+  if [ -x "$homebrew_prefix/bin/brew" ]; then
+    info "homebrew: $("$homebrew_prefix/bin/brew" --version | sed -n '1p')"
+    return 0
+  fi
+  if [ "$mode" != apply ]; then
+    info "Homebrew is missing; apply mode would install it"
+    return 0
+  fi
+  info "installing Homebrew"
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  [ -x "$homebrew_prefix/bin/brew" ] || die "Homebrew installer did not create $homebrew_prefix/bin/brew"
 }
 
 write_bootstrap_flake() {
   local flake_dir="$bootstrap_root/$target_user"
-  local flake_file="$flake_dir/flake.nix"
-  local darwin_inputs=""
-  local darwin_package=""
-  local darwin_configuration=""
-  local nix_darwin_ref="master"
-  local outputs_args="inputs@{ public, nixpkgs, home-manager, ... }"
-
   mkdir -p "$flake_dir"
-
-  if [ "$darwin_phase" -eq 1 ]; then
-    nix_darwin_ref="$(bootstrap_nix_darwin_ref)"
-    outputs_args="inputs@{ public, nixpkgs, home-manager, nix-darwin, ... }"
-    darwin_inputs="    nix-darwin.url = \"github:nix-darwin/nix-darwin/$nix_darwin_ref\";
-    nix-darwin.inputs.nixpkgs.follows = \"nixpkgs\";"
-    darwin_package="    packages.$host_platform.darwin-rebuild = nix-darwin.packages.$host_platform.darwin-rebuild;"
-    darwin_configuration=$(cat <<EOF
-    darwinConfigurations.$profile_name = nix-darwin.lib.darwinSystem {
-      specialArgs = {
-        inherit inputs;
-        self = public;
-      };
-      modules = [
-        public.darwinModules.default
-        ({ lib, ... }: {
-          xj.publicDotfiles.darwin = {
-            enable = true;
-            macosMajor = $macos_major;
-          };
-
-          system = {
-            primaryUser = $(nix_string "$target_user");
-            stateVersion = 6;
-          };
-
-          users.users.$(nix_string "$target_user").home = $(nix_string "$target_home");
-          nixpkgs.hostPlatform = $(nix_string "$host_platform");
-
-          # Bootstrap owns app/system convergence, not the Nix daemon itself.
-          nix.enable = false;
-
-          # Newer macOS releases already ship sudo_local.
-          environment.etc."pam.d/sudo_local".enable = lib.mkForce false;
-
-          homebrew.prefix = lib.mkDefault $(nix_string "$homebrew_prefix");
-        })
-      ];
-    };
-EOF
-)
-  fi
-
-  cat > "$flake_file" <<EOF
+  cat >"$flake_dir/flake.nix" <<EOF
 {
-  description = "Machine-local public-dotfiles bootstrap host";
-
+  description = "Machine-local public-dotfiles Home Manager host";
   inputs = {
     public.url = $(nix_string "path:$repo_root");
     nixpkgs.follows = "public/nixpkgs";
     home-manager.follows = "public/home-manager";
-$darwin_inputs
   };
-
-  outputs = $outputs_args:
-  let
-    pkgs = import nixpkgs {
-      system = $(nix_string "$host_platform");
-    };
-  in
-  {
+  outputs = inputs@{ public, nixpkgs, home-manager, ... }: {
     packages.$host_platform.home-manager = home-manager.packages.$host_platform.home-manager;
-$darwin_package
-
     homeConfigurations.$profile_name = home-manager.lib.homeManagerConfiguration {
-      inherit pkgs;
-      extraSpecialArgs = {
-        inherit inputs;
-        self = public;
-      };
+      pkgs = import nixpkgs { system = $(nix_string "$host_platform"); };
+      extraSpecialArgs = { inherit inputs; self = public; };
       modules = [
         public.homeModules.default
         ({ ... }: {
@@ -462,222 +175,68 @@ $darwin_package
             repoRoot = $(nix_string "$repo_root");
             packageSets = [ $(nix_list_strings "${package_sets[@]}")];
           };
-
           home = {
             username = $(nix_string "$target_user");
             homeDirectory = $(nix_string "$target_home");
             stateVersion = $(nix_string "$home_state_version");
           };
-
           programs.home-manager.enable = true;
         })
       ];
     };
-
-$darwin_configuration
   };
 }
 EOF
-
-  rm -f "$flake_dir/flake.lock"
-
-  info "generated local bootstrap flake: $flake_file"
+  info "generated local Home Manager flake: $flake_dir/flake.nix"
   printf '%s\n' "$flake_dir"
 }
 
 build_activation() {
   local flake_dir="$1"
-
   if ! have_cmd nix; then
-    info "skipping Home Manager build because nix is not installed"
-    return
+    info "skipping build because Nix is not installed"
+    return 0
   fi
-  if [ "$skip_build" -eq 1 ]; then
-    info "skipping Home Manager build because --skip-build was requested"
-    return
-  fi
-
-  info "building Home Manager activation package"
-  activation_generation="$(nix_cmd build --no-link --print-out-paths "$flake_dir#homeConfigurations.$profile_name.activationPackage")"
-}
-
-build_darwin_system() {
-  local flake_dir="$1"
-
-  [ "$darwin_phase" -eq 1 ] || return 0
-
-  if ! have_cmd nix; then
-    info "skipping nix-darwin build because nix is not installed"
-    return
-  fi
-  if [ "$skip_build" -eq 1 ]; then
-    info "skipping nix-darwin build because --skip-build was requested"
-    return
-  fi
-
-  info "building nix-darwin system"
-  nix_cmd build --no-link "$flake_dir#darwinConfigurations.$profile_name.system"
-}
-
-homebrew_command() {
-  cat <<'EOF'
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-EOF
-}
-
-install_homebrew() {
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-}
-
-homebrew_version() {
-  local version
-  version="$("$homebrew_prefix/bin/brew" --version)"
-  printf '%s\n' "${version%%$'\n'*}"
-}
-
-ensure_homebrew_for_darwin() {
-  [ "$darwin_phase" -eq 1 ] || return 0
-
-  if [ -x "$homebrew_prefix/bin/brew" ]; then
-    info "homebrew: $(homebrew_version)"
-    return
-  fi
-
-  if [ "$mode" != "apply" ]; then
-    info "Homebrew is missing at $homebrew_prefix/bin/brew"
-    printf '\nInstall command used by --darwin --apply when Homebrew is missing:\n  %s\n\n' "$(homebrew_command)"
-    return
-  fi
-
-  info "installing Homebrew with the official installer"
-  install_homebrew
-
-  [ -x "$homebrew_prefix/bin/brew" ] || die "Homebrew installer completed, but $homebrew_prefix/bin/brew is still missing"
-  info "homebrew: $(homebrew_version)"
-}
-
-prepare_nix_darwin_etc() {
-  local file backup target
-
-  [ "$darwin_phase" -eq 1 ] || return 0
-  [ "$mode" = "apply" ] || return 0
-
-  for file in /etc/bashrc /etc/zshrc; do
-    [ -e "$file" ] || [ -L "$file" ] || continue
-
-    target="$(readlink "$file" 2>/dev/null || true)"
-    case "$target" in
-      /etc/static/*)
-        continue
-        ;;
-    esac
-
-    backup="$file.before-nix-darwin"
-    if [ -e "$backup" ] || [ -L "$backup" ]; then
-      die "$file blocks nix-darwin activation, but $backup already exists; inspect those files and move one manually"
-    fi
-
-    info "backing up $file to $backup for nix-darwin ownership"
-    sudo mv "$file" "$backup"
-  done
+  [ "$skip_build" -eq 0 ] || { info "skipping build as requested"; return 0; }
+  activation_generation="$(nix_cmd build --no-link --print-out-paths \
+    "$flake_dir#homeConfigurations.$profile_name.activationPackage")"
 }
 
 apply_home_manager() {
   local flake_dir="$1"
-  local switch_args
-
-  [ "$mode" = "apply" ] || {
-    return 0
-  }
-
-  have_cmd nix || die "--apply requires nix; rerun with --install-nix --apply or install nix first"
-
-  switch_args=(switch --flake "$flake_dir#$profile_name" -b "$backup_extension")
-
-  zsh "$repo_root/scripts/migrate-ghostty-parent.zsh" --home "$target_home" --repo "$repo_root" --apply
-  info "running Home Manager switch"
-  nix_cmd run "$flake_dir#home-manager" -- "${switch_args[@]}"
-}
-
-apply_darwin_system() {
-  local flake_dir="$1"
-  local darwin_rebuild
-
-  [ "$darwin_phase" -eq 1 ] || return 0
-  [ "$mode" = "apply" ] || return 0
-
-  have_cmd nix || die "--darwin --apply requires nix; rerun with --install-nix --darwin --apply or install nix first"
-
-  darwin_rebuild="$(nix_cmd build --no-link --print-out-paths "$flake_dir#darwin-rebuild")/bin/darwin-rebuild"
-  info "running nix-darwin switch with sudo"
-  sudo "$darwin_rebuild" switch --flake "$flake_dir#$profile_name"
-}
-
-apply_display_layout() {
-  [ "$darwin_phase" -eq 1 ] || return 0
-  [ "$mode" = "apply" ] || return 0
-
-  info "applying display layout policy"
-  "$repo_root/scripts/apply-display-layout.sh" --apply
-}
-
-finish_message() {
-  if [ "$mode" = "dry-run" ]; then
-    if [ "$darwin_phase" -eq 1 ]; then
-      info "dry run complete; rerun with --darwin --apply for Home Manager plus nix-darwin/Homebrew"
-    else
-      info "dry run complete; rerun with --apply to switch this user"
-    fi
-    return 0
-  fi
-
-  if [ "$darwin_phase" -eq 1 ]; then
-    info "apply complete; run: task check"
-  else
-    info "Home Manager apply complete; run: task check"
-    info "rerun with --darwin --apply for the Homebrew GUI/app ledger and full verification"
-  fi
+  [ "$mode" = apply ] || return 0
+  zsh "$repo_root/scripts/migrate-ghostty-parent.zsh" \
+    --home "$target_home" --repo "$repo_root" --apply
+  info "running standalone Home Manager switch"
+  nix_cmd run "$flake_dir#home-manager" -- switch \
+    --flake "$flake_dir#$profile_name" -b "$backup_extension"
 }
 
 main() {
   local flake_dir
-
   parse_args "$@"
-  if [ "$show_plan" -eq 1 ]; then
-    [ "$mode" != "apply" ] || die "--plan cannot be combined with --apply"
-    [ "$nix_install_mode" = "never" ] || die "--plan cannot install Nix"
-    [ "$skip_build" -eq 0 ] || die "--plan requires a built generation; omit --skip-build"
-  elif [ "$plan_json" -eq 1 ]; then
-    die "--json requires --plan"
-  fi
   guard_private_overlay_apply
-  enable_nix_flake_features
-  cd "$repo_root"
   preflight
-  if [ "$show_plan" -eq 0 ]; then
-    zsh "$repo_root/scripts/migrate-ghostty-parent.zsh" --home "$target_home" --repo "$repo_root" --dry-run
-  fi
-  require_sudo_for_darwin_apply
-  install_nix_if_requested
-  prepare_nix_darwin_etc
+  ensure_nix
+  ensure_homebrew
   flake_dir="$(write_bootstrap_flake)"
   build_activation "$flake_dir"
-  build_darwin_system "$flake_dir"
+
   if [ "$show_plan" -eq 1 ]; then
-    [ -n "$activation_generation" ] || die "--plan needs an available Nix installation"
+    [ -n "$activation_generation" ] || die "--plan requires Nix"
     plan_args=(--generation "$activation_generation" --source-mode working-tree --scope home)
-    if [ "$darwin_phase" -eq 1 ]; then
-      plan_args=(--generation "$activation_generation" --source-mode working-tree --scope system)
-    fi
-    if [ "$plan_json" -eq 1 ]; then plan_args+=(--json); fi
-    python3 "$repo_root/scripts/public-control.py" --repo "$repo_root" --home "$target_home" plan "${plan_args[@]}"
-    return
+    [ "$plan_json" -eq 0 ] || plan_args+=(--json)
+    python3 "$repo_root/scripts/public-control.py" --repo "$repo_root" \
+      --home "$target_home" plan "${plan_args[@]}"
+    return 0
   fi
-  ensure_homebrew_for_darwin
-  apply_home_manager "$flake_dir"
-  apply_darwin_system "$flake_dir"
-  apply_display_layout
-  finish_message
+
+  if [ "$mode" = apply ]; then
+    apply_home_manager "$flake_dir"
+    info "Home Manager apply complete; next run: task apps && mise install --locked"
+  else
+    info "dry run complete; use task apply to activate"
+  fi
 }
 
 main "$@"

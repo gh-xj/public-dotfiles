@@ -161,13 +161,12 @@ with tempfile.TemporaryDirectory(prefix="native-plan-") as tmp:
     assert report["files"]["changed"] == 1 and report["files"]["new"] == 1
     assert live.read_text() == "old config"
     assert all(call[0] == "git" for call in calls), "planning must not build or activate"
-    assert report["apply_command"] == "task -g dotfiles:apply:home"
+    assert report["apply_command"] == "task -g dotfiles:apply"
 print("plan describes built file changes and reloads without activating or changing live state")
 
 
 for options, message in (
     (("--plan", "--apply"), "cannot be combined"),
-    (("--plan", "--install-nix"), "cannot install"),
     (("--plan", "--skip-build"), "requires a built generation"),
 ):
     rejected = subprocess.run([str(root / "scripts/bootstrap-macos.sh"), *options], capture_output=True, text=True)
@@ -190,6 +189,6 @@ if len(sys.argv) > 1:
         listed = subprocess.run([str(task), "--taskfile", str(path), "--list-all"],
                                 cwd=tmp, capture_output=True, text=True)
         assert listed.returncode == 0, listed.stderr
-        assert "dotfiles:plan" in listed.stdout and "dotfiles:apply:home" in listed.stdout
+        assert "dotfiles:plan" in listed.stdout and "dotfiles:apply" in listed.stdout
         assert "new-human-req-doc" in listed.stdout
     print("generated global Task shim preserves common tasks and routes owning operations")

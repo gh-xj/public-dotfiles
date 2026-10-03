@@ -26,10 +26,6 @@
   in
   {
     homeModules.default = import ./modules/home;
-    homeModule = self.homeModules.default;
-
-    darwinModules.default = import ./modules/darwin;
-    darwinModule = self.darwinModules.default;
 
     packageSets = import ./packages;
     lib.packageSets = self.packageSets;

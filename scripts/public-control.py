@@ -418,7 +418,7 @@ class Control:
             "runtime_seeds": "Existing app-owned settings are preserved; review doctor integration suggestions separately",
             "repository_files": "Repo links can already reflect uncommitted edits; static snapshots use the selected source",
             "after_apply": sorted(reloads),
-            "apply_command": "task -g dotfiles:apply:" + scope,
+            "apply_command": "task -g dotfiles:apply" if scope == "home" else "no public system apply",
             "generation_changed": resolve(self.active) != resolve(self.desired),
         }
 

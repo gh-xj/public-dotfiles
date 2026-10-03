@@ -122,7 +122,7 @@ main() {
   fi
 
   displayplacer_cmd="$(find_cmd displayplacer || true)"
-  [ -n "$displayplacer_cmd" ] || die "displayplacer is required; run the nix-darwin/Homebrew phase first"
+  [ -n "$displayplacer_cmd" ] || die "displayplacer is required; run task apps first"
 
   list_output="$("$displayplacer_cmd" list)"
 

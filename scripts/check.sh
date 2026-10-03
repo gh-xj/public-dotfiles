@@ -57,9 +57,9 @@ if [ "$deep" -eq 1 ]; then
   }
   trap cleanup EXIT
   XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR="$bootstrap_root" \
-    ./scripts/bootstrap-macos.sh --darwin --dry-run --skip-build
+    ./scripts/bootstrap-macos.sh --dry-run --skip-build
   nix_cmd eval --raw \
-    "$bootstrap_root/${USER:-$(id -un)}#darwinConfigurations.bootstrap.config.system.build.toplevel.drvPath" \
+    "$bootstrap_root/${USER:-$(id -un)}#homeConfigurations.bootstrap.activationPackage.drvPath" \
     >/dev/null
 fi
 
