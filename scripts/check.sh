@@ -11,6 +11,7 @@ nix_cmd() {
 
 gitleaks protect --staged --source . --redact --no-banner
 ./scripts/verify-denylist.sh
+python3 scripts/check-harness-budget.py
 nix_cmd flake check --no-write-lock-file
 generation="$(nix_cmd build --no-link --print-out-paths .#homeConfigurations.example.activationPackage)"
 python3 scripts/verify-generated-links.py "$generation" \
