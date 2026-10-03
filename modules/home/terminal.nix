@@ -33,16 +33,6 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    # A legacy parent link must be removed before HM inspects or links leaves;
-    # otherwise even checkLinkTargets can inspect files inside the checkout.
-    home.activation.migrateGhosttyParent = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-      ghostty_migration_mode=--apply
-      if [ -n "''${DRY_RUN:-}" ]; then ghostty_migration_mode=--dry-run; fi
-      ${pkgs.zsh}/bin/zsh ${../../scripts/migrate-ghostty-parent.zsh} \
-        --home ${lib.escapeShellArg config.home.homeDirectory} \
-        --repo ${lib.escapeShellArg cfg.repoRoot} "$ghostty_migration_mode"
-    '';
-
     programs.tmux = {
       enable = true;
       package = null;

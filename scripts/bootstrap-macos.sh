@@ -205,8 +205,6 @@ build_activation() {
 apply_home_manager() {
   local flake_dir="$1"
   [ "$mode" = apply ] || return 0
-  zsh "$repo_root/scripts/migrate-ghostty-parent.zsh" \
-    --home "$target_home" --repo "$repo_root" --apply
   info "running standalone Home Manager switch"
   nix_cmd run "$flake_dir#home-manager" -- switch \
     --flake "$flake_dir#$profile_name" -b "$backup_extension"

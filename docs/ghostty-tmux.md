@@ -1,43 +1,9 @@
 # Ghostty and tmux
 
-## Upgrading the legacy Ghostty directory link
-
-Older installs linked `~/.config/ghostty` to the checkout's `.config/ghostty`
-directory. Native Home Manager Ghostty now owns only `~/.config/ghostty/config`;
-its source of truth remains `programs.ghostty` in `modules/home/terminal.nix`.
-
-Bootstrap preflight inspects the parent with link-aware semantics (including
-dangling links). On apply, a known legacy link is logged and unlinked, its target
-directory/content is preserved, and a real parent directory is created. Home
-Manager then links the generated leaf. The same migration runs before
-`checkLinkTargets` for direct Home Manager and downstream-overlay activations.
-Repeating it leaves a real directory and its leaf unchanged. Dry-run logs the
-planned action without modifying either location.
-
-An unknown parent symlink or a `.config` ancestor resolving inside the checkout
-stops activation. Inspect it and explicitly move it aside before retrying; the
-normal Home Manager leaf-backup policy does not authorize replacing arbitrary
-parent links. Do not recreate the standalone repo config. Any earlier accidental
-generated leaf inside the checkout is left untouched for separate inspection.
-
-After applying from the owning repo, verify the actual live delivery:
-
-```sh
-python3 scripts/verify-ghostty.py --live
-```
-
-The verifier requires a real parent, an existing leaf resolving to the current
-Home Manager profile, successful `ghostty +validate-config`, and effective font,
-theme, command and keybindings matching that generation. Use `--generation PATH`
-for a nonstandard profile location, or `--ghostty PATH` for another executable.
-It also detects overrides in other Ghostty config locations. `task check` runs
-disposable upgrade fixtures using the generated Home Manager linker; it does
-not activate or migrate your live home.
-
-Existing Ghostty surfaces can retain startup settings. After a successful apply
-and live check, reload Ghostty configuration and open a new surface to check its
-startup command; CLI verification does not prove an already-open GUI surface
-has reloaded. See [Ghostty config loading](https://ghostty.org/docs/config).
+Home Manager owns `~/.config/ghostty/config`; its source of truth is
+`programs.ghostty` in `modules/home/terminal.nix`. The parent must already be a
+real directory. Existing Ghostty surfaces can retain startup settings, so after
+apply reload the configuration and open a new surface.
 
 This setup treats tmux as the primary terminal workspace layer and Ghostty as a keybinding bridge on macOS.
 
@@ -211,8 +177,8 @@ Run this after changing Ghostty, tmux, or Karabiner terminal key rules:
 task check
 ```
 
-This validates Ghostty config, Karabiner complex-modification assets, generated
-tmux config loading, and the agent/Workmux pane integration.
+This validates the generated Home Manager configuration and its parseable
+configuration files without inspecting live GUI state.
 
 ## Theme policy
 

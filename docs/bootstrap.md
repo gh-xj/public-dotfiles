@@ -45,10 +45,8 @@ profile; do not edit `hosts/example.nix` with private identities. If an adjacent
 
 ## First-Run Boundaries
 
-Bootstrap migrates only the known legacy Ghostty parent symlink before Home
-Manager links the generated leaf. TCC grants, browser/app accounts, encrypted
-runtime state, Raycast registration and system-level macOS settings remain
-interactive or separately owned.
+TCC grants, browser/app accounts, encrypted runtime state, Raycast registration
+and system-level macOS settings remain interactive or separately owned.
 
 The Home Manager module enables `shell`, `dev` and `ops` package sets by
 default. A downstream profile may set `xj.publicDotfiles.packageSets` to a

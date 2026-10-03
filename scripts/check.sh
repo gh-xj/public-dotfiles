@@ -45,7 +45,6 @@ task --taskfile global/Taskfile.yml --list-all >/dev/null
 
 if [ "$deep" -eq 1 ]; then
   python3 scripts/verify-agent-seeds.py "$generation" "$repo_root" ".#homeConfigurations.$home_config"
-  python3 scripts/test-ghostty-migration.py "$generation" ".#homeConfigurations.$home_config"
   python3 scripts/test-yazi-runtime.py "$generation"
   python3 scripts/test-yazi-projects.py "$generation/home-path/bin/yazi"
   PATH="$generation/home-path/bin:$PATH" python3 scripts/test-tmux-recovery.py
