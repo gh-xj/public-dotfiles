@@ -20,6 +20,14 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
+    # `defaults write` alone leaves running services on cached values; symbolic
+    # hotkeys (e.g. Ctrl+Left/Right freed for tmux) only change after a reload.
+    system.activationScripts.postActivation.text = lib.mkAfter ''
+      launchctl asuser "$(id -u ${config.system.primaryUser})" \
+        sudo --user=${config.system.primaryUser} -- \
+        /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u || true
+    '';
+
     system.defaults = {
       ".GlobalPreferences"."com.apple.mouse.scaling" = 3.0;
 
