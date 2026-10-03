@@ -14,7 +14,6 @@
       agent = "custom";
       extraAgents.custom = { argv = [ "custom-cli" "codex" ]; type = "codex"; };
     };
-    displayLayoutsFile = ./display-layouts.tsv;
     tmuxRecovery = {
       enable = true;
       schedule.enable = true;

@@ -45,8 +45,3 @@ tasks:
     desc: Verify and open install intents for missing Raycast extensions
     cmds:
       - ./scripts/verify-raycast-extensions.sh --open-missing
-
-  display:layout:
-    desc: Plan, apply or verify host-injected display layouts
-    cmds:
-      - bash scripts/apply-display-layout.sh {{.CLI_ARGS}}

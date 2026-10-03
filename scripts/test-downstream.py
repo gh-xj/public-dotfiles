@@ -72,16 +72,6 @@ with tempfile.TemporaryDirectory(prefix="downstream-composition-") as tmp:
     assert ".claude/settings.json" not in metadata["mutable_targets"]
     wrapper = (files / ".local/bin/tmux-recovery").read_text()
     assert "--keep-newest 8" in wrapper and "--keep-days 3" in wrapper and "--adapters" in wrapper
-    layout = files / ".config/xj/display-layouts.tsv"
-    assert layout.read_text() == (fixture / "display-layouts.tsv").read_text()
-    fake_bin = Path(tmp) / "bin"
-    fake_bin.mkdir()
-    display = fake_bin / "displayplacer"
-    display.write_text('#!/bin/sh\nprintf "%s\\n" "Persistent screen id: fixture" "Serial screen id: DISPLAY-FIXTURE" "Resolution: 640x480" "Hertz: 60" "Color Depth: 8" "Scaling: off" "Origin: (0,0)" "Rotation: 0" "Enabled: true"\n')
-    display.chmod(0o700)
-    preview = subprocess.check_output(["bash", str(repo / "scripts/apply-display-layout.sh"), "--layouts", str(layout), "--dry-run"],
-                                      env=dict(os.environ, PATH=str(fake_bin) + ":" + os.environ["PATH"]), text=True)
-    assert "800x600" in preview and "DISPLAY-FIXTURE" in preview
     workmux_file = files / ".config/workmux/config.yaml"
     workmux = json.loads(subprocess.check_output(["ruby", "-ryaml", "-rjson", "-e", "puts JSON.generate(YAML.load_file(ARGV[0]))", str(workmux_file)], text=True))
     assert workmux["agent"] == "custom" and workmux["status_format"] is False
@@ -95,8 +85,7 @@ with tempfile.TemporaryDirectory(prefix="downstream-composition-") as tmp:
     assert ".claude/settings.json" in json.loads((public / ".config/public-dotfiles/generation.json").read_text())["mutable_targets"]
     assert "seedClaudeSettings" in (generation / "activate").read_text()
     assert not (public / ".local/bin/scratch-gc").exists()
-    assert not (public / ".config/xj/display-layouts.tsv").exists()
     assert not (public / ".local/bin/tmux-recovery").exists()
     assert "Downstream fixture policy" not in (public / "AGENTS.md").read_text()
     assert not list((public / "Library/LaunchAgents").glob("*tmux-recovery*")) if (public / "Library/LaunchAgents").exists() else True
-    print("standalone/downstream builds, ownership switches, policy/rules, Workmux argv, display data and recovery schedule verified")
+    print("standalone/downstream builds, ownership switches, policy/rules, Workmux argv and recovery schedule verified")

@@ -4,8 +4,8 @@ A separate flake imports `public.homeModules.default` and supplies local data.
 Start from `examples/downstream/flake.nix` and `host.nix` in your private owner.
 Existing nix-darwin consumers should follow
 [the standalone migration](migrate-work-mac.md).
-The fixture deliberately uses only synthetic identities and hardware data; do
-not put a real host, provider command or hardware serial back into this repo.
+The fixture deliberately uses only synthetic identities; do not put a real
+host or provider command back into this repo.
 Pin public in the downstream lock, then update that pin explicitly after rebase.
 Build with `nix build .#homeConfigurations.<profile>.activationPackage`; activate
 through the downstream's normal switch.
@@ -19,7 +19,6 @@ through the downstream's normal switch.
 | `agents.codexRules.extraText` | Genuinely downstream-only rules; generic proven rules belong in main |
 | `workmux.agent`, `workmux.extraAgents.<name>.argv`, `.type` | Provider selection and trusted argv; no source-file patch required |
 | `workmux.extraConfig` | Additional YAML-compatible configuration; `status_format` remains false |
-| `displayLayoutsFile` | Private host TSV installed at `~/.config/xj/display-layouts.tsv`; null by default |
 | `tmuxRecovery.*` | Opt-in public engine, retention and optional schedule; trusted adapter file remains downstream |
 | `scratchGc.enable = false` | Public creates no scratch package/home target; private owner may claim it directly |
 | `scratchGc.package` with `.enable = true` | Optional delivery of a complete downstream package, not a public scratch implementation |
@@ -46,12 +45,6 @@ a `.claude` parent symlink into its repository), set
 owner preserves the live settings and merges required public integration itself.
 The read-only doctor reports missing integration; do not disable all helper delivery.
 
-Display data is never inferred from a shared physical panel. Use
-`task display:layout -- --dry-run`, `--verify` or explicit `--apply`, or the
-installed `apply-display-layout` command. Standalone bootstrap skips display
-changes when no host data exists. The data format is tab-separated serial,
-label, resolution, Hz, color depth, scaling, origin and rotation.
-
 ## Migration checklist
 
 1. Move the local host into the private flake; import the public module rather
@@ -63,17 +56,15 @@ label, resolution, Hz, color depth, scaling, origin and rotation.
 3. Disable public Codex-hook seeding if a private owner manages it. Remove the
    old `home.file` disabling override. Keep required identity/status hooks when
    merging private hooks; retain app hook trust review.
-4. Supply display TSV data from the host. Remove any local patch to the display
-   engine or the former shared `config/macos/display-layouts.tsv`.
-5. Keep scratch ownership disabled unless deliberately supplying a full private
+4. Keep scratch ownership disabled unless deliberately supplying a full private
    package. No public scratch policy requires a machine-specific CLI.
-6. Set `tmuxRecovery.enable = true`, enable its schedule and interval 300 only when ready
+5. Set `tmuxRecovery.enable = true`, enable its schedule and interval 300 only when ready
    to replace the old scheduler. Disable the old private job explicitly in its
    owner to avoid duplicate scheduling. Keep the legacy checkpoint archive:
    new retention never claims it, and old formats need explicit migration.
-7. Drop downstream patches to `.claude/CLAUDE.md`, `.codex/rules/default.rules`,
+6. Drop downstream patches to `.claude/CLAUDE.md`, `.codex/rules/default.rules`,
    `.config/workmux/config.yaml`, `global/Taskfile.yml`, the public `Taskfile.yml`,
-   `flake.nix`, `scripts/tmux-recovery.py`, `scripts/apply-display-layout.sh`,
+   `flake.nix`, `scripts/tmux-recovery.py`,
    `modules/home/recovery.nix`, `modules/home/composition.nix`, the agent modules,
    `modules/home/control.nix`, `modules/home/config-files.nix`, and recovery docs.
    These files remain in main; remove the overlay patches, not the upstream files.
@@ -81,4 +72,4 @@ label, resolution, Hz, color depth, scaling, origin and rotation.
 The public checks build both the standalone example and a separate downstream
 flake, without activating either. They
 verify shared policy identity, seed ownership, private target non-conflict,
-Workmux parsing, hardware-data injection and the launchd command composition.
+Workmux parsing and the launchd command composition.
