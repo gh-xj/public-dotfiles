@@ -6,6 +6,7 @@ brew "atuin"
 brew "displayplacer"
 brew "duti"
 brew "imsg"
+brew "mosh"
 brew "mole"
 brew "pngpaste"
 
