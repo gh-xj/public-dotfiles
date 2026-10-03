@@ -2,32 +2,39 @@
 
 ## Scope
 
-This public repo owns the public-safe, opinionated app, shell, editor, terminal,
-CLI, and agent defaults needed to restore xj's comfortable environment.
-Never add sensitive/account-bound/company-private/secret-adjacent state or
-private identifiers such as employers, internal projects, private hosts/IPs,
-emails, or user-specific absolute paths; those belong in `private-config`.
+This public repo owns reusable macOS app, shell, editor, terminal, CLI, and
+agent defaults. It must remain independently usable without `private-config`.
+Never add secrets, account/company identifiers, private hosts/IPs, emails, or
+user-specific absolute paths; private and machine-local state belongs elsewhere.
 
-Public is independently consumed by another Mac without `private-config`, so
-its example profile and `task apply` / `task check` must remain standalone.
-Use the `config-manager` skill and edit repo sources, never live `$HOME` links.
+## Invariants
 
-## Git and Worktrees
+- Standalone Home Manager is the only activation path; never add nix-darwin.
+- Nix owns shell tools, Brewfile owns native apps, and mise owns runtimes.
+- Edit repo sources, never generated files or live home symlinks.
+- Preserve mutable agent settings and app-owned out-of-store files.
+- Keep the task surface exactly: check, plan, apply, rollback, doctor, capture, apps.
 
-Before git operations, run `git status --short`; preserve unrelated changes.
-Treat public and private as separate repos and commits. Stage explicit paths
-only, and inspect `git diff --cached` immediately before every commit.
-Stage new flake-consumed files before Nix checks because untracked files are
-invisible to flake evaluation.
+## Commands
 
-Only the lead session commits on `main`. Background agents use clean worktrees
-on `agent/*`; the lead reviews and lands their atomic commits. Do not leave an
-accepted operation uncommitted unless a reported blocker prevents it.
-Keep `CLAUDE.md` as the one-line `@AGENTS.md` compatibility file.
+- `task check` — pure repo/generation gate; no live home, network, or activation.
+- `task plan` — build and preview without activation.
+- `task doctor` — read-only live drift and command-provider report.
+- `task apply` — Home Manager plus user-level macOS settings; no sudo.
+- `task rollback` — activate the previous Home Manager generation.
+- `task capture` — capture declared macOS settings into the repo.
+- `task apps` — Brewfile plus locked mise tools; human-approved because it may prompt.
 
-## Verification
+## Authority and Done
 
-Run `task check` before commits; it includes the staged gitleaks scan and the
-private-identifier denylist.
-Report exact commands and failures. See `docs/daily-git-workflow.md` for the
-normal branch, commit, verification, and push path.
+Use the `config-manager` skill. Preserve unrelated changes and treat public and
+private as separate repos. Only the lead session commits on `main`; other agents
+use `agent/*` worktrees. Stage explicit paths, inspect `git diff --cached`, and
+make imperative atomic commits. Never amend, rebase, reset, force-push, or push
+without explicit direction. Work is done only when `task check` passes, the
+relevant plan/doctor proof is recorded, and accepted changes are committed.
+
+## Pointers
+
+See `docs/daily-git-workflow.md`, `docs/config-delivery-model.md`, and
+`docs/dotfiles-operations.md`. Keep `CLAUDE.md` as the one-line `@AGENTS.md` shim.
