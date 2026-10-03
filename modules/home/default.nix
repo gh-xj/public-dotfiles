@@ -9,6 +9,7 @@ in
     ./delivery.nix
     ./config-files.nix
     ./default-openers.nix
+    ./macos-settings.nix
     ./packages.nix
     ./shell.nix
     ./terminal.nix

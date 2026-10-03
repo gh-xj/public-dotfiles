@@ -37,6 +37,7 @@ esac
 bash ./scripts/verify-nvim.sh
 ./scripts/verify-terminal.sh "$generation"
 python3 scripts/test-agent-status.py
+python3 scripts/test-macos-settings.py
 python3 scripts/test-public-control.py "$generation"
 PATH="$generation/home-path/bin:$PATH" python3 scripts/test-human-req-doc.py
 python3 scripts/verify-codex-strict.py

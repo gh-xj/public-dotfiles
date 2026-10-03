@@ -36,6 +36,11 @@ tasks:
     cmds:
       - python3 scripts/public-control.py doctor {{.CLI_ARGS}}
 
+  capture:
+    desc: Capture declared macOS settings from this Mac
+    cmds:
+      - python3 scripts/macos-settings.py capture
+
   raycast:install:
     desc: Verify and open install intents for missing Raycast extensions
     cmds:
