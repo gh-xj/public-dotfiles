@@ -11,7 +11,7 @@ def tracked(repo):
     if result.returncode == 0:
         return [Path(item.decode()) for item in result.stdout.split(b"\0") if item]
     return [path.relative_to(repo) for path in repo.rglob("*")
-            if path.is_file() and ".git" not in path.relative_to(repo).parts]
+            if (path.is_file() or path.is_symlink()) and ".git" not in path.relative_to(repo).parts]
 
 
 def line_count(repo, paths):
