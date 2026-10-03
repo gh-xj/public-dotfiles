@@ -33,7 +33,9 @@ tasks:
         python3 scripts/public-control.py doctor --live || status=1
         scripts/verify-home-drift.sh || status=1
         python3 scripts/macos-settings.py diff || status=1
-        brew bundle check --file Brewfile --no-upgrade || status=1
+        brew_cmd="$(command -v brew || true)"
+        [ -n "$brew_cmd" ] || brew_cmd="$(for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do [ ! -x "$candidate" ] || { printf '%s\n' "$candidate"; break; }; done)"
+        if [ -n "$brew_cmd" ]; then "$brew_cmd" bundle check --file Brewfile --no-upgrade || status=1; else echo "Homebrew is unavailable" >&2; status=1; fi
         python3 scripts/provenance.py || status=1
         exit "$status"
 
@@ -45,5 +47,9 @@ tasks:
   apps:
     desc: Install Brewfile apps and locked mise tools (may prompt)
     cmds:
-      - brew bundle --file Brewfile --no-upgrade
-      - MISE_CONFIG_FILE="{{.TASKFILE_DIR}}/config/mise/config.toml" mise install --locked
+      - |
+        brew_cmd="$(command -v brew || true)"
+        [ -n "$brew_cmd" ] || brew_cmd="$(for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do [ ! -x "$candidate" ] || { printf '%s\n' "$candidate"; break; }; done)"
+        [ -n "$brew_cmd" ] || { echo "Homebrew is required" >&2; exit 1; }
+        "$brew_cmd" bundle --file Brewfile --no-upgrade
+      - MISE_CONFIG_FILE="{{.TASKFILE_DIR}}/config/mise/config.toml" "${MISE_BIN:-$HOME/.local/state/nix/profiles/home-manager/home-path/bin/mise}" install --locked
