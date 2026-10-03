@@ -40,8 +40,3 @@ tasks:
     desc: Capture declared macOS settings from this Mac
     cmds:
       - python3 scripts/macos-settings.py capture
-
-  raycast:install:
-    desc: Verify and open install intents for missing Raycast extensions
-    cmds:
-      - ./scripts/verify-raycast-extensions.sh --open-missing
