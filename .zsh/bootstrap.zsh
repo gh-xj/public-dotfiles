@@ -234,8 +234,6 @@ _source_zsh_plugin() {
 
     [[ -n "${XJ_ZSH_PLUGIN_ROOTS:-}" ]] && roots+=(${(s.:.)XJ_ZSH_PLUGIN_ROOTS})
     roots+=(
-        "$HOME/.nix-profile/share"
-        "/run/current-system/sw/share"
         "/nix/var/nix/profiles/default/share"
     )
     [[ -n "${HOMEBREW_PREFIX:-}" ]] && roots+=("$HOMEBREW_PREFIX/share")

@@ -169,6 +169,11 @@ A downstream private flake can import only the sets it wants, or run the same
 module against a different nixpkgs pin with
 `--override-input nixpkgs <flake-url>`.
 
+Home Manager also installs mise and delivers the locked public runtime and npm
+CLI declarations at `~/.config/mise/`. Run `mise install --locked` after an
+apply; language runtimes and ecosystem CLIs do not belong in the Nix package
+sets.
+
 ## Agent Baseline
 
 This repo now publishes the reusable Claude/Codex baseline:

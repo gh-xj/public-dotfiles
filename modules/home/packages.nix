@@ -17,6 +17,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = lib.concatMap (name: packageSets.${name} pkgs) cfg.packageSets;
+    home.packages = [ pkgs.mise ] ++ lib.concatMap (name: packageSets.${name} pkgs) cfg.packageSets;
+    xdg.configFile."mise/config.toml".source = ../../config/mise/config.toml;
+    xdg.configFile."mise/mise.lock".source = ../../config/mise/mise.lock;
   };
 }

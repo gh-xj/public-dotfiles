@@ -39,10 +39,10 @@ host selection and private data.
 
 ## Check what actually runs
 
-The active Home Manager profile precedes Homebrew and system profiles for
-ordinary declared CLI tools. User-local and project SDK bins keep precedence.
-This makes a home-only package switch usable on nix-darwin hosts even before
-the next system switch updates `/etc/profiles/per-user`.
+The active provider order is user-local tools, mise shims, the standalone Home
+Manager profile, Determinate Nix, Homebrew, then macOS. Login and non-login zsh
+use the same PATH; language runtimes do not leak in from ecosystem-specific
+global bin directories.
 
 The generation's existing public manifest records the Yazi/ya package version
 from the installed derivation. Live doctor probes those two known commands and
