@@ -23,7 +23,6 @@ homeConfigurations."user@host" = home-manager.lib.homeManagerConfiguration {
 6. Before cutover, build the activation package with `nix build --no-link` and
    run both downstream and public `task check`.
 7. With the machine owner present, run the separately owned one-time root
-   teardown, then downstream `task apply`, `task apps`, and
-   `mise install --locked`.
+   teardown, then downstream `task apply` and `task apps`.
 8. Start a fresh login and non-login zsh and verify they resolve the same PATH,
    Home Manager profile, mise shims, Homebrew and Nix commands.

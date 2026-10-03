@@ -47,24 +47,12 @@ Git status uses the audited upstream plugin pinned in `package.toml`; the old
 dual-version fetch adapter has been removed. The preview toggle keeps its
 existing layout behavior with indexed ratios.
 
-## Verification and versions
-
-`task check:deep` runs native isolated Yazi tests against the built generation.
-Additional runtime versions can be checked explicitly:
-
-```sh
-python3 scripts/test-yazi-runtime.py /path/to/yazi
-python3 scripts/test-yazi-projects.py /path/to/yazi
-```
-
-These checks exercise actual PTYs and disposable filesystem fixtures. They
-validate argv quoting, task diagnostics, editor handoff, preview toggling,
-non-overwriting Done moves, detached-window quit and Projects persistence.
-A real macOS application open remains part of manual release validation.
+## Versions
 
 Yazi and ya are owned by Nix at release 26.9.1, through a narrow package
 override that leaves other nixpkgs packages pinned. The activated Home Manager
 profile precedes Homebrew/system CLI paths, including after a home-only switch.
 Both commands should resolve through the same activated profile and report
-the same version. Review app and plugin updates together; CLI package changes need a new shell or rehash,
+the same version. `task doctor` reports conflicting managed providers. Review
+app and plugin updates together; CLI package changes need a new shell or rehash,
 and a running Yazi instance needs restarting.

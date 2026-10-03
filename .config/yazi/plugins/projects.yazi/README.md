@@ -20,10 +20,6 @@ Two open sessions refresh before actions, but truly simultaneous saves are
 not locked and may overwrite one another. Atomic rename protects against
 partial writes; it does not guarantee durability through a power failure.
 
-Validate with `python3 scripts/test-yazi-projects.py /path/to/yazi` from the
-repository root. Native Yazi tests use a disposable configuration and state;
-the companion Lua harness injects write, close, and rename failures.
-
 > [!NOTE]
 > The latest release of Yazi is required at the moment.
 

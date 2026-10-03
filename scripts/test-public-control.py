@@ -166,12 +166,12 @@ print("plan describes built file changes and reloads without activating or chang
 
 
 for options, message in (
-    (("--plan", "--apply"), "cannot be combined"),
-    (("--plan", "--skip-build"), "requires a built generation"),
+    (("--plan", "--apply"), "choose one operation"),
+    ((), "choose --plan, --apply, or --rollback"),
 ):
     rejected = subprocess.run([str(root / "scripts/bootstrap-macos.sh"), *options], capture_output=True, text=True)
     assert rejected.returncode != 0 and message in rejected.stderr
-print("standalone plan rejects activation, installation and incomplete-build flags")
+print("standalone operator requires exactly one explicit operation")
 
 
 if len(sys.argv) > 1:

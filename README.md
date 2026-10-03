@@ -14,13 +14,12 @@ Install Determinate Nix and Homebrew, then clone this repo. From the clone:
 ```bash
 task apply
 task apps
-mise install --locked
 ```
 
 `task apply` creates a machine-local standalone Home Manager host under
-`~/.local/state/public-dotfiles/bootstrap/`. It installs Determinate Nix and
-Homebrew when missing, then switches only the user profile. `task apps` applies
-the Brewfile without cleanup. Neither command manages macOS system settings.
+`~/.local/state/public-dotfiles/bootstrap/`, switches only the user profile,
+and applies declared user-level macOS settings. `task apps` applies the Brewfile
+without cleanup and installs the locked mise toolset.
 
 Preview the Home Manager generation without activating it:
 
@@ -138,9 +137,8 @@ module against a different nixpkgs pin with
 `--override-input nixpkgs <flake-url>`.
 
 Home Manager also installs mise and delivers the locked public runtime and npm
-CLI declarations at `~/.config/mise/`. Run `mise install --locked` after an
-apply; language runtimes and ecosystem CLIs do not belong in the Nix package
-sets.
+CLI declarations at `~/.config/mise/`. `task apps` installs them after applying;
+language runtimes and ecosystem CLIs do not belong in the Nix package sets.
 
 ## Agent Baseline
 
@@ -178,7 +176,7 @@ operating environment on a clean machine.
 
 - build the host-native example with `NIX_CONFIG='experimental-features = nix-command flakes' nix build .#`
 - install Determinate Nix and Homebrew, clone the repo, then run `task apply`
-- run `task apps` for the Brewfile and `mise install --locked` for runtimes
+- run `task apps` for the Brewfile and locked mise runtimes
 - edit `hosts/example.nix` only when intentionally testing the checked-in example host
 - use `task apply` as the standalone Home Manager path
 - use `private-config` only when the machine needs sensitive, account-bound,

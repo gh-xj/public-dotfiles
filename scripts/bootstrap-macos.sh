@@ -7,23 +7,20 @@ target_home="${HOME:-/Users/$target_user}"
 bootstrap_root="${XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR:-${XDG_STATE_HOME:-$target_home/.local/state}/public-dotfiles/bootstrap}"
 profile_name="bootstrap"
 home_state_version="25.11"
-mode="dry-run"
+mode=""
 show_plan=0
 plan_json=0
-skip_build=0
 host_platform=""
-homebrew_prefix=""
 activation_generation=""
 backup_extension="public-dotfiles-backup-$(date +%Y%m%d%H%M%S)"
 package_sets=("shell" "dev" "ops")
 
 usage() {
   cat <<'EOF'
-Usage: scripts/bootstrap-macos.sh [--dry-run|--plan [--json]|--apply] [--skip-build]
+Usage: scripts/bootstrap-macos.sh {--plan [--json] | --apply | --rollback}
 
-Build or apply the standalone Home Manager profile. Apply mode installs
-Determinate Nix and Homebrew when missing; it never manages system settings.
-After apply, run `task apps` and `mise install --locked`.
+Build, apply, or roll back the standalone Home Manager profile. Apply runs
+without sudo and includes the declared macOS user settings. Apps are separate.
 EOF
 }
 
@@ -61,21 +58,18 @@ nix_list_strings() {
 parse_args() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
-      --plan) show_plan=1 ;;
+      --plan) [ -z "$mode" ] || die "choose one operation"; show_plan=1; mode="plan" ;;
       --json) plan_json=1 ;;
-      --dry-run) mode="dry-run" ;;
-      --apply) mode="apply" ;;
-      --skip-build) skip_build=1 ;;
+      --apply) [ -z "$mode" ] || die "choose one operation"; mode="apply" ;;
+      --rollback) [ -z "$mode" ] || die "choose one operation"; mode="rollback" ;;
       -h|--help) usage; exit 0 ;;
       *) die "unknown option: $1" ;;
     esac
     shift
   done
 
-  if [ "$show_plan" -eq 1 ]; then
-    [ "$mode" != "apply" ] || die "--plan cannot be combined with --apply"
-    [ "$skip_build" -eq 0 ] || die "--plan requires a built generation"
-  elif [ "$plan_json" -eq 1 ]; then
+  [ -n "$mode" ] || die "choose --plan, --apply, or --rollback"
+  if [ "$plan_json" -eq 1 ] && [ "$show_plan" -eq 0 ]; then
     die "--json requires --plan"
   fi
 }
@@ -91,12 +85,7 @@ host_system() {
 preflight() {
   [ "$(uname -s)" = Darwin ] || die "this bootstrap supports macOS only"
   host_platform="$(host_system)"
-  case "$host_platform" in
-    aarch64-darwin) homebrew_prefix=/opt/homebrew ;;
-    x86_64-darwin) homebrew_prefix=/usr/local ;;
-  esac
   have_cmd git || die "missing required command: git"
-  have_cmd curl || die "missing required command: curl"
   have_cmd zsh || die "missing required command: zsh"
   info "Home Manager target: $target_user at $target_home ($host_platform)"
 }
@@ -122,33 +111,8 @@ load_nix_profile() {
 
 ensure_nix() {
   load_nix_profile
-  if have_cmd nix; then
-    info "nix: $(nix --version)"
-    return 0
-  fi
-  if [ "$mode" != apply ]; then
-    info "Nix is missing; apply mode would install Determinate Nix"
-    return 0
-  fi
-  info "installing Determinate Nix"
-  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
-    | sh -s -- install
-  load_nix_profile
-  have_cmd nix || die "Nix installed but is not available; open a new shell and retry"
-}
-
-ensure_homebrew() {
-  if [ -x "$homebrew_prefix/bin/brew" ]; then
-    info "homebrew: $("$homebrew_prefix/bin/brew" --version | sed -n '1p')"
-    return 0
-  fi
-  if [ "$mode" != apply ]; then
-    info "Homebrew is missing; apply mode would install it"
-    return 0
-  fi
-  info "installing Homebrew"
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  [ -x "$homebrew_prefix/bin/brew" ] || die "Homebrew installer did not create $homebrew_prefix/bin/brew"
+  have_cmd nix || die "Nix is required; install Determinate Nix first"
+  info "nix: $(nix --version)"
 }
 
 write_bootstrap_flake() {
@@ -193,13 +157,15 @@ EOF
 
 build_activation() {
   local flake_dir="$1"
-  if ! have_cmd nix; then
-    info "skipping build because Nix is not installed"
-    return 0
-  fi
-  [ "$skip_build" -eq 0 ] || { info "skipping build as requested"; return 0; }
   activation_generation="$(nix_cmd build --no-link --print-out-paths \
     "$flake_dir#homeConfigurations.$profile_name.activationPackage")"
+}
+
+rollback_home_manager() {
+  local profile="${XDG_STATE_HOME:-$target_home/.local/state}/nix/profiles/home-manager"
+  [ -e "$profile" ] || die "Home Manager profile does not exist"
+  nix-env --profile "$profile" --rollback
+  "$(readlink -f "$profile")/activate"
 }
 
 apply_home_manager() {
@@ -216,7 +182,10 @@ main() {
   guard_private_overlay_apply
   preflight
   ensure_nix
-  ensure_homebrew
+  if [ "$mode" = rollback ]; then
+    rollback_home_manager
+    return
+  fi
   flake_dir="$(write_bootstrap_flake)"
   build_activation "$flake_dir"
 
@@ -229,12 +198,8 @@ main() {
     return 0
   fi
 
-  if [ "$mode" = apply ]; then
-    apply_home_manager "$flake_dir"
-    info "Home Manager apply complete; next run: task apps && mise install --locked"
-  else
-    info "dry run complete; use task apply to activate"
-  fi
+  apply_home_manager "$flake_dir"
+  info "Home Manager and macOS settings apply complete; next run: task apps"
 }
 
 main "$@"

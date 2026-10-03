@@ -69,7 +69,5 @@ The read-only doctor reports missing integration; do not disable all helper deli
    `modules/home/control.nix`, `modules/home/config-files.nix`, and recovery docs.
    These files remain in main; remove the overlay patches, not the upstream files.
 
-The public checks build both the standalone example and a separate downstream
-flake, without activating either. They
-verify shared policy identity, seed ownership, private target non-conflict,
-Workmux parsing and the launchd command composition.
+The public check builds the standalone example without activation. A downstream
+owner verifies its composed profile through its own canonical check.

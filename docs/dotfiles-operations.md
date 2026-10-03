@@ -29,8 +29,9 @@ The plan prints that policy and warns about pending edits. Repository-backed
 links may already reflect edits even when immutable snapshots use committed
 sources. Keep those two effects distinct.
 
-`apply` activates the owning Home Manager generation without sudo. `apps`
-applies the Brewfile without cleanup. Rebuilds do not update lock files;
+`apply` activates the owning Home Manager generation and user-level macOS
+settings without sudo. `apps` applies the Brewfile without cleanup and installs
+the locked mise toolset. Rebuilds do not update lock files;
 dependency updates are a separate reviewed change. The configured owner retains
 responsibility for its host selection and private data.
 
@@ -41,12 +42,10 @@ Manager profile, Determinate Nix, Homebrew, then macOS. Login and non-login zsh
 use the same PATH; language runtimes do not leak in from ecosystem-specific
 global bin directories.
 
-The generation's existing public manifest records the Yazi/ya package version
-from the installed derivation. Live doctor probes those two known commands and
-compares their resolved binaries with the selected/active generation. It
-reports unknown for missing observations, prints no arbitrary native stdout or
-private paths, and never uninstalls competing packages. A same-version binary
-from a different provider still counts as source drift.
+`doctor` compares the live home with its active generation, checks macOS and
+Brewfile drift, and audits every command declared by Home Manager, Brewfile, or
+mise. Missing commands and multiple managed providers are failures; doctor
+reports them without installing, removing, or activating anything.
 
 After a package change, start a new shell or `rehash`; restart running programs
 that still hold old code. For app configuration, follow the plan's reload
@@ -60,7 +59,5 @@ retains its guard against applying over an adjacent composed private profile.
 On an already configured machine, prefer the global owner rather than trying
 to bootstrap another profile.
 
-`task check` is the routine verification surface. `task check:deep` retains
-slower runtime and cross-profile probes. Package/version migrations also run
-native Yazi/Projects tests against the built binaries. Plan and doctor are
-read-only; they are not substitutes for those checks.
+`task check` is the only verification surface. Plan and doctor are read-only;
+they answer generation-change and live-drift questions respectively.

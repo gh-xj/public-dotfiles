@@ -4,39 +4,46 @@ env:
   NIX_CONFIG: experimental-features = nix-command flakes
 
 tasks:
+  check:
+    desc: Run the pure repository and Home Manager generation gate
+    cmds:
+      - ./scripts/check.sh
+
   plan:
-    desc: Build and preview standalone Home Manager changes
+    desc: Build and preview standalone Home Manager changes without activation
     cmds:
       - ./scripts/bootstrap-macos.sh --plan {{.CLI_ARGS}}
 
   apply:
-    desc: Apply the standalone public Home Manager profile
+    desc: Apply Home Manager and declared macOS settings without sudo
     cmds:
       - ./scripts/bootstrap-macos.sh --apply {{.CLI_ARGS}}
 
-  apps:
-    desc: Install declared Homebrew apps and macOS-native tools without cleanup
+  rollback:
+    desc: Roll back and activate the previous Home Manager generation
     cmds:
-      - brew bundle --file Brewfile --no-upgrade
-
-  check:
-    desc: Build once and run public behavioral checks
-    aliases: [verify]
-    cmds:
-      - ./scripts/check.sh
-
-  check:deep:
-    desc: Run routine checks plus slow runtime and cross-profile probes
-    cmds:
-      - ./scripts/check.sh --deep
+      - ./scripts/bootstrap-macos.sh --rollback
 
   doctor:
-    desc: Diagnose generated output and runtime drift (-- --live includes running state)
+    desc: Diagnose live configuration, package ledgers, and command provenance (read-only)
     silent: true
     cmds:
-      - python3 scripts/public-control.py doctor {{.CLI_ARGS}}
+      - |
+        status=0
+        python3 scripts/public-control.py doctor --live || status=1
+        scripts/verify-home-drift.sh || status=1
+        python3 scripts/macos-settings.py diff || status=1
+        brew bundle check --file Brewfile --no-upgrade || status=1
+        python3 scripts/provenance.py || status=1
+        exit "$status"
 
   capture:
-    desc: Capture declared macOS settings from this Mac
+    desc: Capture declared macOS settings from this Mac into the repo
     cmds:
       - python3 scripts/macos-settings.py capture
+
+  apps:
+    desc: Install Brewfile apps and locked mise tools (may prompt)
+    cmds:
+      - brew bundle --file Brewfile --no-upgrade
+      - MISE_CONFIG_FILE="{{.TASKFILE_DIR}}/config/mise/config.toml" mise install --locked

@@ -15,19 +15,17 @@ git clone https://github.com/gh-xj/public-dotfiles.git ~/public-dotfiles
 cd ~/public-dotfiles
 task apply
 task apps
-mise install --locked
 task check
 ```
 
-`task apply` also installs the two prerequisites when they are missing. It
-generates a machine-local Home Manager flake under
+`task apply` requires the two prerequisites. It generates a machine-local Home
+Manager flake under
 `~/.local/state/public-dotfiles/bootstrap/`, backs up unmanaged link targets,
-and switches only the user profile. It never manages system settings or uses
-sudo after the prerequisite installers finish.
+switches only the user profile, and applies declared user-level macOS settings
+without sudo.
 
-`task apps` runs `brew bundle --no-upgrade`; it never runs cleanup. The Brewfile
-gates casks that require newer macOS releases. `mise install --locked` installs
-the declared runtimes and npm CLIs from `~/.config/mise/`.
+`task apps` runs `brew bundle --no-upgrade` and `mise install --locked`; it never
+runs cleanup. The Brewfile gates casks that require newer macOS releases.
 
 ## Read-Only Verification
 
