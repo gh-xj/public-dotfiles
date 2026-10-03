@@ -4,7 +4,7 @@ set -euo pipefail
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 target_user="${USER:-$(id -un)}"
 target_home="${HOME:-/Users/$target_user}"
-bootstrap_root="${XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR:-${XDG_STATE_HOME:-$target_home/.local/state}/public-dotfiles/bootstrap}"
+bootstrap_root="${XJ_PUBLIC_DOTFILES_BOOTSTRAP_DIR:-}"
 profile_name="bootstrap"
 home_state_version="25.11"
 mode=""
@@ -179,6 +179,14 @@ apply_home_manager() {
 main() {
   local flake_dir
   parse_args "$@"
+  if [ -z "$bootstrap_root" ]; then
+    if [ "$mode" = plan ]; then
+      bootstrap_root="$(mktemp -d)"
+      trap 'rm -rf -- "$bootstrap_root"' EXIT
+    else
+      bootstrap_root="${XDG_STATE_HOME:-$target_home/.local/state}/public-dotfiles/bootstrap"
+    fi
+  fi
   guard_private_overlay_apply
   preflight
   ensure_nix
