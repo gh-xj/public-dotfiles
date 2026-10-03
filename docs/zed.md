@@ -8,7 +8,7 @@ same checkout or a sibling Git worktree without moving the agents.
 
 - Settings, keymap, tasks, snippets and theme: `.config/zed/` in this repo
 - Home Manager: individual repo-backed links in `~/.config/zed/`
-- App installation: `zed` in `modules/darwin/homebrew.nix`
+- App installation: `zed` in `Brewfile`
 - CLI: Homebrew installs `zed`; use `zed path/to/worktree`
 
 Leaf links let Zed retain its own mutable files and databases alongside public

@@ -20,6 +20,11 @@ tasks:
     cmds:
       - ./scripts/bootstrap-macos.sh --apply {{.CLI_ARGS}}
 
+  apps:
+    desc: Install declared Homebrew apps and macOS-native tools without cleanup
+    cmds:
+      - brew bundle --file Brewfile --no-upgrade
+
   check:
     desc: Build once and run public behavioral checks
     aliases: [verify]

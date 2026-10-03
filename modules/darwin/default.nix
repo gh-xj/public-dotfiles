@@ -3,7 +3,6 @@
 {
   imports = [
     ./defaults.nix
-    ./homebrew.nix
   ];
 
   options.xj.publicDotfiles.darwin = {
