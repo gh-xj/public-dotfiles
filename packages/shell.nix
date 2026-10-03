@@ -15,7 +15,7 @@ pkgs: [
   pkgs.tealdeer
   pkgs.trash-cli
   (pkgs.callPackage ./yazi.nix { })
-  pkgs.yq
+  pkgs."yq-go"
   pkgs.zoxide
   pkgs.zsh
   pkgs."zsh-autopair"
