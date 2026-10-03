@@ -37,7 +37,8 @@ def resolve(path, seen=()):
 
 def visit(path, ancestors=()):
     target = resolve(path)
-    if target.is_dir():
+    # Out-of-store targets are repo-owned trees; only the declared link must resolve.
+    if target.is_dir() and target.is_relative_to("/nix/store"):
         assert target not in ancestors, f"directory cycle: {path}"
         for child in target.iterdir():
             visit(child, (*ancestors, target))
