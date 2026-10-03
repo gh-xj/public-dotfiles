@@ -25,7 +25,7 @@ cask "claude"
 cask "setapp"
 cask "typora"
 cask "mimestream"
-cask "whatsapp"
+mas "WhatsApp Messenger", id: 310633997
 cask "1password"
 cask "1password-cli"
 cask "cleanshot"
