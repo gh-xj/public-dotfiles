@@ -45,6 +45,11 @@ in
       ".zshenv" = mkGeneratedText (
         builtins.readFile ../../.zshenv
         + lib.optionalString (cfg.zshEnvExtra != "") ("\n" + cfg.zshEnvExtra)
+        + ''
+
+          # Preserve the final provider order across system shell startup files.
+          typeset -g +x PUBLIC_DOTFILES_STARTUP_PATH="$PATH"
+        ''
       ) // { force = true; };
       ".zprofile" = mkRepoFile ".zprofile";
       ".zshrc" = mkRepoFile ".zshrc";

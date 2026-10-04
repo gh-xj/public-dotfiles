@@ -4,8 +4,10 @@ import argparse
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
+import tempfile
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("generation", type=Path)
@@ -76,4 +78,28 @@ if toml_files:
                    check=True, stdout=subprocess.DEVNULL)
     parsed += len(toml_files)
 
-print(f"generated state: links resolve, mutable targets excluded, {parsed} configs parsed")
+with tempfile.TemporaryDirectory(prefix="generated-shell-") as directory:
+    fixture = Path(directory)
+    (fixture / ".zshenv").write_text(resolve(generated / ".zshenv").read_text())
+    profile_text = resolve(generated / ".zprofile").read_text()
+    (fixture / ".zprofile").write_text(profile_text.replace("/bin/launchctl setenv", "/usr/bin/true"))
+    (fixture / ".zshrc").write_text("source " + shlex.quote(str(resolve(generated / ".zshrc"))) + "\n")
+    private = fixture / ".config/zsh/private.zshenv"
+    private.parent.mkdir(parents=True)
+    private.write_text('export PATH="$HOME/fixture-private:$PATH"\n'
+                       'print -r -- loaded >> "$HOME/private-loads"\n')
+    env = {"HOME": str(fixture), "ZDOTDIR": str(fixture), "PATH": "/usr/bin:/bin",
+           "PUBLIC_DOTFILES_STARTUP_PATH": "inherited-value-must-not-leak", "ZSH_MINIMAL": "1"}
+    observed = []
+    for flags in ("-c", "-lc", "-ic", "-lic"):
+        result = subprocess.run(["/bin/zsh", flags, 'print -r -- "$PATH"; /usr/bin/env'],
+                                env=env, check=True, capture_output=True, text=True)
+        lines = result.stdout.splitlines()
+        observed.append(lines[0])
+        assert not any(line.startswith("PUBLIC_DOTFILES_STARTUP_PATH=") for line in lines[1:])
+    assert len(set(observed)) == 1, "shell startup changed the declared provider order"
+    assert (fixture / "private-loads").read_text().splitlines() == ["loaded"] * 4, "private environment must load once per shell"
+    nested = subprocess.run(["/bin/zsh", "-lc", "/bin/zsh -lc 'print -r -- \"$PATH\"'"],
+                            env=env, check=True, capture_output=True, text=True)
+    assert nested.stdout.strip() == observed[0], "nested login shell changed provider order"
+print(f"generated state: links resolve, mutable targets excluded, shell provider order verified, {parsed} configs parsed")

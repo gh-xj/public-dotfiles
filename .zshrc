@@ -1,3 +1,9 @@
+# System interactive startup can prepend Nix paths after .zshenv/.zprofile.
+if [[ -n "${PUBLIC_DOTFILES_STARTUP_PATH:-}" ]]; then
+    export PATH="$PUBLIC_DOTFILES_STARTUP_PATH"
+fi
+unset PUBLIC_DOTFILES_STARTUP_PATH
+
 typeset -g _XJ_ZSHRC_FILE="${${(%):-%x}:A}"
 typeset -g _XJ_ZSH_MODULE_DIR="${_XJ_ZSHRC_FILE:h}/.zsh"
 

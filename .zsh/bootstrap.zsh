@@ -428,7 +428,7 @@ setup_utils() {
 # --- init() and its invocation (was 50-init.zsh) ---
 #
 # Main initialization
-# (PATH is fully composed in .zprofile; this file only handles interactive concerns)
+# (PATH is composed in .zshenv and restored after system startup files.)
 init() {
     # Homebrew completions must be on fpath before compinit
     local homebrew_prefix="${HOMEBREW_PREFIX:-}"
@@ -475,7 +475,7 @@ init() {
         setup_keybindings
     fi
 
-    # Source bun completion after compinit finishes (PATH set in .zprofile).
+    # Source bun completion after compinit finishes (PATH set in .zshenv).
     [[ -s "$HOME/.bun/_bun" ]] && source "$HOME/.bun/_bun"
 }
 

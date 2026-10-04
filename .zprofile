@@ -1,4 +1,10 @@
-# Environment variables and path configuration
+# Restore the complete declared PATH after macOS path_helper, including overlays.
+if [[ -n "${PUBLIC_DOTFILES_STARTUP_PATH:-}" ]]; then
+    export PATH="$PUBLIC_DOTFILES_STARTUP_PATH"
+fi
+[[ -o interactive ]] || unset PUBLIC_DOTFILES_STARTUP_PATH
+
+# Environment variables and terminal configuration
 setup_environment() {
     # Core environment
     export EDITOR='nvim'
