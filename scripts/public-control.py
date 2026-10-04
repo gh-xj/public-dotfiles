@@ -67,13 +67,26 @@ def metadata(generation):
     return read_json(generation / "home-files/.config/public-dotfiles/generation.json") if generation else {}
 
 
-def detach_mutable(home, repo, apply=False, skip=()):
+def detach_mutable(home, repo, apply=False, skip=(), legacy_only=(), old_generation=None):
     """Detach only known managed links, preserving bytes before HM cleans old links."""
     actions = []
     for name in MUTABLE:
         if name in skip:
             continue
         path = home / name
+        verified_legacy = False
+        if name in legacy_only:
+            old = old_generation / "home-files" / name if old_generation else None
+            declared = name in metadata(old_generation).get("mutable_targets", [])
+            public_sources = [repo / relative for relative in (
+                ".claude/settings.json", "config/claude/settings.json",
+                "config/codex/config.toml", "config/codex/hooks.json")]
+            known_source = resolve(path) is not None and any(
+                resolve(path) == resolve(source) for source in public_sources)
+            if not path.is_symlink() or not (known_source or (
+                    declared and resolve(old) is not None and resolve(path) == resolve(old))):
+                continue
+            verified_legacy = True
         if path.parent.is_symlink() or path.parent.resolve().is_relative_to(repo.resolve()):
             if apply:
                 raise SafeError("mutable-agent-parent-is-symlink; resolve its ownership before activation")
@@ -83,7 +96,7 @@ def detach_mutable(home, repo, apply=False, skip=()):
             continue
         raw = os.readlink(path)
         destination = (path.parent / raw).resolve()
-        known = raw.startswith("/nix/store/") or destination in {
+        known = verified_legacy or raw.startswith("/nix/store/") or destination in {
             repo / ".claude/settings.json", repo / "config/claude/settings.json",
             repo / "config/codex/config.toml", repo / "config/codex/hooks.json",
         }
@@ -462,10 +475,14 @@ def main():
     detach_mode.add_argument("--dry-run", action="store_true")
     detach_mode.add_argument("--apply", action="store_true")
     detach.add_argument("--skip", action="append", choices=MUTABLE, default=[])
+    detach.add_argument("--legacy-only", action="append", choices=MUTABLE, default=[])
+    detach.add_argument("--old-generation", default="")
     args = parser.parse_args()
     try:
         if args.command == "detach-agent-configs":
-            report = detach_mutable(args.home, args.repo.resolve(), apply=args.apply, skip=args.skip)
+            report = detach_mutable(args.home, args.repo.resolve(), apply=args.apply, skip=args.skip,
+                                    legacy_only=args.legacy_only,
+                                    old_generation=Path(args.old_generation) if args.old_generation else None)
         else:
             control = Control(args.repo, args.home, getattr(args, "flake", None), args.generation)
             control.select()

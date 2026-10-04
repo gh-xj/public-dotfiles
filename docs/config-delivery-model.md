@@ -51,3 +51,14 @@ After activation, source the generated `~/.tmux.conf` to update an existing
 server. Reloading does not rewrite environments in existing panes or explicit
 per-session PATH overrides; those need their own intentional refresh. Merely
 editing the repository's `.tmux.conf` does not install the generated prelude.
+
+## Mutable Activation Ownership
+
+Mutable agent links are detached after Home Manager's `writeBoundary` and before
+`linkGeneration` cleans the old generation. Any set `DRY_RUN` value, including an
+empty value, leaves links intact. Disabling a public feature preserves legacy
+bytes only when the target resolves to a known public source or the old public
+generation declares that exact target. An enabled downstream `home.file` target
+always takes precedence when its public seed is disabled; unproven foreign links
+are left to their owner. Ghostty's parent directory is checked read-only before
+link collision checks: resolve parent symlink ownership before activation.
