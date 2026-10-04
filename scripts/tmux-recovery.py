@@ -77,18 +77,22 @@ def read_record(path, owned=False):
     if path.is_symlink() or not stat.S_ISREG(path.stat().st_mode) or path.stat().st_size > 16 * 1024 * 1024:
         raise RecoveryError("checkpoint must be a bounded regular file")
     record = json.loads(path.read_text())
+    if not isinstance(record, dict):
+        raise RecoveryError("checkpoint must be an object")
     if record.get("format") != FORMAT or record.get("version") != VERSION:
         raise RecoveryError("unsupported checkpoint format; legacy files are not migrated automatically")
     if not re.fullmatch(r"all|session-[0-9a-f]{64}", record.get("scope", "")):
         raise RecoveryError("invalid scope")
     if not isinstance(record.get("created_ns"), int) or record["created_ns"] < 0 or digest(record["payload"]) != record.get("sha256"):
         raise RecoveryError("invalid checkpoint checksum or timestamp")
+    validate_payload(record["payload"])
     if owned and path.name != filename(record):
         raise RecoveryError("not an engine-owned checkpoint")
     return record
 
 
 def save(directory, scope, payload, keep_newest, keep_days):
+    validate_payload(payload)
     if directory.is_symlink():
         raise RecoveryError("checkpoint directory must not be a symlink")
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -134,6 +138,59 @@ def save(directory, scope, payload, keep_newest, keep_days):
                 candidate.unlink()
                 removed += 1
         return {"file": str(path), "changed": changed, "pruned_owned_files": removed}
+
+
+def _validate_payload(payload):
+    sessions = payload["sessions"]
+    if not isinstance(sessions, list) or not 1 <= len(sessions) <= 256:
+        raise RecoveryError("invalid session count")
+    targets = set()
+    for session in sessions:
+        name = text(session["name"], 255)
+        if not name or "." in name or ":" in name or name in targets:
+            raise RecoveryError("invalid or duplicate target session name")
+        targets.add(name)
+        windows = session["windows"]
+        if not 1 <= len(windows) <= 512 or sum(w["active"] is True for w in windows) != 1:
+            raise RecoveryError("invalid windows or active window")
+        indices = set()
+        for window in windows:
+            index = window["index"]
+            if type(index) is not int or index < 0 or index in indices:
+                raise RecoveryError("invalid or duplicate window index")
+            indices.add(index)
+            text(window["name"])
+            if not re.fullmatch(r"[0-9a-fA-F,{}\[\]x]+", window["layout"]):
+                raise RecoveryError("invalid layout")
+            if not all(type(window[k]) is int and 2 <= window[k] <= 10000 for k in ("width", "height")):
+                raise RecoveryError("invalid window dimensions")
+            panes = window["panes"]
+            if not 1 <= len(panes) <= 256 or sum(p["active"] is True for p in panes) != 1:
+                raise RecoveryError("invalid panes or active pane")
+            pane_indices = [p["index"] for p in panes]
+            if any(type(i) is not int or i < 0 for i in pane_indices) or pane_indices != sorted(set(pane_indices)):
+                raise RecoveryError("invalid pane order")
+            for pane in panes:
+                cwd = Path(text(pane["cwd"]))
+                if not cwd.is_absolute():
+                    raise RecoveryError("checkpoint working directory is missing")
+                text(pane["title"]); text(pane["label"])
+                if not isinstance(pane["providers"], dict):
+                    raise RecoveryError("invalid providers")
+                for provider, identity in pane["providers"].items():
+                    text(provider, 32); text(identity["option"])
+                    session_id(identity["session_id"])
+                if pane.get("document"):
+                    doc = Path(text(pane["document"]))
+                    if not doc.is_absolute():
+                        raise RecoveryError("invalid or missing document path")
+
+
+def validate_payload(payload):
+    try:
+        _validate_payload(payload)
+    except (KeyError, TypeError, AttributeError) as error:
+        raise RecoveryError("invalid checkpoint payload structure") from error
 
 
 class Engine:
@@ -202,53 +259,24 @@ class Engine:
         return {"sessions": sorted(sessions, key=lambda s: s["name"])}
 
     def validate(self, payload, prefix="", resume_agents=False, resume_documents=False):
-        sessions = payload["sessions"]
-        if not isinstance(sessions, list) or not 1 <= len(sessions) <= 256:
-            raise RecoveryError("invalid session count")
-        targets = set()
-        for session in sessions:
+        validate_payload(payload)
+        for session in payload["sessions"]:
             name = text(prefix + session["name"], 255)
-            if not name or "." in name or ":" in name or name in targets:
-                raise RecoveryError("invalid or duplicate target session name")
-            if self.exists(name):
-                raise RecoveryError("target session exists; choose --prefix or inspect it manually")
-            targets.add(name)
-            windows = session["windows"]
-            if not 1 <= len(windows) <= 512 or sum(w["active"] is True for w in windows) != 1:
-                raise RecoveryError("invalid windows or active window")
-            indices = set()
-            for window in windows:
-                index = window["index"]
-                if type(index) is not int or index < 0 or index in indices:
-                    raise RecoveryError("invalid or duplicate window index")
-                indices.add(index)
-                text(window["name"])
-                if not re.fullmatch(r"[0-9a-fA-F,{}\[\]x]+", window["layout"]):
-                    raise RecoveryError("invalid layout")
-                if not all(type(window[k]) is int and 2 <= window[k] <= 10000 for k in ("width", "height")):
-                    raise RecoveryError("invalid window dimensions")
-                panes = window["panes"]
-                if not 1 <= len(panes) <= 256 or sum(p["active"] is True for p in panes) != 1:
-                    raise RecoveryError("invalid panes or active pane")
-                pane_indices = [p["index"] for p in panes]
-                if any(type(i) is not int or i < 0 for i in pane_indices) or pane_indices != sorted(set(pane_indices)):
-                    raise RecoveryError("invalid pane order")
-                for pane in panes:
-                    cwd = Path(text(pane["cwd"]))
-                    if not cwd.is_absolute() or not cwd.is_dir():
+            if "." in name or ":" in name or self.exists(name):
+                raise RecoveryError("invalid or existing target session; choose --prefix or inspect it manually")
+            for window in session["windows"]:
+                for pane in window["panes"]:
+                    if not Path(pane["cwd"]).is_dir():
                         raise RecoveryError("checkpoint working directory is missing")
-                    text(pane["title"]); text(pane["label"])
                     for provider, identity in pane["providers"].items():
                         if provider not in self.providers or self.providers[provider]["option"] != identity["option"]:
                             raise RecoveryError("checkpoint requires a matching trusted adapter map")
-                        session_id(identity["session_id"])
                     if resume_agents and len(pane["providers"]) > 1:
                         raise RecoveryError("multiple provider IDs in one pane; select the intended identity first")
-                    if pane.get("document"):
-                        doc = Path(text(pane["document"]))
-                        if not doc.is_absolute() or resume_documents and not doc.is_file():
+                    if pane.get("document") and resume_documents:
+                        if not Path(pane["document"]).is_file():
                             raise RecoveryError("invalid or missing document path")
-                        if resume_agents and resume_documents and pane["providers"]:
+                        if resume_agents and pane["providers"]:
                             raise RecoveryError("agent and document resume conflict in one pane; choose one resume mode")
 
     def restore(self, payload, apply=False, prefix="", resume_agents=False, resume_documents=False):

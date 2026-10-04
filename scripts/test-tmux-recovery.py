@@ -59,6 +59,21 @@ with tempfile.TemporaryDirectory(prefix="recovery-fixture-") as tmp:
         saved = r.save(state, "all", payload, 3, 7)
         path = Path(saved["file"])
         assert path.stat().st_mode & 0o777 == 0o600
+        # Legal JSON with a wrong envelope must not block future checkpoints.
+        unknown = []
+        for i, invalid in enumerate(([], None, 42, "text", {"format": r.FORMAT})):
+            broken = state / (r.PREFIX + "broken-" + str(i) + ".json")
+            broken.write_text(json.dumps(invalid))
+            unknown.append((broken, broken.read_bytes()))
+        assert not r.save(state, "all", payload, 1, 7)["changed"]
+        before_files = {p.name: p.read_bytes() for p in state.iterdir()}
+        bad = copy.deepcopy(payload)
+        bad["sessions"][0]["windows"][0]["panes"][0]["title"] = "x" * 4097
+        rejected(lambda: r.save(state, "all", bad, 1, 7))
+        assert before_files == {p.name: p.read_bytes() for p in state.iterdir()}
+        for broken, contents in unknown:
+            assert broken.read_bytes() == contents
+            broken.unlink()  # Fixture cleanup, never engine retention.
         first_mtime = path.stat().st_mtime_ns
         same = r.save(state, "all", engine.capture(), 3, 7)
         assert not same["changed"] and path.stat().st_mtime_ns == first_mtime
