@@ -74,7 +74,7 @@ for path in generated.rglob("*"):
 if toml_files:
     expression = "map (path: builtins.fromTOML (builtins.readFile path)) [ " + " ".join(
         json.dumps(str(path)) for path in toml_files) + " ]"
-    subprocess.run(["nix", "--extra-experimental-features", "nix-command flakes", "eval", "--impure", "--expr", expression],
+    subprocess.run(["nix", "--extra-experimental-features", "nix-command flakes", "eval", "--json", "--impure", "--expr", expression],
                    check=True, stdout=subprocess.DEVNULL)
     parsed += len(toml_files)
 

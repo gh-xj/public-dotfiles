@@ -208,3 +208,16 @@ if len(sys.argv) > 1:
         assert "dotfiles:plan" in listed.stdout and "dotfiles:apply" in listed.stdout
         assert "new-human-req-doc" in listed.stdout
     print("generated global Task shim preserves common tasks and routes owning operations")
+    with tempfile.TemporaryDirectory(prefix="generated-toml-parser-") as tmp:
+        fixture = Path(tmp)
+        (fixture / "home-files").mkdir()
+        for source in (generation / "home-files").iterdir():
+            (fixture / "home-files" / source.name).symlink_to(source)
+        (fixture / "home-path").symlink_to((generation / "home-path").resolve())
+        toml = fixture / "home-files/fixture.toml"
+        for text, valid in (("[fixture]\nvalue = 1\n", True), ("[broken\n", False)):
+            toml.write_text(text)
+            checked = subprocess.run([sys.executable, str(root / "scripts/verify-generated-links.py"), str(fixture),
+                                      "--map", public_root + "=" + str(root)], capture_output=True, text=True)
+            assert (checked.returncode == 0) == valid, checked.stderr
+    print("native generated-config gate accepts valid TOML and rejects malformed TOML")
