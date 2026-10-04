@@ -7,6 +7,7 @@ pkgs: [
   pkgs.fzf
   pkgs.git
   pkgs."git-lfs"
+  pkgs."git-remote-gcrypt"
   pkgs.glow
   pkgs.hyperfine
   pkgs.jq
