@@ -190,6 +190,43 @@ for options, message in (
 print("standalone operator requires exactly one explicit operation")
 
 
+# Run the actual bootstrap main under macOS Bash 3.2 with all external effects
+# stubbed. Its command substitution must propagate each generation failure.
+with tempfile.TemporaryDirectory(prefix="bootstrap-failure-") as tmp:
+    fixture = Path(tmp)
+    source = (root / "scripts/bootstrap-macos.sh").read_text().rsplit('main "$@"', 1)[0]
+    driver = fixture / "driver.sh"
+    driver.write_text(source + r'''
+bootstrap_root="$1"
+target_user=fixture
+preflight() { host_platform=aarch64-darwin; }
+ensure_nix() { :; }
+guard_private_overlay_apply() { :; }
+build_activation() { printf built >"$bootstrap_root/built"; }
+apply_home_manager() { :; }
+case "$2" in
+  mkdir|mktemp|cat|mv) eval "$2() { return 41; }" ;;
+esac
+main --apply
+''')
+    for fault in ("mkdir", "mktemp", "cat", "mv", "ok"):
+        directory = fixture / fault
+        (directory / "fixture").mkdir(parents=True)
+        old = directory / "fixture/flake.nix"
+        old.write_text("old flake")
+        result = subprocess.run(["/bin/bash", str(driver), str(directory), fault], capture_output=True, text=True)
+        assert (result.returncode == 0) == (fault == "ok"), result.stderr
+        assert (directory / "built").exists() == (fault == "ok")
+        if fault != "ok":
+            assert old.read_text() == "old flake"
+            assert "generated local" not in result.stderr
+        assert not list(old.parent.glob(".flake.nix.*"))
+    escaped = subprocess.run(["/bin/bash", "-c", source + '\nnix_string "$1"', "fixture", "${builtins.toString 42}"],
+                             capture_output=True, text=True, check=True)
+    assert escaped.stdout == '"\\${builtins.toString 42}"', repr(escaped.stdout)
+print("bootstrap generation fails closed and quotes literal Nix interpolation")
+
+
 if len(sys.argv) > 1:
     generation = Path(sys.argv[1])
     text = (generation / "home-files/Taskfile.yml").read_text()

@@ -45,6 +45,8 @@ nix_string() {
   local value="$1"
   value="${value//\\/\\\\}"
   value="${value//\"/\\\"}"
+  local interpolation='${'
+  value="${value//"$interpolation"/\\$interpolation}"
   printf '"%s"' "$value"
 }
 
@@ -117,8 +119,10 @@ ensure_nix() {
 
 write_bootstrap_flake() {
   local flake_dir="$bootstrap_root/$target_user"
-  mkdir -p "$flake_dir"
-  cat >"$flake_dir/flake.nix" <<EOF
+  local temporary
+  mkdir -p "$flake_dir" || return 1
+  temporary="$(mktemp "$flake_dir/.flake.nix.XXXXXX")" || return 1
+  if ! cat >"$temporary" <<EOF
 {
   description = "Machine-local public-dotfiles Home Manager host";
   inputs = {
@@ -151,6 +155,14 @@ write_bootstrap_flake() {
   };
 }
 EOF
+  then
+    rm -f -- "$temporary"
+    return 1
+  fi
+  if [ -d "$flake_dir/flake.nix" ] || ! mv -f -- "$temporary" "$flake_dir/flake.nix"; then
+    rm -f -- "$temporary"
+    return 1
+  fi
   info "generated local Home Manager flake: $flake_dir/flake.nix"
   printf '%s\n' "$flake_dir"
 }
@@ -194,7 +206,7 @@ main() {
     rollback_home_manager
     return
   fi
-  flake_dir="$(write_bootstrap_flake)"
+  flake_dir="$(write_bootstrap_flake)" || die "cannot generate local Home Manager flake"
   build_activation "$flake_dir"
 
   if [ "$show_plan" -eq 1 ]; then
