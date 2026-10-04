@@ -13,11 +13,14 @@ buildGoModule rec {
 
   vendorHash = "sha256-97TzBn+JtSjCkA0CORFE8Rb8OGKg7qBJsEFEnBut8Kk=";
 
+  # Keep completion-note failures from closing tasks until the next upstream release.
+  patches = [ ./work-cli-done-note.patch ];
+
   subPackages = [ "cmd/work" ];
   ldflags = [
     "-s"
     "-w"
-    "-X github.com/gh-xj/work-cli/internal/workcli.appVersion=v${version}"
+    "-X github.com/gh-xj/work-cli/internal/workcli.appVersion=v${version}+done-note-fix"
   ];
 
   meta = {

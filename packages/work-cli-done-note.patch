@@ -1,0 +1,128 @@
+diff --git a/internal/work/store.go b/internal/work/store.go
+index 90671ab..da8fdef 100644
+--- a/internal/work/store.go
++++ b/internal/work/store.go
+@@ -338,6 +338,11 @@ func (s *Store) DoneWorkItem(input DoneWorkItemInput) (DoneWorkItemResult, error
+ 			completedAt := now
+ 			item.CompletedAt = &completedAt
+ 		}
++		// Persist requested evidence before closing the item or releasing its lease.
++		completionPath, err := s.writeCompletionNote(id, input, now)
++		if err != nil {
++			return err
++		}
+ 		if err := writeYAMLFile(s.workItemPath(id), item); err != nil {
+ 			return err
+ 		}
+@@ -349,10 +354,6 @@ func (s *Store) DoneWorkItem(input DoneWorkItemInput) (DoneWorkItemResult, error
+ 		} else {
+ 			result.LeaseReleased = true
+ 		}
+-		completionPath, err := s.writeCompletionNote(id, input, now)
+-		if err != nil {
+-			return err
+-		}
+ 		result.Item = item
+ 		result.CompletionPath = completionPath
+ 		return nil
+diff --git a/internal/work/store_test.go b/internal/work/store_test.go
+index 3b64dec..f9b0316 100644
+--- a/internal/work/store_test.go
++++ b/internal/work/store_test.go
+@@ -566,6 +566,96 @@ func TestDoneWorkItemMarksDoneReleasesLeaseAndWritesCompletion(t *testing.T) {
+ 	}
+ }
+ 
++func TestDoneWorkItemNoteFailurePreservesItemAndLease(t *testing.T) {
++	for _, obstruction := range []string{"space-file", "note-directory"} {
++		t.Run(obstruction, func(t *testing.T) {
++			store := newInitializedTestStore(t)
++			item, err := store.CreateWorkItem(WorkItemInput{Title: "Preserve unfinished work"})
++			if err != nil {
++				t.Fatal(err)
++			}
++			if _, err := store.ClaimWorkItem(ClaimWorkItemInput{
++				ID: item.ID, Actor: Actor{ID: "test-agent"}, TTL: time.Hour,
++			}); err != nil {
++				t.Fatal(err)
++			}
++			paths := []string{store.workItemPath(item.ID), store.workLeasePath(item.ID)}
++			before := make([][]byte, len(paths))
++			for i, path := range paths {
++				before[i], err = os.ReadFile(path)
++				if err != nil {
++					t.Fatal(err)
++				}
++			}
++			blockedPath := store.workItemSpacePath(item.ID)
++			if obstruction == "note-directory" {
++				blockedPath = filepath.Join(blockedPath, "completion.md")
++				if err := os.MkdirAll(blockedPath, 0o755); err != nil {
++					t.Fatal(err)
++				}
++				if err := os.WriteFile(filepath.Join(blockedPath, "keep"), []byte("existing content"), 0o644); err != nil {
++					t.Fatal(err)
++				}
++			} else {
++				if err := os.MkdirAll(filepath.Dir(blockedPath), 0o755); err != nil {
++					t.Fatal(err)
++				}
++				if err := os.WriteFile(blockedPath, []byte("existing file"), 0o644); err != nil {
++					t.Fatal(err)
++				}
++			}
++			input := DoneWorkItemInput{ID: item.ID, Summary: "Verified completion"}
++			if _, err := store.DoneWorkItem(input); err == nil {
++				t.Fatal("expected completion note write error")
++			}
++			for i, path := range paths {
++				after, err := os.ReadFile(path)
++				if err != nil {
++					t.Fatal(err)
++				}
++				if !bytes.Equal(before[i], after) {
++					t.Fatalf("note failure changed %s", path)
++				}
++			}
++			if err := os.RemoveAll(blockedPath); err != nil {
++				t.Fatal(err)
++			}
++			result, err := store.DoneWorkItem(input)
++			if err != nil {
++				t.Fatalf("retry after removing obstruction: %v", err)
++			}
++			if result.Item.Status != WorkStatusDone || !result.LeaseReleased {
++				t.Fatalf("unexpected retry result: %#v", result)
++			}
++			if note, err := os.ReadFile(result.CompletionPath); err != nil || !bytes.Contains(note, []byte(input.Summary)) {
++				t.Fatalf("retry completion note = %q, error = %v", note, err)
++			}
++		})
++	}
++}
++
++func TestDoneWorkItemWithoutNoteDoesNotNeedSpace(t *testing.T) {
++	store := newInitializedTestStore(t)
++	item, err := store.CreateWorkItem(WorkItemInput{Title: "Complete without notes"})
++	if err != nil {
++		t.Fatal(err)
++	}
++	spacePath := store.workItemSpacePath(item.ID)
++	if err := os.MkdirAll(filepath.Dir(spacePath), 0o755); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.WriteFile(spacePath, []byte("blocked space"), 0o644); err != nil {
++		t.Fatal(err)
++	}
++	result, err := store.DoneWorkItem(DoneWorkItemInput{ID: item.ID})
++	if err != nil {
++		t.Fatal(err)
++	}
++	if result.Item.Status != WorkStatusDone || result.CompletionPath != "" {
++		t.Fatalf("unexpected done result: %#v", result)
++	}
++}
++
+ func TestDoneWorkItemValidatesID(t *testing.T) {
+ 	store := newInitializedTestStore(t)
+ 	if _, err := store.DoneWorkItem(DoneWorkItemInput{ID: "missing"}); err == nil {

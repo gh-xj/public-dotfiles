@@ -1,10 +1,10 @@
 {
   "docs_root": "docs",
   "tasks": 7,
-  "script_files": 20,
-  "script_loc": 2524,
+  "script_files": 21,
+  "script_loc": 2879,
   "docs_files": 14,
-  "docs_loc": 907,
+  "docs_loc": 945,
   "hooks": 13,
   "skills": 2
 }

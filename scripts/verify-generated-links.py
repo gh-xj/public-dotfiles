@@ -48,6 +48,14 @@ def visit(path, ancestors=()):
 
 visit(generated)
 
+tmux_config = resolve(generated / ".config/tmux/tmux.conf").read_text()
+provider_line = next(line for line in tmux_config.splitlines() if line.startswith("set-environment -g PATH "))
+server_paths = shlex.split(provider_line)[3].split(":")
+assert str((generation / "home-path").resolve() / "bin") in server_paths, "tmux must use its generation's tools"
+assert all(path.startswith("/nix/store/") for path in server_paths[:3]), "pin Bash/tmux/profile before fallbacks"
+if "\nrun-shell" in tmux_config:
+    assert tmux_config.index(provider_line) < tmux_config.index("\nrun-shell"), "set server providers before plugins"
+
 for relative in (".claude/settings.json", ".codex/config.toml", ".codex/hooks.json"):
     assert not (generated / relative).exists(), f"mutable target is owned by home.file: {relative}"
 
