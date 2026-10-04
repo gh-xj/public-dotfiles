@@ -77,14 +77,13 @@ def detach_mutable(home, repo, apply=False, skip=(), legacy_only=(), old_generat
         verified_legacy = False
         if name in legacy_only:
             old = old_generation / "home-files" / name if old_generation else None
-            declared = name in metadata(old_generation).get("mutable_targets", [])
             public_sources = [repo / relative for relative in (
                 ".claude/settings.json", "config/claude/settings.json",
                 "config/codex/config.toml", "config/codex/hooks.json")]
             known_source = resolve(path) is not None and any(
                 resolve(path) == resolve(source) for source in public_sources)
             if not path.is_symlink() or not (known_source or (
-                    declared and resolve(old) is not None and resolve(path) == resolve(old))):
+                    resolve(old) is not None and resolve(path) == resolve(old))):
                 continue
             verified_legacy = True
         if path.parent.is_symlink() or path.parent.resolve().is_relative_to(repo.resolve()):

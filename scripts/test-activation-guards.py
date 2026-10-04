@@ -55,13 +55,10 @@ with tempfile.TemporaryDirectory(prefix="activation-guards-") as tmp:
     live.symlink_to(foreign)
     control.detach_mutable(home, repo, True, legacy_only=control.MUTABLE)
     assert live.is_symlink()
-    # A declared old public target is preserved when the feature is disabled.
+    # Preserve old managed bytes even when the generation predates metadata.
     old_file = old / "home-files/.codex/hooks.json"
     old_file.parent.mkdir(parents=True)
     old_file.symlink_to(foreign)
-    meta = old / "home-files/.config/public-dotfiles/generation.json"
-    meta.parent.mkdir(parents=True)
-    meta.write_text(json.dumps({"mutable_targets": [".codex/hooks.json"]}))
     control.detach_mutable(home, repo, True, legacy_only=control.MUTABLE, old_generation=old)
     assert not live.is_symlink() and live.read_text() == "foreign"
     parent = home / ".config/ghostty"
@@ -74,3 +71,13 @@ with tempfile.TemporaryDirectory(prefix="activation-guards-") as tmp:
     parent.mkdir()
     subprocess.run([bash, "-eu", "-c", preflight], check=True)
 print("activation guards: actual HM ordering, dry-run, feature disable, downstream ownership, Ghostty preflight passed")
+
+# A downstream activation may own the file without declaring any home.file.
+expression = f'''let f = builtins.getFlake {json.dumps(str(root))};
+  h = f.homeConfigurations.example.extendModules {{ modules = [{{
+    xj.publicDotfiles.agents.codexHooks.seed.enable = false;
+  }}]; }}; in h.config.home.activation.detachMutableAgentConfigs.data'''
+opted_out = subprocess.run(control.NIX + ["eval", "--impure", "--raw", "--expr", expression],
+                           check=True, capture_output=True, text=True).stdout
+assert "--skip .codex/hooks.json" in opted_out
+print("explicit seed opt-out remains authoritative without downstream home.file")

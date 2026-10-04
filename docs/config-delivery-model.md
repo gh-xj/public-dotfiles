@@ -57,8 +57,10 @@ editing the repository's `.tmux.conf` does not install the generated prelude.
 Mutable agent links are detached after Home Manager's `writeBoundary` and before
 `linkGeneration` cleans the old generation. Any set `DRY_RUN` value, including an
 empty value, leaves links intact. Disabling a public feature preserves legacy
-bytes only when the target resolves to a known public source or the old public
-generation declares that exact target. An enabled downstream `home.file` target
-always takes precedence when its public seed is disabled; unproven foreign links
-are left to their owner. Ghostty's parent directory is checked read-only before
+bytes only when the target resolves to a known public source or matches the old
+Home Manager generation's target, including generations predating public metadata.
+This preserves old managed bytes; it does not claim downstream ownership.
+An explicit seed opt-out always skips detachment, including when downstream
+activation owns the file without `home.file`. Enabled downstream `home.file`
+targets also take precedence; unproven foreign links are left to their owner. Ghostty's parent directory is checked read-only before
 link collision checks: resolve parent symlink ownership before activation.

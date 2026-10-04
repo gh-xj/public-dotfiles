@@ -12,7 +12,9 @@ let
   allMutableTargets = [ ".claude/settings.json" ".codex/config.toml" ".codex/hooks.json" ];
   downstreamTargets = builtins.filter (name:
     builtins.any (entry: entry.enable && entry.target == name) (builtins.attrValues config.home.file)
-  ) allMutableTargets;
+  ) allMutableTargets
+    ++ lib.optionals (!cfg.agents.claudeSettings.seed.enable) [ ".claude/settings.json" ]
+    ++ lib.optionals (!cfg.agents.codexHooks.seed.enable) [ ".codex/hooks.json" ];
   legacyOnlyTargets = builtins.filter (name: !(builtins.elem name mutableTargets)) allMutableTargets;
 in {
   config = lib.mkIf cfg.enable {
