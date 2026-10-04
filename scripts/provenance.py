@@ -93,6 +93,13 @@ def label(directory, home, profile):
     return "other-managed"
 
 
+def provider(path, home, profile):
+    # Home Manager may also link a command into ~/.local/bin; that is the same owner.
+    if path.is_symlink() and "-home-manager-files/" in os.readlink(path):
+        return "home-manager"
+    return label(path.parent, home, profile)
+
+
 def audit(home, profile, brewfile, mise_config, path_value):
     declared = {}
     for command in executables(profile / "home-path/bin"):
@@ -114,7 +121,7 @@ def audit(home, profile, brewfile, mise_config, path_value):
                 directories.append(directory)
     issues = [(item, []) for item in setup_missing]
     for command, owners in sorted(declared.items()):
-        providers = sorted({label(directory, home, profile) for directory in directories
+        providers = sorted({provider(directory / command, home, profile) for directory in directories
                             if (directory / command).is_file() and os.access(directory / command, os.X_OK)})
         if len(providers) != 1 or providers[0] not in {OWNER_PROVIDERS[owner] for owner in owners}:
             issues.append((command + " [" + ",".join(sorted(owners)) + "]", providers))
@@ -127,8 +134,13 @@ def main():
     parser.add_argument("--profile", type=Path)
     parser.add_argument("--brewfile", type=Path, default=Path(__file__).resolve().parent.parent / "Brewfile")
     parser.add_argument("--mise-config", type=Path, default=Path(__file__).resolve().parent.parent / "config/mise/config.toml")
-    parser.add_argument("--path", default=os.environ.get("PATH", ""))
+    parser.add_argument("--path", help="PATH to audit (default: a fresh login shell's PATH)")
     args = parser.parse_args()
+    if args.path is None:
+        # Audit what a new shell gets, not the possibly stale caller environment.
+        env = {"HOME": str(args.home), "USER": os.environ.get("USER", "")}
+        args.path = subprocess.run(["/bin/zsh", "-lc", 'print -r -- "$PATH"'], env=env,
+                                   capture_output=True, text=True, check=True).stdout.strip()
     profile = args.profile or args.home / ".local/state/nix/profiles/home-manager"
     declared, issues = audit(args.home, profile, args.brewfile, args.mise_config, args.path)
     for command, providers in issues:
