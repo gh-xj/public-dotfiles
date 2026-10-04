@@ -38,3 +38,16 @@ part of the intended workflow. Use store-backed immutable links by default.
 | `~/.tmux.conf` | Generated shim | Bridges into Home Manager's generated tmux config |
 | `~/.config/raycast/scripts` | Repo-backed immutable link | Raycast setup needs the durable repo path for UI registration |
 | `~/.config/bat` | Store-backed immutable link | Static public config with no live repo-path requirement |
+
+## tmux Server Providers
+
+Home Manager generates a PATH prelude before its base configuration and plugin
+initializers. Bash, tmux, and the same generation's `home.path/bin` precede the
+existing Brew/system fallback. This covers a fresh server started by a GUI and
+server `run-shell` commands without depending on an interactive shell startup.
+The fzf URL plugin's unused `/tmp/filter` debug write is removed at build time.
+
+After activation, source the generated `~/.tmux.conf` to update an existing
+server. Reloading does not rewrite environments in existing panes or explicit
+per-session PATH overrides; those need their own intentional refresh. Merely
+editing the repository's `.tmux.conf` does not install the generated prelude.

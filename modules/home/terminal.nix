@@ -14,6 +14,15 @@ let
     ]
     ++ map (selector: "bind -n M-${selector.tmuxKey} ${selector.tmuxCommand}") legacySelectors
   );
+  # Pin tools to this generation, including bash for plugin env shebangs.
+  tmuxServerPath = lib.makeBinPath [ pkgs.bash pkgs.tmux config.home.path ]
+    + ":/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+  fzfTmuxUrl = pkgs.tmuxPlugins.fzf-tmux-url.overrideAttrs (old: {
+    postInstall = (old.postInstall or "") + ''
+      substituteInPlace "$target/fzf-url.tmux" \
+        --replace-fail 'echo "$extra_filter" > /tmp/filter' ""
+    '';
+  });
   easyjumpTmux = pkgs.tmuxPlugins.mkTmuxPlugin {
     pluginName = "easyjump";
     path = "easyjump.tmux";
@@ -33,6 +42,12 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
+    # HM's base config uses mkBefore (500), plugins use normal order (1000),
+    # and extraConfig uses mkAfter (1500). PATH must precede plugin execution.
+    xdg.configFile."tmux/tmux.conf".text = lib.mkOrder 499 ''
+      set-environment -g PATH "${tmuxServerPath}"
+    '';
+
     programs.tmux = {
       enable = true;
       package = null;
@@ -44,7 +59,7 @@ in
       prefix = "C-s";
       terminal = "tmux-256color";
       plugins = [
-        pkgs.tmuxPlugins.fzf-tmux-url
+        fzfTmuxUrl
         {
           plugin = easyjumpTmux;
           extraConfig = ''
