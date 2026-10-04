@@ -3,8 +3,11 @@
 import importlib.util
 import os
 from pathlib import Path
+import sys
 import tempfile
+from unittest.mock import patch
 
+sys.dont_write_bytecode = True
 root = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location("provenance", root / "scripts/provenance.py")
 provenance = importlib.util.module_from_spec(spec)
@@ -34,4 +37,17 @@ with tempfile.TemporaryDirectory(prefix="provenance-") as tmp:
                for item, providers in provenance.audit(home, profile, brewfile, mise, duplicate)[1])
     assert any(item.startswith("node ") and not providers
                for item, providers in provenance.audit(home, profile, brewfile, mise, str(profile / "home-path/bin"))[1])
+    for command in ("node", "npm", "npx", "corepack"):
+        executable(brew / "bin" / command)
+    original_label = provenance.label
+    def fixture_label(directory, fixture_home, fixture_profile):
+        return "homebrew" if directory == brew / "bin" else original_label(directory, fixture_home, fixture_profile)
+    with patch.object(provenance, "label", side_effect=fixture_label):
+        wrong_path = os.pathsep.join((str(profile / "home-path/bin"), str(brew / "bin")))
+        mismatches = provenance.audit(home, profile, brewfile, mise, wrong_path)[1]
+        assert all((command + " [mise]", ["homebrew"]) in mismatches for command in ("node", "npm", "npx", "corepack"))
+    local = home / ".local/bin"
+    local.mkdir(parents=True)
+    executable(local / "task")
+    assert ("task [nix]", ["user-local"]) in provenance.audit(home, profile, brewfile, mise, str(local))[1]
 print("managed command provenance fixtures passed")

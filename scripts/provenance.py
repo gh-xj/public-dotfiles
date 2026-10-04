@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Report missing or duplicate managed providers for declared commands on PATH."""
+"""Report missing, duplicate or wrongly owned providers for declared commands."""
 import argparse
 import os
 from pathlib import Path
@@ -8,6 +8,7 @@ import shutil
 import subprocess
 
 SYSTEM_DIRS = {"/usr/bin", "/bin", "/usr/sbin", "/sbin"}
+OWNER_PROVIDERS = {"nix": "home-manager", "brew": "homebrew", "mise": "mise"}
 MISE_COMMANDS = {
     "node": {"node", "npm", "npx", "corepack"},
     "go": {"go", "gofmt"},
@@ -115,7 +116,7 @@ def audit(home, profile, brewfile, mise_config, path_value):
     for command, owners in sorted(declared.items()):
         providers = sorted({label(directory, home, profile) for directory in directories
                             if (directory / command).is_file() and os.access(directory / command, os.X_OK)})
-        if len(providers) != 1:
+        if len(providers) != 1 or providers[0] not in {OWNER_PROVIDERS[owner] for owner in owners}:
             issues.append((command + " [" + ",".join(sorted(owners)) + "]", providers))
     return declared, issues
 
@@ -131,7 +132,7 @@ def main():
     profile = args.profile or args.home / ".local/state/nix/profiles/home-manager"
     declared, issues = audit(args.home, profile, args.brewfile, args.mise_config, args.path)
     for command, providers in issues:
-        state = "missing" if not providers else "duplicate: " + ", ".join(providers)
+        state = "missing" if not providers else ("owner mismatch: " if len(providers) == 1 else "duplicate: ") + ", ".join(providers)
         print(f"{command}: {state}")
     print(f"command provenance: {len(declared)} declared commands, {len(issues)} issue(s)")
     raise SystemExit(bool(issues))

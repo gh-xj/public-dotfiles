@@ -44,7 +44,7 @@ global bin directories.
 
 `doctor` compares the live home with its active generation, checks macOS and
 Brewfile drift, and audits every command declared by Home Manager, Brewfile, or
-mise. Missing commands and multiple managed providers are failures; doctor
+mise. Missing, duplicate or wrongly owned managed providers are failures; doctor
 reports them without installing, removing, or activating anything.
 
 After a package change, start a new shell or `rehash`; restart running programs
