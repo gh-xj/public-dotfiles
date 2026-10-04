@@ -5,11 +5,13 @@ import importlib.util
 import json
 import plistlib
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location("settings", Path(__file__).with_name("macos-settings.py"))
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
