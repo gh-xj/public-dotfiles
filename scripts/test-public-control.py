@@ -164,6 +164,22 @@ with tempfile.TemporaryDirectory(prefix="native-plan-") as tmp:
     assert report["apply_command"] == "task -g dotfiles:apply"
 print("plan describes built file changes and reloads without activating or changing live state")
 
+with patch.object(control.Control, "select", side_effect=AssertionError("must reject before probing")):
+    with patch.object(sys, "argv", ["public-control.py", "plan", "--generation", "/nonexistent", "--scope", "system"]):
+        try:
+            control.main()
+        except SystemExit as error:
+            assert error.code == 2
+        else:
+            raise AssertionError("obsolete system scope must be rejected")
+try:
+    app.plan("system")
+except control.SafeError as error:
+    assert "home-scope-only" in str(error)
+else:
+    raise AssertionError("internal callers must not describe unsupported system activation")
+print("obsolete system planning is rejected before inspecting live state")
+
 
 for options, message in (
     (("--plan", "--apply"), "choose one operation"),

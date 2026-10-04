@@ -372,6 +372,8 @@ class Control:
         return {"commands": result, "paired_runtime_versions_match": len(set(versions)) == 1 if all(versions) else None}
 
     def plan(self, scope="home", source_mode="working-tree"):
+        if scope != "home":
+            raise SafeError("plan-supports-home-scope-only; use the standalone Home Manager owner")
         if self.desired is None or not self.desired.exists():
             raise SafeError("plan-requires-built-generation; build the owning profile first")
         desired, truncated = leaves(self.desired / "home-files")
@@ -418,13 +420,13 @@ class Control:
             "runtime_seeds": "Existing app-owned settings are preserved; review doctor integration suggestions separately",
             "repository_files": "Repo links can already reflect uncommitted edits; static snapshots use the selected source",
             "after_apply": sorted(reloads),
-            "apply_command": "task -g dotfiles:apply" if scope == "home" else "no public system apply",
+            "apply_command": "task -g dotfiles:apply",
             "generation_changed": resolve(self.active) != resolve(self.desired),
         }
 
 
 def print_plan(report):
-    print("Scope: " + report["scope"] + (" (includes system settings; sudo is required for apply)" if report["scope"] == "system" else " (Home Manager; no sudo)"))
+    print("Scope: " + report["scope"] + " (Home Manager; no sudo)")
     print("Source: " + report["source_mode"])
     if report["source"]["dirty"]:
         print("Checkout has pending edits: " + ("snapshots ignore them; commit before apply" if report["source_mode"] == "committed-head" else "this standalone preview includes them"))
@@ -452,7 +454,7 @@ def main():
     doctor.add_argument("--flake", default=os.getenv("PUBLIC_DOTFILES_HOME_FLAKE"))
     plan = sub.add_parser("plan", help="Preview a built native generation; never activate it")
     plan.add_argument("--generation", type=Path, required=True)
-    plan.add_argument("--scope", choices=("home", "system"), default="home")
+    plan.add_argument("--scope", choices=("home",), default="home")
     plan.add_argument("--source-mode", choices=("working-tree", "committed-head"), default="working-tree")
     plan.add_argument("--json", action="store_true")
     detach = sub.add_parser("detach-agent-configs", help=argparse.SUPPRESS)
