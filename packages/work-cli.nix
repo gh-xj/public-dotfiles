@@ -20,7 +20,7 @@ buildGoModule rec {
   ldflags = [
     "-s"
     "-w"
-    "-X github.com/gh-xj/work-cli/internal/workcli.appVersion=v${version}+done-note-fix"
+    "-X github.com/gh-xj/work-cli/internal/workcli.appVersion=v${version}-done-note-fix"
   ];
 
   meta = {
