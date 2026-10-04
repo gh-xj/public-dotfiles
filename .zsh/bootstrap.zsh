@@ -41,15 +41,18 @@ _xj_cache_tool_init() {
     local dep
     integer stale=0
 
-    [[ -f "$cache" ]] || stale=1
-    [[ "$bin" -nt "$cache" ]] && stale=1
+    # Nix store binaries all have epoch mtimes, so key the cache on the
+    # resolved binary path recorded in its first line.
+    local first=""
+    [[ -f "$cache" ]] && read -r first < "$cache"
+    [[ "$first" == "# ${bin:A}" ]] || stale=1
     for dep in "${deps[@]}"; do
         [[ -e "$dep" && "$dep" -nt "$cache" ]] && stale=1
     done
 
     if (( stale )); then
         mkdir -p "$HOME/.cache"
-        "$@" >| "$cache" 2>/dev/null || return 1
+        { print -r -- "# ${bin:A}"; "$@" } >| "$cache" 2>/dev/null || return 1
     fi
 
     [[ -r "$cache" ]] || return 1
