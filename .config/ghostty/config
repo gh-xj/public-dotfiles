@@ -1,0 +1,26 @@
+adjust-cell-height = 20%
+confirm-close-surface = false
+font-family = RecMonoDuotone Nerd Font
+font-size = 16
+font-thicken = true
+keybind = global:cmd+shift+option+a=toggle_quick_terminal
+keybind = all:cmd+ctrl+h=text:\x13{
+keybind = all:cmd+ctrl+l=text:\x13}
+keybind = ctrl+left=text:\x13p
+keybind = ctrl+right=text:\x13n
+keybind = ctrl+shift+comma=text:\x13H
+keybind = ctrl+shift+period=text:\x13L
+keybind = super+t=text:\x13c
+keybind = super+w=text:\x13X
+keybind = super+d=text:\x13|
+keybind = super+shift+d=text:\x13_
+keybind = super+shift+enter=text:\x13z
+keybind = super+ctrl+equal=text:\x13E
+keybind = all:super+shift+[=text:\x13h
+keybind = all:super+shift+j=text:\x13j
+keybind = all:super+shift+k=text:\x13k
+keybind = all:super+shift+]=text:\x13l
+keybind = shift+enter=text:\x1b\r
+macos-option-as-alt = true
+quick-terminal-animation-duration = 0
+theme = light:Atom One Light,dark:One Dark Two

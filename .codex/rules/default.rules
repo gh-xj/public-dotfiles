@@ -1,0 +1,30 @@
+prefix_rule(pattern=["task", "check"], decision="allow")
+prefix_rule(pattern=["task", "plan"], decision="allow")
+prefix_rule(pattern=["task", "doctor"], decision="allow")
+prefix_rule(pattern=["task", "capture"], decision="allow")
+
+prefix_rule(
+    pattern=["task", ["apps", "ssh:install", "recovery:verify"]],
+    decision="forbidden",
+    justification="Package installation and secret recovery require the human operator.",
+)
+prefix_rule(
+    pattern=[["scripts/root.sh", "./scripts/root.sh"]],
+    decision="forbidden",
+    justification="Root configuration is human-only.",
+)
+prefix_rule(
+    pattern=[["bash", "zsh"], ["scripts/root.sh", "./scripts/root.sh"]],
+    decision="forbidden",
+    justification="Root configuration is human-only.",
+)
+prefix_rule(
+    pattern=[["sudo", "/usr/bin/sudo"]],
+    decision="forbidden",
+    justification="Agents never use sudo in the dotfiles workflow.",
+)
+prefix_rule(
+    pattern=[["sops", "age", "op"]],
+    decision="forbidden",
+    justification="Secret material and recovery tools are human-only.",
+)

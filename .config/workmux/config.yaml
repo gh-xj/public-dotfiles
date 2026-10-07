@@ -1,0 +1,7 @@
+{
+  "nerdfont": true,
+  "agent": "codex",
+  "window_prefix": "wm-",
+  "window_placement": "rightmost",
+  "status_format": false
+}

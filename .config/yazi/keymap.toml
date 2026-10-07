@@ -1,0 +1,76 @@
+# Maintain personal bindings; inherit the rest from the installed Yazi release.
+# o and P are prefixes; t and gt deliberately keep their older single-key meanings.
+
+[mgr]
+prepend_keymap = [
+  # Files and external apps
+  { on = [ "o", "o" ], run = "open", desc = "Open with the configured rule" },
+  { on = [ "o", "p" ], run = "shell 'open %s'", desc = "Open selected files with the default macOS app" },
+  { on = [ "o", "y" ], run = "shell 'open -a \"Yoink\" %s'", desc = "Send selected files to Yoink" },
+  { on = "b", run = "shell --block 'nvim %s'", desc = "Edit selected files in Neovim; return when closed" },
+  { on = "<C-p>", run = "shell --orphan 'qlmanage -p %s'", desc = "Quick Look selected files" },
+  { on = [ "U", "d" ], run = "plugin move-to-done", desc = "Move selected files to Done" },
+  { on = [ "g", "c" ], run = "plugin vcs-files", desc = "Show Git file changes" },
+  { on = "<C-g>", run = "shell --block lazygit", desc = "Open Lazygit" },
+
+  # Search: list filter, fuzzy jump, and recursive search are separate workflows.
+  { on = "f", run = "plugin fzf", desc = "Fuzzy find a file or directory" },
+  { on = "F", run = "filter --smart", desc = "Filter the current file list" },
+  { on = "<C-f>", run = "plugin xj-fzf", desc = "Search recursively, including hidden and ignored files" },
+  { on = "<C-t>", run = "plugin smart-filter", desc = "Smart filter the current file list" },
+  { on = "z", run = "plugin zoxide", desc = "Jump to a directory via zoxide" },
+  { on = "Z", run = "plugin fzf", desc = "Fuzzy find a file or directory" },
+
+  # Navigation: hjkl moves files; left/right switches tabs; up/down scrolls preview.
+  { on = "k", run = "arrow -1", desc = "Move cursor up" },
+  { on = "j", run = "arrow 1", desc = "Move cursor down" },
+  { on = "K", run = "arrow -5", desc = "Move cursor up 5 files" },
+  { on = "J", run = "arrow 5", desc = "Move cursor down 5 files" },
+  { on = "[", run = [ "leave", "arrow -1", "enter" ], desc = "Enter the previous sibling directory" },
+  { on = "]", run = [ "leave", "arrow 1", "enter" ], desc = "Enter the next sibling directory" },
+  { on = [ "g", "l" ], run = "follow", desc = "Follow the hovered symlink" },
+  { on = [ "g", "t" ], run = "cd ~/Documents/today", desc = "Go to today" },
+  { on = [ "g", "r" ], run = "cd /", desc = "Go to the filesystem root" },
+  { on = "<Up>", run = "seek -5", desc = "Scroll preview up 5 lines" },
+  { on = "<Down>", run = "seek 5", desc = "Scroll preview down 5 lines" },
+  { on = "e", run = "plugin toggle-view preview", desc = "Hide or show preview" },
+
+  # Tabs: F-keys create a missing tab; numbers remain relative motions.
+  { on = "<Left>", run = "tab_switch -1 --relative", desc = "Switch to the previous tab" },
+  { on = "<Right>", run = "tab_switch 1 --relative", desc = "Switch to the next tab" },
+  { on = "t", run = "tab_create --current", desc = "Create a tab in the current directory" },
+  { on = "<F1>", run = "plugin switch-create-tab 0", desc = "Switch to or create tab 1" },
+  { on = "<F2>", run = "plugin switch-create-tab 1", desc = "Switch to or create tab 2" },
+  { on = "<F3>", run = "plugin switch-create-tab 2", desc = "Switch to or create tab 3" },
+  { on = "<F4>", run = "plugin switch-create-tab 3", desc = "Switch to or create tab 4" },
+  { on = "<F5>", run = "plugin switch-create-tab 4", desc = "Switch to or create tab 5" },
+  { on = "1", run = "plugin relative-motions 1", desc = "Start a relative motion with 1" },
+  { on = "2", run = "plugin relative-motions 2", desc = "Start a relative motion with 2" },
+  { on = "3", run = "plugin relative-motions 3", desc = "Start a relative motion with 3" },
+  { on = "4", run = "plugin relative-motions 4", desc = "Start a relative motion with 4" },
+  { on = "5", run = "plugin relative-motions 5", desc = "Start a relative motion with 5" },
+  { on = "6", run = "plugin relative-motions 6", desc = "Start a relative motion with 6" },
+  { on = "7", run = "plugin relative-motions 7", desc = "Start a relative motion with 7" },
+  { on = "8", run = "plugin relative-motions 8", desc = "Start a relative motion with 8" },
+  { on = "9", run = "plugin relative-motions 9", desc = "Start a relative motion with 9" },
+
+  # Projects owns the P prefix, including the old force-paste key.
+  { on = [ "P", "s" ], run = "plugin projects save", desc = "Save current project" },
+  { on = [ "P", "l" ], run = "plugin projects load", desc = "Load project" },
+  { on = [ "P", "P" ], run = "plugin projects load_last", desc = "Load last project" },
+  { on = [ "P", "d" ], run = "plugin projects delete", desc = "Delete project" },
+  { on = [ "P", "D" ], run = "plugin projects delete_all", desc = "Delete all projects" },
+  { on = [ "P", "m" ], run = "plugin projects 'merge current'", desc = "Merge current tab into another Yazi instance" },
+  { on = [ "P", "M" ], run = "plugin projects 'merge all'", desc = "Merge all tabs into another Yazi instance" },
+
+  # Preserve older rename positions and close/quit behavior.
+  { on = "A", run = "rename --cursor=end", desc = "Rename from the end of the filename" },
+  { on = "I", run = "rename --cursor=start", desc = "Rename from the start of the filename" },
+  { on = "q", run = "close --no-cwd-file", desc = "Close this tab; keep the shell directory when exiting" },
+  { on = "Q", run = "quit", desc = "Quit Yazi and update the shell directory" },
+]
+
+[input]
+prepend_keymap = [
+  { on = "<Esc>", run = "close", desc = "Cancel input" },
+]

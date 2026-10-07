@@ -1,0 +1,81 @@
+[
+  {
+    "context": "Editor && mode == full && vim_mode == normal && !menu",
+    "bindings": {
+      "j": ["vim::Down", {"display_lines": true}],
+      "k": ["vim::Up", {"display_lines": true}],
+      "shift-j": ["workspace::SendKeystrokes", "5 g j"],
+      "shift-k": ["workspace::SendKeystrokes", "5 g k"],
+      "t": "editor::ScrollCursorTop",
+      ", ,": "editor::ScrollCursorCenter",
+      "up": "vim::LineUp",
+      "down": "vim::LineDown",
+      "left": "pane::ActivatePreviousItem",
+      "right": "pane::ActivateNextItem",
+      "alt-h": "pane::ActivatePreviousItem",
+      "alt-l": "pane::ActivateNextItem",
+      "f1": ["pane::ActivateItem", 0],
+      "f2": ["pane::ActivateItem", 1],
+      "f3": ["pane::ActivateItem", 2],
+      "f4": ["pane::ActivateItem", 3],
+      "f5": ["pane::ActivateItem", 4],
+      "f6": ["pane::ActivateItem", 5],
+      "f7": ["pane::ActivateItem", 6],
+      "f8": ["pane::ActivateItem", 7],
+      "f9": ["pane::ActivateItem", 8],
+      "f10": "pane::AlternateFile",
+      "ctrl-p": "file_finder::Toggle",
+      ", f": "file_finder::Toggle",
+      ", b": "tab_switcher::Toggle",
+      ", r": "pane::DeploySearch",
+      ", c": "command_palette::Toggle",
+      ", o": "outline_panel::ToggleFocus",
+      ", r n": "editor::Rename",
+      ", l": ["workspace::SendKeystrokes", ": n o h l enter"],
+      ", d": ["workspace::SendKeystrokes", "\" _ d d"],
+      ", x": "pane::CloseActiveItem",
+      ", =": "editor::Format",
+      ", g g": ["task::Spawn", {"task_name": "Lazygit", "reveal_target": "center"}],
+      ", g d": "git::Diff",
+      ", g f": "file_finder::Toggle",
+      "ctrl-e": ["task::Spawn", {"task_name": "Yazi", "reveal_target": "center"}],
+      ", e": ["task::Spawn", {"task_name": "Yazi", "reveal_target": "center"}],
+      ", v s": "pane::SplitVertical",
+      ", h s": "pane::SplitHorizontal",
+      ", s r": "pane::SplitVertical",
+      ", s b": "pane::SplitHorizontal",
+      ", t t": "workspace::NewTerminal",
+      "] w": "workspace::ActivateNextPane",
+      "[ w": "workspace::ActivatePreviousPane"
+    }
+  },
+  {
+    "context": "Editor && mode == full && vim_mode == visual && !menu",
+    "bindings": {
+      "j": ["vim::Down", {"display_lines": true}],
+      "k": ["vim::Up", {"display_lines": true}],
+      "shift-j": ["workspace::SendKeystrokes", "5 g j"],
+      "shift-k": ["workspace::SendKeystrokes", "5 g k"],
+      "up": "vim::LineUp",
+      "down": "vim::LineDown"
+    }
+  },
+  {
+    "context": "Workspace && !Terminal",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-1": ["workspace::ActivatePane", 0],
+      "cmd-2": ["workspace::ActivatePane", 1],
+      "cmd-3": ["workspace::ActivatePane", 2],
+      "cmd-4": ["workspace::ActivatePane", 3],
+      "cmd-5": ["workspace::ActivatePane", 4],
+      "cmd-6": ["workspace::ActivatePane", 5],
+      "cmd-7": ["workspace::ActivatePane", 6],
+      "cmd-8": ["workspace::ActivatePane", 7]
+    }
+  },
+  {
+    "context": "Terminal",
+    "bindings": {"shift-enter": ["terminal::SendText", "\u001b\r"]}
+  }
+]

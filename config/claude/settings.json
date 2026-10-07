@@ -1,0 +1,121 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(jq *)",
+      "Bash(rg *)",
+      "Bash(imsg chats *)",
+      "Bash(imsg history *)",
+      "Bash(imsg search *)",
+      "Bash(imsg group *)",
+      "Bash(gws calendar +agenda *)",
+      "Bash(gws calendar events list *)",
+      "Bash(gws calendar events get *)",
+      "Bash(gws calendar freebusy query *)"
+    ],
+    "deny": [
+      "Bash(rg --pre*)",
+      "Bash(rg * --pre*)",
+      "Bash(gws calendar * -o*)",
+      "Bash(gws calendar * --output*)"
+    ]
+  },
+  "cleanupPeriodDays": 365,
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agent-workmux-status working"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agent-workmux-status waiting"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agent-workmux-status done"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agent-session claude start"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agent-session claude end"
+          }
+        ]
+      }
+    ],
+    "PostToolBatch": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agent-workmux-status resume"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"$HOME/.claude/statusline-command.sh\""
+  },
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  },
+  "theme": "light",
+  "editorMode": "vim",
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "tui": "fullscreen",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "xhigh"
+    }
+  }
+}

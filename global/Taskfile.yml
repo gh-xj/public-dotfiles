@@ -1,0 +1,29 @@
+version: "3"
+
+tasks:
+  new-human-req-doc:
+    desc: Create a human request doc and open it in the configured editor
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - |
+        set -eu
+        set -- {{.CLI_ARGS}}
+        case "${1:-}" in
+          --name|-n) name="${2:-}"; [ "$#" -eq 2 ] ;;
+          *) name="" ;;
+        esac
+        [ -n "$name" ] || { printf '%s\n' 'usage: task new-human-req-doc -- --name "your title"' >&2; exit 1; }
+        slug="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
+        [ -n "$slug" ] || { printf '%s\n' 'name produced an empty slug' >&2; exit 1; }
+        mkdir -p .docs/human-requests
+        base=".docs/human-requests/$(date +%Y-%m-%d)-$slug.md"
+        path="$base"
+        suffix=2
+        while [ -e "$path" ]; do path="${base%.md}-$suffix.md"; suffix=$((suffix + 1)); done
+        printf '# %s\n' "$name" >"$path"
+        if [ -n "${TMUX:-}" ] && [ -n "${TMUX_PANE:-}" ]; then
+          window_name="$(printf '%s' "$name" | tr ' ' '-')"
+          tmux rename-window -t "$TMUX_PANE" "$window_name"
+          tmux set-option -p -t "$TMUX_PANE" @recovery_document "$PWD/$path"
+        fi
+        "${EDITOR:-nvim}" "$path"

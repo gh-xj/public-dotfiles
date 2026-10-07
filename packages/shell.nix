@@ -1,0 +1,30 @@
+pkgs: [
+  pkgs.bash
+  pkgs.bat
+  pkgs.btop
+  pkgs.coreutils
+  pkgs.eza
+  pkgs.fastfetch
+  pkgs.fd
+  pkgs.fzf
+  pkgs.git
+  pkgs."git-lfs"
+  pkgs."git-remote-gcrypt"
+  pkgs.gnupg
+  pkgs.glow
+  pkgs.hyperfine
+  pkgs.jq
+  pkgs.ripgrep
+  pkgs.starship
+  pkgs.tealdeer
+  pkgs.trash-cli
+  (pkgs.callPackage ./yazi.nix { })
+  pkgs."yq-go"
+  pkgs.zoxide
+  pkgs.zsh
+  pkgs."zsh-autopair"
+  pkgs."zsh-autosuggestions"
+  pkgs."zsh-fzf-tab"
+  pkgs."zsh-syntax-highlighting"
+  pkgs."zsh-vi-mode"
+]

@@ -1,0 +1,45 @@
+#:schema https://yazi-rs.github.io/schemas/yazi.json
+# Keep only intentional differences from Yazi's maintained defaults.
+
+[mgr]
+sort_by      = "natural"
+linemode     = "size"
+show_hidden  = true
+mouse_events = [ "click", "scroll" ]
+
+[opener]
+# Keep Finder's Reveal as the only reveal action; no extra EXIF utility menu.
+reveal = [
+  { run = "open -R %s1", desc = "Reveal in Finder", for = "macos" },
+]
+bulk-rename = [
+  { run = "nvim %s", block = true, desc = "Rename in Neovim", for = "unix" },
+]
+sqlite-schema = [
+  { run = "sqlite3 -readonly %s1 '.schema'; result=$?; printf '\\nPress Enter to return to Yazi'; read -r _; exit \"$result\"", block = true, desc = "Show database schema (read-only)", for = "unix" },
+]
+
+[open]
+# Restrict local exceptions so remote downloads and trash actions remain inherited.
+# ** avoids the legacy wildcard deduplication in Yazi 26.5.6.
+prepend_rules = [
+  { url = "local://bulk-rename.txt", use = "bulk-rename" },
+  { url = "local://*.{sqlite,sqlite3}", use = [ "sqlite-schema", "open", "reveal" ] },
+  { url = "local://**", mime = "application/vnd.sqlite3", use = [ "sqlite-schema", "open", "reveal" ] },
+  # .db is not necessarily SQLite; leave other database formats to their GUI app.
+  { url = "local://*.db", use = [ "open", "reveal" ] },
+  { url = "local://*.{md,log,log.*,jsonl,ndjson}", use = [ "edit", "reveal" ] },
+  { url = "local://**", mime = "{audio,video}/*", use = [ "open", "reveal" ] },
+  { url = "local://**", mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", use = [ "open", "reveal" ] },
+]
+
+[plugin]
+prepend_fetchers = [
+  { url = "local://**", run = "git", group = "git" },
+  { url = "local://**/", run = "git", group = "git" },
+]
+
+prepend_previewers = [
+  # Piper passes the preview path as $1; Yazi's %s formatter does not apply here.
+  { url = "local://**/", run = 'piper -- eza --tree --level=2 --all --color=always --icons=always --group-directories-first --no-quotes --follow-symlinks "$1"' },
+]

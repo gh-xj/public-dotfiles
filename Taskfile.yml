@@ -1,0 +1,64 @@
+version: "3"
+
+env:
+  NIX_CONFIG: experimental-features = nix-command flakes
+
+vars:
+  # A downstream overlay (private config, work overlay) passes its own ledger.
+  EXTRA_BREWFILE: ""
+  BREWFILES: 'Brewfile{{if .EXTRA_BREWFILE}} {{.EXTRA_BREWFILE}}{{end}}'
+
+tasks:
+  check:
+    desc: Run the pure repository and Home Manager generation gate
+    cmds:
+      - ./scripts/check.sh
+
+  plan:
+    desc: Build and preview standalone Home Manager changes without activation
+    cmds:
+      - ./scripts/bootstrap-macos.sh --plan {{.CLI_ARGS}}
+
+  apply:
+    desc: Apply Home Manager and declared macOS settings without sudo
+    cmds:
+      - ./scripts/bootstrap-macos.sh --apply {{.CLI_ARGS}}
+
+  rollback:
+    desc: Roll back and activate the previous Home Manager generation
+    cmds:
+      - ./scripts/bootstrap-macos.sh --rollback
+
+  doctor:
+    desc: Diagnose live configuration, package ledgers, and command provenance (read-only)
+    silent: true
+    cmds:
+      - |
+        status=0
+        python3 scripts/public-control.py doctor --live || status=1
+        scripts/verify-home-drift.sh || status=1
+        python3 scripts/macos-settings.py diff || status=1
+        brew_cmd="$(command -v brew || true)"
+        [ -n "$brew_cmd" ] || brew_cmd="$(for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do [ ! -x "$candidate" ] || { printf '%s\n' "$candidate"; break; }; done)"
+        provenance_args=""
+        for brewfile in {{.BREWFILES}}; do
+          provenance_args="$provenance_args --brewfile $brewfile"
+          if [ -n "$brew_cmd" ]; then "$brew_cmd" bundle check --file "$brewfile" --no-upgrade || status=1; else echo "Homebrew is unavailable" >&2; status=1; fi
+        done
+        python3 scripts/provenance.py $provenance_args || status=1
+        exit "$status"
+
+  capture:
+    desc: Capture declared macOS settings from this Mac into the repo
+    cmds:
+      - python3 scripts/macos-settings.py capture
+
+  apps:
+    desc: Install Brewfile apps and locked mise tools (may prompt)
+    cmds:
+      - |
+        brew_cmd="$(command -v brew || true)"
+        [ -n "$brew_cmd" ] || brew_cmd="$(for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do [ ! -x "$candidate" ] || { printf '%s\n' "$candidate"; break; }; done)"
+        [ -n "$brew_cmd" ] || { echo "Homebrew is required" >&2; exit 1; }
+        for brewfile in {{.BREWFILES}}; do "$brew_cmd" bundle --file "$brewfile" --no-upgrade; done
+      - MISE_TRUSTED_CONFIG_PATHS="{{.TASKFILE_DIR}}/config/mise/config.toml:$HOME/.config/mise/config.toml" MISE_CONFIG_FILE="{{.TASKFILE_DIR}}/config/mise/config.toml" "${MISE_BIN:-$HOME/.local/state/nix/profiles/home-manager/home-path/bin/mise}" install --locked

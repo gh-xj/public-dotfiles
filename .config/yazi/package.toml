@@ -1,0 +1,42 @@
+[[plugin.deps]]
+use = "yazi-rs/plugins:full-border"
+rev = "68f7d48"
+hash = "3996fc74044bc44144b323686f887e1"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:git"
+rev = "=7200d7374462ba11c0fa5662115a96dd6ef8c9ab"
+hash = "347cc6b190eb0c2fd60513cc7ae37412"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:vcs-files"
+rev = "68f7d48"
+hash = "5cfd9b2bd3f8ec4e3245e3426a967f82"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:piper"
+rev = "68f7d48"
+hash = "2dd68af59418b631b9703a03f606b31f"
+
+[[plugin.deps]]
+use = "dedukun/relative-motions"
+rev = "a603d9e"
+hash = "e02a788e5b8ae0fb47fd0193dda589cc"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:smart-filter"
+rev = "68f7d48"
+hash = "407d19bc4fb46eff5fa8ff8337644847"
+
+# projects.yazi is a local fork; its checked persistence must not be
+# overwritten by ya pkg upgrade. See plugins/projects.yazi/README.md.
+
+[[flavor.deps]]
+use = "yazi-rs/flavors:catppuccin-latte"
+rev = "4a1802a"
+hash = "525675a9180ed23a097b07399627294a"
+
+[[flavor.deps]]
+use = "yazi-rs/flavors:dracula"
+rev = "4a1802a"
+hash = "7a870f143a4026a893ea3123be711e7a"

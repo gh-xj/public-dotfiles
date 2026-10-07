@@ -1,0 +1,7 @@
+# Public-safe user-level Codex seed template. Keep custom providers, per-project
+# trust, auth, and runtime state in the private repo or live home directory.
+personality = "pragmatic"
+
+[tui]
+vim_mode_default = true
+theme = "catppuccin-latte"

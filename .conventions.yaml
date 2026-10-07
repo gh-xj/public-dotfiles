@@ -1,0 +1,4 @@
+agent_docs: [AGENTS.md, CLAUDE.md]
+docs_root: docs
+checks:
+  - "task check exits 0 as the canonical repository gate."
