@@ -34,6 +34,15 @@ make imperative atomic commits. Never amend, rebase, reset, force-push, or push
 without explicit direction. Work is done only when `task check` passes, the
 relevant plan/doctor proof is recorded, and accepted changes are committed.
 
+## Upstream proposals
+
+Working in a downstream overlay on another Mac, treat a change as generic when
+any Mac using this repo would want it and it carries no company, account, host,
+or private-path data. Make it in the overlay first, mark that copy
+`upstream-pending: <slug>`, and write a self-contained prompt to the git-ignored
+`.upstream/<slug>.md` here; never commit it to this repo from that machine. See
+`docs/downstream-composition.md`.
+
 ## Pointers
 
 See `docs/daily-git-workflow.md`, `docs/config-delivery-model.md`, and

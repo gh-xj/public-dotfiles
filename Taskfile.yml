@@ -7,6 +7,8 @@ vars:
   # A downstream overlay (private config, work overlay) passes its own ledger.
   EXTRA_BREWFILE: ""
   BREWFILES: 'Brewfile{{if .EXTRA_BREWFILE}} {{.EXTRA_BREWFILE}}{{end}}'
+  # The overlay repo doctor scans for `upstream-pending:` markers.
+  OVERLAY_DIR: ""
 
 tasks:
   check:
@@ -35,7 +37,7 @@ tasks:
     cmds:
       - |
         status=0
-        python3 scripts/public-control.py doctor --live || status=1
+        python3 scripts/public-control.py doctor --live {{if .OVERLAY_DIR}}--overlay "{{.OVERLAY_DIR}}"{{end}} || status=1
         scripts/verify-home-drift.sh || status=1
         python3 scripts/macos-settings.py diff || status=1
         brew_cmd="$(command -v brew || true)"

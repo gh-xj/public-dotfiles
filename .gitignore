@@ -8,6 +8,8 @@
 .configctl/runs/
 .task/
 .work/
+# Machine-local upstream proposals; see docs/downstream-composition.md.
+.upstream/
 .claude/settings.local.json
 /result
 /result-*

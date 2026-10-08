@@ -44,6 +44,28 @@ a `.claude` parent symlink into its repository), set
 owner preserves the live settings and merges required public integration itself;
 do not disable all helper delivery.
 
+## Upstream proposals
+
+An overlay is where a machine unblocks itself, not where generic ideas live.
+When an overlay change would suit any Mac (no company, account, host, or private
+path), keep the overlay copy, tag it with a comment `upstream-pending: <slug>`,
+and write `~/public-dotfiles/.upstream/<slug>.md` (git-ignored; `<slug>` is
+`YYYY-MM-DD-topic`). Write it as a prompt for the public lead session:
+
+```markdown
+# <one-line change>
+Why: <problem seen and why every Mac benefits>
+Evidence: <commands run here and what they showed>
+Suggested change: <public files/options and the shape of the edit>
+Overlay copy: <overlay file to delete once this lands>
+```
+
+`task doctor` lists `upstream_proposals.pending`. The owner pastes them into
+the lead session, which re-implements on current `main`. After pulling the
+change, delete the proposal and the overlay copy together; doctor reports any
+overlay marker left without its proposal as `stale_overlay_markers`. Overlays
+pass `OVERLAY_DIR=<overlay repo>` to the public doctor to enable that check.
+
 ## Migration checklist
 
 1. Move the local host into the private flake; import the public module rather

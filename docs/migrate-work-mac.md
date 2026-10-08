@@ -92,7 +92,8 @@ xj.publicDotfiles = {
 
 The complete public-safe fixture is in `examples/downstream/`. Pin the public
 input in the overlay lock and make its `check`, `plan`, `apply`, and `doctor`
-commands target the named `homeConfigurations` entry. Verify from the overlay:
+commands target the named `homeConfigurations` entry; its doctor calls the
+public one with `EXTRA_BREWFILE` and `OVERLAY_DIR`. Verify from the overlay:
 
 ```bash
 task check
@@ -258,6 +259,8 @@ Git-ignored runtime trees under live-linked config, such as a legacy
 is optional; Neovim loads plugins from `~/.local/share/nvim/lazy`, so moving
 the tree to the Trash is safe while sessions stay open.
 
+Generic improvements found on this Mac go upstream as proposals, not overlay
+forks: see [upstream proposals](downstream-composition.md#upstream-proposals).
 Complete TCC grants, work account sign-ins, Raycast Cloud Sync, and app
 first-run dialogs manually. Hand-edited config now uses live repo links;
 agent settings stay writable and re-merge declared keys on apply. Config-only edits need no apply. Reload

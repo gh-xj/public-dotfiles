@@ -178,3 +178,7 @@ re-merge declared keys on each apply. Config-only edits therefore do not need
 `task apply`. Reload existing tmux with `tmux source-file ~/.tmux.conf`; use
 Ghostty's Reload Configuration action. Package or Nix module changes still need
 `task apply`.
+
+An improvement found on this Mac that every Mac would want goes to
+`~/public-dotfiles/.upstream/` as a proposal for the lead session, not as a
+local commit: see [upstream proposals](downstream-composition.md#upstream-proposals).

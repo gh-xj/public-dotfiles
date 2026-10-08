@@ -94,6 +94,20 @@ with tempfile.TemporaryDirectory(prefix="doctor-settings-merge-") as tmp:
 print("doctor reports pending settings merges by key name only")
 
 
+with tempfile.TemporaryDirectory(prefix="doctor-upstream-") as tmp:
+    repo, overlay = Path(tmp) / "repo", Path(tmp) / "overlay"
+    (repo / ".upstream").mkdir(parents=True)
+    (repo / ".upstream/2026-10-08-kept.md").write_text("pending\n")
+    overlay.mkdir()
+    (overlay / "host.nix").write_text("# upstream-pending: 2026-10-08-kept\n# upstream-pending: 2026-09-01-landed\n")
+    (overlay / "ignored.nix").write_text("# upstream-pending: untracked-only\n")
+    subprocess.run(["git", "init", "-q", str(overlay)], check=True)
+    subprocess.run(["git", "-C", str(overlay), "add", "host.nix"], check=True)
+    assert control.upstream_proposals(repo, overlay) == {"pending": ["2026-10-08-kept"], "stale_overlay_markers": ["2026-09-01-landed"]}
+    assert control.upstream_proposals(repo) == {"pending": ["2026-10-08-kept"], "stale_overlay_markers": []}
+print("doctor counts upstream proposals and flags overlay markers whose proposal is gone")
+
+
 with tempfile.TemporaryDirectory(prefix="detach-agent-config-") as tmp:
     home = Path(tmp) / "home"
     repo = (Path(tmp) / "repo").resolve()

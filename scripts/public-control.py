@@ -145,6 +145,14 @@ def settings_merge(home, repo, targets=MUTABLE):
     return result
 
 
+def upstream_proposals(repo, overlay=None):
+    """Pending .upstream/ proposals, and overlay `upstream-pending:` markers whose proposal is gone."""
+    pending = sorted(path.stem for path in (repo / ".upstream").glob("*.md"))
+    found = run(["git", "-C", overlay, "grep", "-ohE", "upstream-pending: [A-Za-z0-9._-]+"]).stdout if overlay else ""
+    stale = sorted({line.split(": ", 1)[1] for line in found.splitlines()} - set(pending))
+    return {"pending": pending, "stale_overlay_markers": stale}
+
+
 def leaves(root, limit=4096):
     result = {}
     if not root.exists():
@@ -232,9 +240,10 @@ def tmux_options(config):
 
 
 class Control:
-    def __init__(self, repo, home, flake=None, generation=None, runner=run):
+    def __init__(self, repo, home, flake=None, generation=None, runner=run, overlay=None):
         self.repo, self.home = repo.resolve(), home.absolute()
         self.flake, self.desired, self.run = flake, generation.resolve() if generation else None, runner
+        self.overlay = overlay
         self.target_home = None
         profile = home / ".local/state/nix/profiles/home-manager"
         if home == Path.home():
@@ -316,7 +325,8 @@ class Control:
         report["selection"] = "explicit" if self.flake or self.desired else "provide --flake or --generation to compare generated output"
         if live:
             report.update(programs=self.programs(), ghostty=self.ghostty(), tmux=self.tmux(), settings_merge=settings_merge(self.home, self.repo, self.mutable_targets()),
-                          generated_links=link_health(self.home, self.active), mutable_link_migrations=self.detached())
+                          generated_links=link_health(self.home, self.active), mutable_link_migrations=self.detached(),
+                          upstream_proposals=upstream_proposals(self.repo, self.overlay))
         return report
 
 
@@ -440,6 +450,7 @@ def main():
     doctor.add_argument("--live", action="store_true")
     doctor.add_argument("--generation", type=Path, help="already built comparison generation (read-only)")
     doctor.add_argument("--flake", default=os.getenv("PUBLIC_DOTFILES_HOME_FLAKE"))
+    doctor.add_argument("--overlay", type=Path, help="downstream repo to scan for upstream-pending markers")
     plan = sub.add_parser("plan", help="Preview a built native generation; never activate it")
     plan.add_argument("--generation", type=Path, required=True)
     plan.add_argument("--scope", choices=("home",), default="home")
@@ -459,7 +470,8 @@ def main():
                                     legacy_only=args.legacy_only,
                                     old_generation=Path(args.old_generation) if args.old_generation else None)
         else:
-            control = Control(args.repo, args.home, getattr(args, "flake", None), args.generation)
+            control = Control(args.repo, args.home, getattr(args, "flake", None), args.generation,
+                              overlay=getattr(args, "overlay", None))
             control.select()
             report = control.plan(args.scope, args.source_mode) if args.command == "plan" else control.doctor(args.live)
         if args.command == "plan" and not args.json:
