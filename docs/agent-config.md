@@ -70,6 +70,9 @@ itself. The canonical source for those skills is `.claude/skills/`, with
 `.agents/skills/` reserved for Codex discovery adapters when needed. These are
 not global home skill trees and are not linked into `~/.claude/skills` or
 `~/.codex/skills` by the public Home Manager module.
+Org-neutral personal skills belong in a separate portable skills source that
+an owner installs (Decision 2026-10-08); this repo's skill budget stays for
+skills that operate this repo, so none are moved here.
 
 ## What stays private
 

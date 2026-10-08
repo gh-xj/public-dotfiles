@@ -21,6 +21,7 @@ python3 scripts/test-agent-status.py
 python3 scripts/test-macos-settings.py
 python3 scripts/test-nvim-health.py
 python3 scripts/test-provenance.py
+python3 scripts/test-retention.py
 python3 scripts/test-public-control.py "$generation"
 "$check_python" scripts/test-activation-guards.py "$generation"
 PATH="$generation/home-path/bin:$PATH" "$check_python" scripts/test-tmux-recovery.py

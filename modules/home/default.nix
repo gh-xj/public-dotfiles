@@ -15,6 +15,8 @@ in
     ./terminal.nix
     ./control.nix
     ./recovery.nix
+    ./retention.nix
+    ./backup.nix
     ./composition.nix
   ];
 

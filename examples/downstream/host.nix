@@ -23,6 +23,8 @@
       adaptersFile = "${config.home.homeDirectory}/.config/tmux-recovery/adapters.json";
     };
     scratchGc.enable = false;
+    retention = { enable = true; logs.maxMegabytes = 20; scratch.fixture = { root = "${config.home.homeDirectory}/scratch"; maxAgeDays = 7; }; };
+    encryptedMirrors.fixture = { repository = "${config.home.homeDirectory}/overlay"; remote = "/srv/fixture-mirror"; gpgKey = "FIXTUREKEYID"; };
   };
   # These synthetic private-owner declarations prove there is no public target
   # conflict. A real owner should preserve mutable hook edits with its own seed

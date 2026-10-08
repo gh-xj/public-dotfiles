@@ -39,6 +39,22 @@ for `doctor`, which checks both ledgers and audits their formulae). Rebuilds do 
 dependency updates are a separate reviewed change. The configured owner retains
 responsibility for its host selection and private data.
 
+## Workstation state
+
+`retention.enable` (off by default) schedules `workstation-retention`: it caps
+launchd logs in place, archives old Codex/Claude transcripts per day as verified
+`tar.zst` (resume of an archived session needs extraction first), and expires
+Claude scratch. Scheduled runs only report until `retention.apply = true`;
+downstream data adds `logs.globs`, `archives.<n>`, `scratch.<n>`. A downstream
+`scratchGc` package replaces the scratch pass.
+
+`encryptedMirrors.<name>` (`repository`, `remote`, `gpgKey` from downstream)
+installs `encrypted-mirror-<name>` and a daily launchd push of commits only,
+encrypted by git-remote-gcrypt. It pushes only when gpg-agent already holds the
+key and never prompts (`--pinentry-mode=error`), otherwise it notifies. Restore
+drill: `encrypted-mirror-<name> drill` clones the mirror and compares every
+branch/tag SHA and the HEAD file count.
+
 ## Check what actually runs
 
 The active provider order is user-local tools, mise shims, the standalone Home

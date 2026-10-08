@@ -20,6 +20,7 @@ through the downstream's normal switch.
 | `workmux.agent`, `workmux.extraAgents.<name>.argv`, `.type` | Provider selection and trusted argv; no source-file patch required |
 | `workmux.extraConfig` | Additional YAML-compatible configuration; `status_format` remains false |
 | `tmuxRecovery.*` | Opt-in public engine, retention and optional schedule; trusted adapter file remains downstream |
+| `retention.*`, `encryptedMirrors.<name>` | Public engines with generic defaults; downstream supplies paths, limits, remote and key id |
 | `scratchGc.enable = false` | Public creates no scratch package/home target; private owner may claim it directly |
 | `scratchGc.package` with `.enable = true` | Optional delivery of a complete downstream package, not a public scratch implementation |
 

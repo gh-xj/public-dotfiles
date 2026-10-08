@@ -16,7 +16,7 @@ in {
     workmux.agent = lib.mkOption { type = lib.types.str; default = defaults.agent; };
     workmux.extraAgents = lib.mkOption { type = lib.types.attrsOf agentType; default = { }; };
     workmux.extraConfig = lib.mkOption { type = yaml.type; default = { }; description = "Additional Workmux settings; the public agent selection and status_format=false remain authoritative."; };
-    scratchGc.enable = lib.mkOption { type = lib.types.bool; default = false; description = "Deliver a downstream-owned scratch collector package through the public ownership boundary."; };
+    scratchGc.enable = lib.mkOption { type = lib.types.bool; default = false; description = "Deliver a downstream-owned scratch collector package; it replaces the scratch pass of the public retention engine."; };
     scratchGc.package = lib.mkOption { type = lib.types.nullOr lib.types.package; default = null; description = "Complete downstream scratch-gc package; no public implementation is assumed."; };
   };
   config = lib.mkIf cfg.enable (lib.mkMerge [
