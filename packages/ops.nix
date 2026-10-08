@@ -7,6 +7,7 @@ pkgs: [
   pkgs.gitleaks
   pkgs.pandoc
   pkgs."poppler-utils"
+  pkgs.rclone
   pkgs."ripgrep-all"
   pkgs."whisper-cpp"
   (pkgs.callPackage ./work-cli.nix { })
