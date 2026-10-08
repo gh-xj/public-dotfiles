@@ -6,49 +6,60 @@ with 126 existing checkpoints and a scheduler opts in with
 `tmuxRecovery.enable = true`; standalone public profiles remain off. It never
 reads agent databases, captures scrollback or records arbitrary foreground commands.
 
+One principle: a bad pane, session or directory never costs the rest.
+
 ```sh
-tmux-recovery checkpoint --session project
-tmux-recovery checkpoint-all
-tmux-recovery restore /path/to/checkpoint.json
-tmux-recovery restore /path/to/checkpoint.json --apply
-tmux-recovery restore /path/to/checkpoint.json --prefix recovered- --apply
+tmux-recovery checkpoint-all                  # or: checkpoint --session NAME
+tmux-recovery restore FILE [--apply] [--prefix recovered-]
+tmux-recovery resume [--all] [--delay 5]      # start recorded agents/editors
+tmux-recovery preflight [--bundle DIR]        # before a planned reboot
+tmux-recovery orphans                         # processes that outlived their pane
 ```
 
-Checkpoint-all produces one consistent file containing all sessions; capture
-failure leaves the previous checkpoint intact. Names are retained as JSON data
-and hashed into fixed-length filenames for one-session snapshots. Files have a
-version, ownership marker and payload checksum, are written atomically at mode
-0600, and unchanged snapshots are reused without changing their mtime. No
-legacy checkpoint is read, converted or removed automatically.
+Checkpoint-all is one consistent file of all sessions from a single
+`list-panes -a` plus one `ps`; a failed capture leaves the previous checkpoint
+intact. Odd data is dropped per pane with a warning (invalid ids, control
+characters, unreadable layouts), never the checkpoint, and each run appends one
+line to `recovery.log` in the state directory (counts, warnings, and busy
+orphans). Files have a version, ownership marker and payload checksum, are
+written atomically at mode 0600, and unchanged snapshots are reused. Existing
+checkpoints stay restorable; no legacy file is read, converted or removed.
 
 The default directory is `~/.local/state/tmux-agents-recovery`. Retention only
 considers this engine's verified `public-tmux-v1-*.json` files: keep at most 32
 globally and discard history older than seven days. The current snapshot is
-protected even when unchanged beyond that age, within the same count cap. Bad,
-unknown, symlinked and legacy files are outside the collector's ownership.
+protected within the same cap. Bad, unknown, symlinked and legacy files are
+outside the collector's ownership.
+
+Editors are found anywhere in a pane's process tree by asking the editor's own
+server (nvim) for its file, so wrapper-launched editors are recorded as the
+pane document; `@recovery_document` still wins when set. Agents are identified by
+the pane option `@resume_target` (`<provider> <session_id>`) written by
+`agent-session`, never by process name, and prompt hooks do not clear it.
 
 ## Restore contract
 
-Default restore prints a plan. `--apply` creates **new detached sessions** using
-the original names (or an explicit prefix). It refuses collisions and missing
-working directories before creation. It preserves window indices/names, layout,
-pane order/cwd, active window/pane, title, label, provider options and optional
-document path. Restored sessions disable automatic window renumbering to keep
-saved index gaps. Existing clients are never selected or switched.
+Default restore prints a plan. `--apply` works per session: an existing session
+is skipped, a missing directory falls back to `~`, a session that fails is
+reported and the next one still runs (exit status 1 if any failed). It creates
+**new detached sessions** under the original names (or `--prefix`), preserving
+window indices/names, layout, pane order/cwd, active window/pane, title, label
+and resume target. Existing clients are never selected or switched, partial
+sessions stay for inspection, and **nothing is started**: panes show a parked
+prompt (Enter starts the default shell).
 
-Panes initially show a parked recovery prompt so shell startup hooks cannot
-erase restored identity. Press Enter to start the default shell, or explicitly
-use `--apply --resume-agents` to resume providers. Normal provider hooks then own
-their current labels. `--apply --resume-documents` opens stored documents with
-`nvim -- <path>`; the path is data, never command text. Both modes in a pane with
-both agent and document metadata are rejected as ambiguous. `new-human-req-doc`
-records the pane-scoped `@recovery_document` path automatically.
+`resume` is the only thing that starts programs: in the current pane, or with
+`--all` every pane staggered by `--delay` seconds so a reboot does not recreate
+the overload. Only panes at a shell prompt (or still parked) are started; busy
+panes are reported. A recorded agent resumes via its adapter, otherwise a
+recorded document opens with `nvim -- <path>`.
 
-If construction or resume fails, new partial sessions remain available for
-inspection. There is no destructive rollback and no existing session is deleted.
-Restored windows retain exited panes, so a failed provider launch remains visible.
-The engine replaces only its own newly-created parked processes during explicit
-resume. Restore is not a replay of the old terminal workload.
+`preflight` lists agents that look mid-task (live agent pane whose process tree
+uses at least 5% CPU, an inference, not proof) and editors with unsaved buffers.
+`--bundle DIR` adds a small `lag-*.txt` (uptime, memory pressure, vm_stat, top
+processes). `orphans` reports processes with ppid 1 whose `TMUX` socket is this
+server and whose `TMUX_PANE` no longer exists; it only reports (busy ones are
+also noted in `recovery.log`), and killing stays with the human.
 
 ## Trusted provider adapters
 
@@ -74,6 +85,7 @@ argv, credentials or provider settings. Restore requires the trusted map to
 match recorded options. Resume argv is shell-quoted for the configured shell,
 so normal shell launch adapters work; no shell text is taken from checkpoints.
 Private providers and wrapper commands belong only in downstream data.
+`agent-session <provider> start|end` accepts any provider name (`@<provider>_sid`); a start clears every other `*_sid` on the pane.
 
 ## Home Manager
 

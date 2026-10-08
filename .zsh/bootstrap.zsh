@@ -372,8 +372,10 @@ setup_plugins() {
     _clear_agent_pane_label() {
         [[ -n "$TMUX_PANE" ]] && (( $+commands[agent-pane-title] )) || return 0
         agent-pane-title clear 2>/dev/null || true
-        tmux set-option -pu -t "$TMUX_PANE" @claude_sid 2>/dev/null
-        tmux set-option -pu -t "$TMUX_PANE" @codex_sid 2>/dev/null
+        local option
+        for option in ${${(M)${(f)"$(tmux show-options -p -t "$TMUX_PANE" 2>/dev/null)"}:#@*_sid *}%% *}; do
+            tmux set-option -pu -t "$TMUX_PANE" "$option" 2>/dev/null
+        done
     }
     add-zsh-hook precmd _clear_agent_pane_label
 }
