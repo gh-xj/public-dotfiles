@@ -1,45 +1,27 @@
 return {
+  -- Zed-style breadcrumbs: file path and the enclosing symbols in each window's winbar.
   {
     "nvim-lualine/lualine.nvim",
-    event = "VeryLazy",
-    opts = {
-      options = { theme = "auto" },
-      sections = {
-        lualine_b = { "branch", {
-          "diff",
-          source = function()
-            local s = vim.b.gitsigns_status_dict
-            if s then
-              return { added = s.added, modified = s.changed, removed = s.removed }
-            end
-          end,
-        }, "diagnostics" },
-      },
-    },
-  },
-
-  {
-    "akinsho/bufferline.nvim",
-    event = "VeryLazy",
-    config = function()
-      require("bufferline").setup({})
+    opts = function(_, opts)
+      local symbols = require("trouble").statusline({
+        mode = "symbols",
+        groups = {},
+        title = false,
+        filter = { range = true },
+        format = "{kind_icon}{symbol.name:Normal}",
+        hl_group = "lualine_c_normal",
+      })
+      local path = LazyVim.lualine.pretty_path()
+      opts.winbar = {
+        lualine_c = {
+          path,
+          { symbols.get, cond = symbols.has },
+        },
+      }
+      opts.inactive_winbar = { lualine_c = { path } }
+      opts.options.disabled_filetypes.winbar = {
+        "snacks_dashboard", "snacks_layout_box", "snacks_picker_list", "trouble", "lazy", "mason",
+      }
     end,
-  },
-
-  {
-    "folke/which-key.nvim",
-    event = "VeryLazy",
-    opts = { delay = 300 },
-  },
-
-  {
-    "folke/trouble.nvim",
-    cmd = { "Trouble", "TroubleToggle" },
-    config = true,
-  },
-
-  {
-    "machakann/vim-highlightedyank",
-    event = "TextYankPost",
   },
 }

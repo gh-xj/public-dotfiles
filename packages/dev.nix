@@ -12,9 +12,13 @@ pkgs: [
   pkgs.lazygit
   pkgs.marksman
   pkgs.neovim
+  pkgs.nil
+  pkgs.nixfmt
   pkgs.pyright
   pkgs.shfmt
+  pkgs.statix
   pkgs.tmux
+  pkgs."tree-sitter"
   pkgs.typescript
   pkgs."typescript-language-server"
   pkgs."vscode-langservers-extracted"
