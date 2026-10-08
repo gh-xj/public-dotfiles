@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Claude Code statusLine — mirrors Starship prompt style
+# Claude Code statusLine — mirrors .config/starship.toml (directory, hostname, git_branch, time)
 # Receives JSON on stdin from Claude Code
 
 input=$(cat)
@@ -17,38 +17,38 @@ fi
 # No name yet: preserve SessionStart's pane-only fallback. Native pane_title
 # may change via OSC and is never read back as Claude's identity.
 
-cwd=$(echo "$input" | jq -r '.cwd // .workspace.current_dir // ""')
-model=$(echo "$input" | jq -r '.model.display_name // ""')
-remaining=$(echo "$input" | jq -r '.context_window.remaining_percentage // empty')
+{ IFS= read -r cwd; IFS= read -r model; IFS= read -r remaining; } < <(
+    printf '%s' "$input" | jq -r '(.cwd // .workspace.current_dir // ""), (.model.display_name // ""), (.context_window.remaining_percentage // "")')
 
-# Directory: basename of cwd
-dir=$(basename "$cwd")
+git_() { git --no-optional-locks -C "$cwd" "$@" 2>/dev/null; }
 
-# Git branch (Starship has git_status disabled, so no file counts)
-branch=$(git --no-optional-locks -C "$cwd" symbolic-ref --quiet --short HEAD 2>/dev/null \
-         || git --no-optional-locks -C "$cwd" rev-parse --short HEAD 2>/dev/null)
-
-# Starship default styles: directory bold cyan, git_branch bold purple,
-# time bold yellow, character bold green; hostname only over SSH.
-bold_green=$'\e[1;32m' bold_cyan=$'\e[1;36m' bold_purple=$'\e[1;35m'
-bold_yellow=$'\e[1;33m' bold_blue=$'\e[1;34m' bold_red=$'\e[1;31m'
-dim=$'\e[2m' reset=$'\e[0m'
-
-parts="${bold_green}➜${reset} "
-if [[ -n "${SSH_CONNECTION:-}" ]]; then
-    parts+="${bold_blue}${reset} on ${bold_red}$(hostname -s)${reset} "
+# [directory]: ~ for home, rooted at the git repo, at most 3 components with a leading …/
+top=$(git_ rev-parse --show-toplevel)
+if [[ -n "$top" ]]; then
+    path="${top##*/}${cwd#"$top"}"
+else
+    path="$cwd"
+    [[ "$path" == "$HOME" || "$path" == "$HOME"/* ]] && path="~${path#"$HOME"}"
 fi
-parts+="${bold_cyan}${dir}${reset}"
-if [[ -n "$branch" ]]; then
-    parts+=" on ${bold_purple} ${branch}${reset}"
+IFS=/ read -ra parts <<< "${path#/}"
+if (( ${#parts[@]} > 3 )); then
+    path="…/${parts[*]: -3:1}/${parts[*]: -2:1}/${parts[*]: -1}"
 fi
 
-# Claude-only context, dimmed so the Starship-shaped part stays primary
-extra=""
-[[ -n "$model" ]] && extra+="  ${model}"
-[[ -n "$remaining" ]] && extra+=" ctx:${remaining}%"
-[[ -n "$extra" ]] && parts+="${dim}${extra}${reset}"
+# [git_branch]: symbol + branch (short SHA when detached). [git_status] is disabled in Starship.
+branch=$(git_ symbolic-ref --quiet --short HEAD || git_ rev-parse --short HEAD)
 
-parts+="  ${bold_yellow}$(date +%H:%M:%S)${reset}"
+branch_symbol=$'\xef\x90\x98 '  # [git_branch] symbol in .config/starship.toml
+bold_cyan=$'\e[1;36m' bold_purple=$'\e[1;35m' bold_yellow=$'\e[1;33m' bold_red=$'\e[1;31m' reset=$'\e[0m'
 
-printf '%s' "$parts"
+out=""
+# [hostname]: ssh_only
+[[ -n "${SSH_CONNECTION:-}" ]] && out+="on ${bold_red}$(hostname -s)${reset} "
+out+="${bold_cyan}${path}${reset}"
+[[ -n "$branch" ]] && out+=" on ${bold_purple}${branch_symbol}${branch}${reset}"
+[[ -n "$model" ]] && out+="  ${model}"
+[[ -n "$remaining" ]] && out+=" ctx:${remaining}%"
+# [time] is Starship's right_format; a status line cannot right-align.
+out+="  ${bold_yellow}$(date +%H:%M:%S)${reset}"
+
+printf '%s' "$out"
