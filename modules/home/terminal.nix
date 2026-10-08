@@ -66,9 +66,12 @@ in
       package = null;
       baseIndex = 1;
       escapeTime = 0;
+      # Neovim FocusGained/FocusLost drive autoread.
+      focusEvents = true;
       historyLimit = 50000;
       keyMode = "vi";
       mouse = true;
+      # Ghostty Cmd shortcuts send this prefix byte (\x13); keep them in sync.
       prefix = "C-s";
       terminal = "tmux-256color";
       plugins = [

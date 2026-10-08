@@ -162,8 +162,8 @@ Examples:
 
 If tmux prefix changes, update both:
 
-1. `set -g prefix ...` and `bind ... send-prefix` in `~/public-dotfiles/.tmux.conf`
-2. Every Ghostty prefix-backed `text:\x..` mapping in `~/public-dotfiles/modules/home/terminal.nix`
+1. `programs.tmux.prefix` in `~/public-dotfiles/modules/home/terminal.nix`
+2. Every Ghostty prefix-backed `text:\x..` mapping in `~/public-dotfiles/.config/ghostty/config`
 
 After changing tmux prefix:
 
@@ -183,8 +183,6 @@ configuration files without inspecting live GUI state.
 
 ## Theme policy
 
-The shared tmux config uses an inline theme selector.
-
-- Shared config sets `@theme` to `dark` by default.
-- Optional host-local overrides belong in `~/.tmux.local.conf`, usually `set -g @theme light` or `set -g @theme dark`.
-- The shared config applies the matching light or dark inline palette after loading the host-local override.
+tmux follows each client's reported light/dark theme (`client_theme`) live and
+uses Ghostty's Atom One Light / One Dark Two colors. To pin one theme on a Mac,
+put `set -g @theme light` or `dark` in `~/.tmux.local.conf`.
