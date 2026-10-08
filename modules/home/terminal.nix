@@ -2,6 +2,7 @@
 
 let
   cfg = config.xj.publicDotfiles;
+  recoveryAdapters = cfg.tmuxRecovery.adaptersFile;
   # Cmd+digit selects a tmux window. Ghostty sends a private CSI sequence that
   # tmux claims as a user key, so no Alt/Meta chord is taken from shells or
   # editors. Cmd+1..8 pick that index; Cmd+9 and Cmd+0 pick the last window.
@@ -33,8 +34,12 @@ let
   });
   paneReopen = pkgs.writeShellApplication {
     name = "tmux-pane-reopen";
-    runtimeInputs = [ pkgs.tmux ];
-    text = builtins.readFile ../../scripts/tmux-pane-reopen.sh;
+    runtimeInputs = [ pkgs.python3 pkgs.tmux ];
+    # Reopened agents resume through the recovery engine's adapter map
+    # (built-ins plus tmuxRecovery.adaptersFile), even when recovery is disabled.
+    text = ''
+      RESUME_ENGINE=(python3 ${../../scripts/tmux-recovery.py}${lib.optionalString (recoveryAdapters != null) " --adapters ${lib.escapeShellArg recoveryAdapters}"})
+    '' + builtins.readFile ../../scripts/tmux-pane-reopen.sh;
   };
   easyjumpTmux = pkgs.tmuxPlugins.mkTmuxPlugin {
     pluginName = "easyjump";

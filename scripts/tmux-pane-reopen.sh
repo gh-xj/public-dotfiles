@@ -41,12 +41,9 @@ reopen)
     else
         pane=$(tmux new-window -P -F "#{pane_id}" -t "$session:" -c "$cwd")
     fi
-    sid=${target#* }
-    if [[ "$sid" =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$ ]]; then
-        case "${target%% *}" in
-        claude) tmux send-keys -t "$pane" "claude --resume $sid" Enter ;;
-        codex) tmux send-keys -t "$pane" "codex resume $sid" Enter ;;
-        esac
+    if [[ -n "$target" ]]; then # RESUME_ENGINE (Nix-prepended) validates and applies the shared adapters
+        tmux set -p -t "$pane" @resume_target "$target"
+        TMUX_PANE=$pane "${RESUME_ENGINE[@]}" resume >/dev/null || tmux display -c "$client" "agent resume failed: $target"
     fi
     tmux switch-client -c "$client" -t "$pane"
     ;;

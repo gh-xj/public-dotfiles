@@ -85,7 +85,7 @@ separate argv element. Checkpoints contain IDs and option names, not adapter
 argv, credentials or provider settings. Restore requires the trusted map to
 match recorded options. Resume argv is shell-quoted for the configured shell,
 so normal shell launch adapters work; no shell text is taken from checkpoints.
-Private providers and wrapper commands belong only in downstream data.
+Private providers/wrappers belong in downstream data; Cmd+Shift+T reopen uses this map.
 `agent-session <provider> start|end` accepts any provider name (`@<provider>_sid`); a start clears every other `*_sid` on the pane.
 
 ## Home Manager
