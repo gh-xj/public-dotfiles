@@ -1,5 +1,25 @@
--- Additions to LazyVim's markdown extra (render-markdown, preview, marksman, lint).
+-- Additions to LazyVim's markdown extra (render-markdown, preview, marksman).
 return {
+  -- No markdownlint: style rules (MD012 etc.) fire mid-edit and read as noise.
+  {
+    "mfussenegger/nvim-lint",
+    opts = function(_, opts)
+      opts.linters_by_ft.markdown = {}
+    end,
+  },
+
+  -- Same rendered view in every mode, so entering insert never flips the buffer
+  -- to raw markdown. Without anti-conceal the cursor line stays rendered too;
+  -- concealcursor "nc" still reveals ** / ` markers on the line while inserting.
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    opts = {
+      render_modes = true,
+      anti_conceal = { enabled = false },
+      win_options = { concealcursor = { rendered = "nc" } },
+    },
+  },
+
   -- List continuation: <CR> on `- item` or `1. item` continues the list.
   {
     "dkarter/bullets.vim",
