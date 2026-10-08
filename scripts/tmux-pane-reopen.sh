@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Browser-style close/reopen for tmux panes. Closing records the window, cwd and
-# agent resume target, then kills the pane; reopening rebuilds the newest record
-# and resumes the agent conversation from its transcript. Processes never linger.
+# agent resume target (or older @claude_sid/@codex_sid), then kills the pane;
+# reopening rebuilds the newest one and resumes the agent from its transcript.
 set -euo pipefail
 US=$'\x1f' RS=$'\x1e' KEEP=20 LIST=@closed_panes
 # `display -t` falls back to the current window, so match ids exactly.
@@ -12,7 +12,7 @@ close)
     pane=$2
     window=$(tmux display -p -t "$pane" "#{window_id}")
     [[ "$window" == @* ]] || exit 1 # a missing target formats as empty, not an error
-    entry=$(tmux display -p -t "$pane" "#{window_id}$US#{pane_current_path}$US#{@resume_target}")
+    entry=$(tmux display -p -t "$pane" "#{window_id}$US#{pane_current_path}$US#{?@resume_target,#{@resume_target},#{?@claude_sid,claude #{@claude_sid},#{?@codex_sid,codex #{@codex_sid},}}}")
     # Fields must not contain the separators or other control characters.
     if [[ "${entry//"$US"/}" != *[[:cntrl:]]* ]]; then
         IFS=$RS read -r -a old <<<"$(tmux show -gqv "$LIST")"
