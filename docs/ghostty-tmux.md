@@ -11,7 +11,7 @@ This setup treats tmux as the primary terminal workspace layer and Ghostty as a 
 
 - tmux custom config source: `~/public-dotfiles/.tmux.conf`
 - tmux Home Manager module and plugin declarations: `~/public-dotfiles/modules/home/terminal.nix`
-- legacy selector contract: `~/public-dotfiles/config/terminal/legacy-selectors.json`
+- Cmd+digit window selectors: generated in `~/public-dotfiles/modules/home/terminal.nix`
 - live tmux custom config: `~/.config/tmux/user.conf` links to the repo
 - generated tmux config: Home Manager renders `~/.config/tmux/tmux.conf`
 - compatibility bridge: Home Manager renders `~/.tmux.conf` to source the live tmux config
@@ -28,17 +28,16 @@ declared in Nix.
 Ghostty sends raw bytes into tmux for a subset of shortcuts.
 
 - Prefix-backed tmux shortcuts must use the current tmux prefix byte in Ghostty `text:\x..` mappings.
-- Option/Alt is reserved for shells and terminal applications. Do not add new tmux bridges on `\x1b...` unless the physical Alt behavior is intentionally being claimed.
+- Option/Alt is reserved for shells and terminal applications. The tmux root table binds no `M-*` keys, so fzf Alt-C, zsh word motions, and LazyVim Alt-j/k all reach the pane.
 - Prefer Cmd/Super in Ghostty for tmux commands, and have those mappings send prefix-backed tmux commands.
 - Do not install `vim-tmux-navigator` or a local Neovim/tmux navigation bridge. Tmux owns `Ctrl-h/j/k/l`; Neovim splits use native `Ctrl-w h/j/k/l`.
 - Do not rewrite physical `Ctrl-h` / `Ctrl-l` in Karabiner. They must reach tmux as real control keys.
 - EasyJump is allowed only on `prefix + J`; its copy-mode `Ctrl-J` binding is unbound so it cannot compete with pane navigation.
 
-Legacy exception:
+Window selectors:
 
-- Some pane/window selectors still use tmux root `M-*` bindings and Ghostty `\x1b...` mappings. Treat those as migration debt, not as the preferred pattern for new shortcuts.
-- Current pane selectors are `Ctrl+1..9 -> M-a/M-s/M-c/M-e/M-g/M-i/M-o/M-p/M-u`.
-- Current window selectors are `Cmd+1..8 -> M-1..M-8`; both `Cmd+9 -> M-9` and the legacy `Cmd+0 -> M-0` select the highest-numbered window.
+- `Cmd+1..8` select that window; `Cmd+9` and `Cmd+0` select the highest-numbered one.
+- Ghostty sends private `CSI 90<digit> ~` sequences that tmux claims as `user-keys` (prefix+digit picks a layout).
 
 Current tmux prefix:
 
@@ -145,6 +144,7 @@ Current pane shortcuts:
 - `super+ctrl+=` sends `prefix + E`: equalize the current tmux layout.
 - `prefix + J` invokes EasyJump.
 - `Ctrl-h/j/k/l` select tmux panes directly in root and copy-mode tables, even when the active pane is running nvim.
+- `super+shift+[` / `j` / `k` / `]` send `prefix + h/j/k/l` as the Cmd-hand alternative.
 - `Ctrl-Left` / `Ctrl-Right` switch to the previous / next tmux window. Ghostty sends `prefix + p/n`; tmux also binds the native root keys for other terminal clients.
 
 Current pane swap behavior:
