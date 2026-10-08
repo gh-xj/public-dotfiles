@@ -12,6 +12,7 @@ keybind = ctrl+shift+comma=text:\x13H
 keybind = ctrl+shift+period=text:\x13L
 keybind = super+t=text:\x13c
 keybind = super+w=text:\x13X
+keybind = super+shift+t=text:\x13T
 keybind = super+d=text:\x13|
 keybind = super+shift+d=text:\x13_
 keybind = super+shift+enter=text:\x13z

@@ -31,6 +31,11 @@ let
         --replace-fail 'echo "$extra_filter" > /tmp/filter' ""
     '';
   });
+  paneReopen = pkgs.writeShellApplication {
+    name = "tmux-pane-reopen";
+    runtimeInputs = [ pkgs.tmux ];
+    text = builtins.readFile ../../scripts/tmux-pane-reopen.sh;
+  };
   easyjumpTmux = pkgs.tmuxPlugins.mkTmuxPlugin {
     pluginName = "easyjump";
     path = "easyjump.tmux";
@@ -50,6 +55,8 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
+    home.packages = [ paneReopen ];
+
     # HM's base config uses mkBefore (500), plugins use normal order (1000),
     # and extraConfig uses mkAfter (1500). PATH must precede plugin execution.
     xdg.configFile = {

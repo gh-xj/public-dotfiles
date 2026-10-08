@@ -139,7 +139,7 @@ Current pane shortcuts:
 
 - `super+d` sends `prefix + |`: split active pane to the right and equalize pane sizes.
 - `super+shift+d` sends `prefix + _`: split active pane downward and equalize pane sizes.
-- `super+w` sends `prefix + X`: close the active pane immediately and equalize remaining pane sizes.
+- `super+w` sends `prefix + X`: close the active pane and equalize the rest; `super+shift+t` (`prefix + T`) reopens the last closed pane in its window and cwd, resuming its Claude/Codex session.
 - `super+shift+enter` sends `prefix + z`: zoom or unzoom the active tmux pane.
 - `super+ctrl+=` sends `prefix + E`: equalize the current tmux layout.
 - `prefix + J` invokes EasyJump.
