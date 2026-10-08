@@ -20,5 +20,6 @@ cask "orbstack" if macos_major >= 14 # needs: docker on ~/.orbstack/bin
 cask "google-chrome" # baseline: browser
 cask "1password" # baseline: credentials
 cask "1password-cli" # baseline: op for agents and scripts
+cask "bruno" # baseline: API client
 cask "claude" # baseline: agent app
 cask "codex-app" # baseline: agent app
