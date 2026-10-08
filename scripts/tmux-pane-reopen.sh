@@ -11,8 +11,7 @@ case "${1:-}" in
 close)
     pane=$2
     window=$(tmux display -p -t "$pane" "#{window_id}")
-    # A missing target formats as empty instead of failing.
-    [[ "$window" == @* ]] || exit 1
+    [[ "$window" == @* ]] || exit 1 # a missing target formats as empty, not an error
     entry=$(tmux display -p -t "$pane" "#{window_id}$US#{pane_current_path}$US#{@resume_target}")
     # Fields must not contain the separators or other control characters.
     if [[ "${entry//"$US"/}" != *[[:cntrl:]]* ]]; then
