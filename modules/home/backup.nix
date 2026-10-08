@@ -18,11 +18,18 @@ let
           gpg-connect-agent "keyinfo $grip" /bye | awk '$2=="KEYINFO"{ if ($7!="1" && $8!="C") bad=1 } END{exit bad}' || return 1
         done
       }
+      # Outcome file read by `task doctor`; silence past `expires` is a finding.
+      record() {
+        local dir="$HOME/.local/state/public-dotfiles/jobs" now; now="$(date +%s)"
+        mkdir -p "$dir"
+        printf '{"ok":%s,"at":%s,"expires":%s,"detail":"%s"}\n' "$2" "$now" "$((now + $3))" "$4" > "$dir/encrypted-mirror-${name}$1.json"
+      }
       mirror() { git -C "$repo" -c gcrypt.participants="$key" -c gcrypt.gpg-args=--pinentry-mode=error "$@"; }
       case "''${1:-push}" in
         push)
-          ready || { notify "gpg-agent does not hold the key; unlock it once (e.g. sign anything)"; exit 0; }
-          if ! { mirror push "gcrypt::$remote" --all && mirror push "gcrypt::$remote" --tags; }; then notify "push failed"; exit 1; fi ;;
+          ready || { record "" false ${toString (2 * 86400)} "gpg-agent does not hold the key"; notify "gpg-agent does not hold the key; unlock it once (e.g. sign anything)"; exit 0; }
+          if ! { mirror push "gcrypt::$remote" --all && mirror push "gcrypt::$remote" --tags; }; then record "" false ${toString (2 * 86400)} "push failed"; notify "push failed"; exit 1; fi
+          record "" true ${toString (2 * 86400)} "pushed" ;;
         drill)
           scratch="$(mktemp -d)"; trap 'rm -rf "$scratch"' EXIT
           git -c gcrypt.gpg-args=--pinentry-mode=error clone --quiet --mirror "gcrypt::$remote" "$scratch/mirror"
@@ -31,6 +38,7 @@ let
           [ "$want" = "$got" ] || { echo "ref mismatch" >&2; diff <(echo "$want") <(echo "$got") >&2 || true; exit 1; }
           head_files() { git -C "$1" ls-tree -r --name-only HEAD | wc -l; }
           [ "$(head_files "$repo")" = "$(head_files "$scratch/mirror")" ] || { echo "file count mismatch" >&2; exit 1; }
+          record -drill true 2592000 "$(echo "$want" | wc -l) refs matched"
           echo "restore drill matched: $(echo "$want" | wc -l) refs, $(head_files "$repo") files at HEAD" ;;
         *) echo "usage: encrypted-mirror-${name} [push|drill]" >&2; exit 2 ;;
       esac

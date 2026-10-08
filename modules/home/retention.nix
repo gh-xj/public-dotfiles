@@ -13,7 +13,7 @@ let
   engine = pkgs.writeShellApplication {
     name = "workstation-retention";
     runtimeInputs = [ pkgs.python3 pkgs.gnutar pkgs.zstd ];
-    text = ''exec python3 ${../../scripts/retention.py} ${settings} ${lib.optionalString rt.apply "--apply"} "$@"'';
+    text = ''exec python3 ${../../scripts/retention.py} ${settings} --status-directory ${home}/.local/state/public-dotfiles/jobs ${lib.optionalString rt.apply "--apply"} "$@"'';
   };
 in {
   options.xj.publicDotfiles.retention = {

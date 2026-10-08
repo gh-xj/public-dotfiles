@@ -162,6 +162,20 @@ def log_run(directory, line):
         log.write_text("\n".join(lines[len(lines) // 2:]) + "\n")
 
 
+def status(directory):
+    """Checkpoint health: every engine-owned file is re-verified, so corruption shows before a restore needs it."""
+    good, bad, newest = 0, [], None
+    for path in sorted(directory.glob(PREFIX + "*.json")):
+        try:
+            created = read_record(path, owned=True)["created_ns"]
+            good, newest = good + 1, max(newest or 0, created)
+        except (OSError, ValueError, KeyError, TypeError, RecoveryError):
+            bad.append(path.name)
+    log = directory / "recovery.log"
+    last = log.read_text().splitlines()[-1:] if log.is_file() else []
+    return {"valid": good, "invalid": bad, "newest_age_seconds": int(time.time() - newest / 1e9) if newest else None, "last_run": last[0] if last else None}
+
+
 def validate_session(session):
     name = text(session["name"], 255)
     if not name or "." in name or ":" in name:
@@ -520,6 +534,7 @@ def main():
     again.add_argument("--delay", type=float, default=5.0)
     ahead = sub.add_parser("preflight", help="before a planned reboot: busy agents, unsaved editors")
     ahead.add_argument("--bundle", type=Path, help="also write a small lag-evidence file into this directory")
+    sub.add_parser("status", help="verify stored checkpoints; exit 1 if any is corrupt")
     sub.add_parser("orphans", help="processes that outlived their tmux pane (report only)")
     args = parser.parse_args()
     try:
@@ -534,6 +549,9 @@ def main():
             result = engine.resume(args.all, args.delay, os.getenv("TMUX_PANE"))
         elif args.command == "preflight":
             result = engine.preflight(args.bundle)
+        elif args.command == "status":
+            result = status(args.output_directory)
+            failed = bool(result["invalid"])
         elif args.command == "orphans":
             result = engine.orphans()
         else:

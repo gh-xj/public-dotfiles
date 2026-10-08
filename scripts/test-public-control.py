@@ -107,6 +107,16 @@ with tempfile.TemporaryDirectory(prefix="doctor-upstream-") as tmp:
     assert control.upstream_proposals(repo) == {"pending": ["2026-10-08-kept"], "stale_overlay_markers": []}
 print("doctor counts upstream proposals and flags overlay markers whose proposal is gone")
 
+with tempfile.TemporaryDirectory(prefix="doctor-jobs-") as tmp:
+    jobs = Path(tmp) / ".local/state/public-dotfiles/jobs"
+    jobs.mkdir(parents=True)
+    for name, body in {"fine": {"ok": True, "at": 1000, "expires": 5000}, "late": {"ok": True, "at": 1000, "expires": 2000},
+                       "broke": {"ok": False, "at": 1000, "expires": 5000}, "odd": {"ok": True}}.items():
+        (jobs / (name + ".json")).write_text(json.dumps(body))
+    states = {name: item["state"] for name, item in control.job_outcomes(Path(tmp), now=3600).items()}
+    assert states == {"broke": "failed", "fine": "ok", "late": "stale", "odd": "unreadable"}
+print("doctor reports scheduled-job outcomes: ok, failed, stale and unreadable")
+
 
 with tempfile.TemporaryDirectory(prefix="detach-agent-config-") as tmp:
     home = Path(tmp) / "home"

@@ -55,6 +55,10 @@ key and never prompts (`--pinentry-mode=error`), otherwise it notifies. Restore
 drill: `encrypted-mirror-<name> drill` clones the mirror and compares every
 branch/tag SHA and the HEAD file count.
 
+`task doctor` shows `jobs` (last retention run, mirror push and drill: ok, failed
+or stale) and `recovery` (checkpoint verification). `recovery.nix` is the
+topology engine; `retention.nix` only bounds disk growth.
+
 ## Check what actually runs
 
 The active provider order is user-local tools, mise shims, the standalone Home

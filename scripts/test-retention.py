@@ -37,7 +37,10 @@ with tempfile.TemporaryDirectory(prefix="retention-") as tmp:
     plan = run()
     assert plan["mode"] == "dry-run" and len(plan["logs"]) == len(plan["archives"]) == len(plan["scratch"]) == 1
     assert log.stat().st_size > 2000 and stale.exists() and (scratch / "stale-dir").exists(), "dry-run must change nothing"
-    assert run("--apply")["mode"] == "apply"
+    jobs = Path(tmp) / "jobs"
+    assert run("--apply", "--status-directory", str(jobs))["mode"] == "apply"
+    outcome = json.loads((jobs / "workstation-retention.json").read_text())
+    assert outcome["ok"] and outcome["expires"] > outcome["at"]
     assert 800 < log.stat().st_size <= 1000 and log.read_text().startswith("line "), "log keeps whole recent lines"
     holder.write("after\n"); holder.flush()
     assert log.read_text().endswith("after\n") and "\0" not in log.read_text()

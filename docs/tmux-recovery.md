@@ -14,6 +14,7 @@ tmux-recovery restore FILE [--apply] [--prefix recovered-]
 tmux-recovery resume [--all] [--delay 5]      # start recorded agents/editors
 tmux-recovery preflight [--bundle DIR]        # before a planned reboot
 tmux-recovery orphans                         # processes that outlived their pane
+tmux-recovery status                          # re-verify every stored checkpoint (exit 1 if corrupt)
 ```
 
 Checkpoint-all is one consistent file of all sessions from a single

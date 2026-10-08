@@ -150,6 +150,13 @@ with tempfile.TemporaryDirectory(prefix="recovery-fixture-") as tmp:
         tmux("set-option", "-p", "-t", p1, "@claude_sid", "claude-test-1")
         r.log_run(state, "fixture run")
         assert (state / "recovery.log").read_text().rstrip().endswith("fixture run")
+        health = r.status(state)
+        assert health["invalid"] == [] and health["valid"] >= 1 and health["last_run"].endswith("fixture run")
+        newest = max(state.glob(r.PREFIX + "*.json"))
+        broken = state / (r.PREFIX + "all-1-deadbeefdead.json")
+        broken.write_text(newest.read_text().replace('"sha256"', '"sha256": "0", "x"', 1))
+        assert r.status(state)["invalid"] == [broken.name], "a corrupt checkpoint is named, not hidden"
+        broken.unlink()
 
         # An override is trusted argv, while checkpoint IDs remain separate data.
         marker = root / "adapter-ran"

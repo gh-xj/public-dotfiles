@@ -2,9 +2,11 @@
   "docs_root": "docs",
   "tasks": 7,
   "script_files": 24,
-  "script_loc": 3420,
+  "script_loc": 3520,
   "docs_files": 14,
-  "docs_loc": 1371,
+  "docs_loc": 1378,
   "hooks": 13,
-  "skills": 2
+  "skills": 2,
+  "script_file_loc_max": 600,
+  "why": "2026-10-08: retention and encrypted-mirror engines with fixtures, plus doctor job/recovery reporting; per-file cap added so growth stays visible"
 }

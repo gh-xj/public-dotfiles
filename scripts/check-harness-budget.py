@@ -24,6 +24,10 @@ def line_count(repo, paths):
     return total
 
 
+def longest(repo, paths):
+    return max((line_count(repo, [path]) for path in paths), default=0)
+
+
 def hook_count(repo, paths):
     total = 0
     for relative in paths:
@@ -66,6 +70,7 @@ def actual(repo, docs_root):
         "tasks": tasks,
         "script_files": len(scripts),
         "script_loc": line_count(repo, scripts),
+        "script_file_loc_max": longest(repo, scripts),
         "docs_files": len(docs),
         "docs_loc": line_count(repo, docs),
         "hooks": hook_count(repo, paths),
@@ -85,6 +90,8 @@ def main():
     if args.actual:
         print(json.dumps(observed, indent=2, sort_keys=True))
         return
+    if not isinstance(budget.get("why"), str) or not budget["why"].strip():
+        raise SystemExit("harness-budget.json needs a `why`: the reason for the current limits")
     exceeded = {key: (observed[key], budget[key]) for key in observed if observed[key] > budget[key]}
     print("harness budget: " + ", ".join(f"{key}={value}" for key, value in observed.items()))
     if exceeded:

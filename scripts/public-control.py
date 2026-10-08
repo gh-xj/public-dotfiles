@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 MUTABLE = (".claude/settings.json", ".codex/config.toml", ".codex/hooks.json")
 # Repo files a mutable agent target may have been linked to by older public generations.
@@ -151,6 +152,20 @@ def upstream_proposals(repo, overlay=None):
     found = run(["git", "-C", overlay, "grep", "-ohE", "upstream-pending: [A-Za-z0-9._-]+"]).stdout if overlay else ""
     stale = sorted({line.split(": ", 1)[1] for line in found.splitlines()} - set(pending))
     return {"pending": pending, "stale_overlay_markers": stale}
+
+
+def job_outcomes(home, now=None):
+    """Last outcome of scheduled jobs; a failed run or silence past `expires` is a finding."""
+    now = now if now is not None else time.time()
+    found = {}
+    for path in sorted((home / ".local/state/public-dotfiles/jobs").glob("*.json")):
+        record = read_json(path, {})
+        if not isinstance(record, dict) or not isinstance(record.get("at"), int) or not isinstance(record.get("expires"), int):
+            found[path.stem] = {"state": "unreadable"}
+            continue
+        state = "failed" if record.get("ok") is not True else "stale" if now > record["expires"] else "ok"
+        found[path.stem] = {"state": state, "age_hours": round((now - record["at"]) / 3600, 1)}
+    return found
 
 
 def leaves(root, limit=4096):
@@ -326,10 +341,21 @@ class Control:
         if live:
             report.update(programs=self.programs(), ghostty=self.ghostty(), tmux=self.tmux(), settings_merge=settings_merge(self.home, self.repo, self.mutable_targets()),
                           generated_links=link_health(self.home, self.active), mutable_link_migrations=self.detached(),
-                          upstream_proposals=upstream_proposals(self.repo, self.overlay))
+                          upstream_proposals=upstream_proposals(self.repo, self.overlay), jobs=job_outcomes(self.home),
+                          recovery=self.recovery())
         return report
 
 
+
+    def recovery(self):
+        """Re-verify stored tmux checkpoints through the installed engine, when there is one."""
+        if not shutil.which("tmux-recovery"):
+            return {"state": "not-installed"}
+        output = self.run(["tmux-recovery", "status"], timeout=30)
+        try:
+            return json.loads(output.stdout)
+        except ValueError:
+            return {"state": "unreadable"}
 
     def programs(self):
         """Compare the paired Yazi commands with the selected/active generation."""
