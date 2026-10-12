@@ -10,7 +10,7 @@ Keep each Codex layer single-owned:
 | Layer | Owner |
 | --- | --- |
 | CLI executable | Official standalone installer; `~/.local/bin/codex` points into `~/.codex/packages/standalone` |
-| Desktop app | Homebrew cask `codex-app`; its bundled executable is app-internal, not the shell CLI |
+| Desktop app | Homebrew cask `chatgpt` (the deprecated `codex-app` merged into it); its bundled executable is app-internal, not the shell CLI |
 | Public policy/defaults | This repo: `config/agents/policy.md`, `.codex/rules`, `config/codex/config.toml`, and `config/codex/hooks.json` |
 | Private skills and account-specific declarations | `private-config` |
 | Auth, sessions, trust, plugin registries, caches, and mutable config | Live real directory `~/.codex`; never a repo parent symlink |

@@ -22,4 +22,4 @@ cask "1password" # baseline: credentials
 cask "1password-cli" # baseline: op for agents and scripts
 cask "bruno" # baseline: API client
 cask "claude" # baseline: agent app
-cask "codex-app" # baseline: agent app
+cask "chatgpt" # baseline: agent app (Codex desktop merged into it)
