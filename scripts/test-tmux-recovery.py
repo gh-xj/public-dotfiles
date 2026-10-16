@@ -205,6 +205,23 @@ with tempfile.TemporaryDirectory(prefix="recovery-fixture-") as tmp:
         assert seen, "editor launched under a wrapper must be recorded"
         assert any(e["document"] == str(draft.resolve()) for e in engine.preflight()["editors_unsaved"])
         assert Path(engine.preflight(root / "lag")["bundle"]).read_text().startswith("## uptime")
+        assert "## swap" in Path(engine.preflight(root / "lag")["bundle"]).read_text()
+        # Claude's own state wins over CPU, and blocked editors are reported.
+        states = root / "claude" / "sessions"
+        states.mkdir(parents=True)
+        os.environ["CLAUDE_CONFIG_DIR"] = str(root / "claude")
+        agent = tmux("new-window", "-d", "-t", "project one:11", "-P", "-F", "#{pane_id}", "sleep", "30")
+        tmux("set-option", "-p", "-t", agent, "@claude_sid", "claude-test-busy")
+        sleeper = int(engine.field(agent, "pane_pid"))
+        for status, expected in (("waiting", True), ("busy", True), ("idle", False)):
+            (states / f"{sleeper}.json").write_text(json.dumps({"pid": sleeper, "status": status}))
+            found = [item for item in engine.preflight()["agents_mid_task"] if item["pane"].endswith(agent)]
+            assert bool(found) == expected and (not found or found[0]["status"] == status), (status, found)
+        tmux("kill-window", "-t", agent)
+        tmux("send-keys", "-t", editor_pane, ":echo \"a\\nb\\nc\"", "Enter")
+        time.sleep(0.5)
+        report = engine.preflight()
+        assert any(item["pane"].endswith(editor_pane) for item in report["editors_unresponsive"]), report
         tmux("kill-window", "-t", editor_pane)
         tmux("kill-window", "-t", shell_pane)
         # Orphans: ppid-1 processes carrying this server's TMUX and a dead pane id.

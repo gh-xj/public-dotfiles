@@ -53,6 +53,8 @@ and package set selection.
 See [docs/default-openers.md](docs/default-openers.md) for durable Markdown/PDF
 opening preferences.
 See [docs/zed.md](docs/zed.md) for the graphical review workflow and Neovim-aligned keys.
+See [docs/cjk-input.md](docs/cjk-input.md) for Chinese input with Vim-mode editors
+and the Karabiner input-source rules.
 
 ## Ownership
 

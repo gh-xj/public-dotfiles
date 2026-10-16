@@ -46,4 +46,5 @@ or private-path data. Make it in the overlay first, mark that copy
 ## Pointers
 
 See `docs/daily-git-workflow.md`, `docs/config-delivery-model.md`, and
-`docs/dotfiles-operations.md`. Keep `CLAUDE.md` as the one-line `@AGENTS.md` shim.
+`docs/dotfiles-operations.md`. Read `docs/cjk-input.md` before editing Karabiner
+input-source rules. Keep `CLAUDE.md` as the one-line `@AGENTS.md` shim.

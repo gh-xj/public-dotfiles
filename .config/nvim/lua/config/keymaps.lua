@@ -10,8 +10,18 @@ end
 map({ "n", "x" }, "J", "5gj", { desc = "Down 5 display lines" })
 map({ "n", "x" }, "K", "5gk", { desc = "Up 5 display lines" })
 map("n", "t", "zt", { desc = "Scroll cursor line to top" })
+-- Zed fold-at-level N closes regions at depth N, which is foldlevel N-1.
+for i = 1, 4 do
+  map("n", "z" .. i, function() vim.wo.foldlevel = i - 1 end, { desc = "Fold at level " .. i })
+end
 map({ "n", "x" }, "<Up>", "<C-y>", { desc = "Scroll up one line" })
 map({ "n", "x" }, "<Down>", "<C-e>", { desc = "Scroll down one line" })
+
+-- Restore Vim's native High/Middle/Low viewport motions. Buffer navigation
+-- remains available on Left/Right and Option-h/l below.
+for _, lhs in ipairs({ "H", "L" }) do
+  pcall(vim.keymap.del, "n", lhs)
+end
 
 -- ===== Buffers =====
 map("n", "<Left>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Prev Buffer" })

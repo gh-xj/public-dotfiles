@@ -32,6 +32,7 @@ Ghostty sends raw bytes into tmux for a subset of shortcuts.
 - Prefer Cmd/Super in Ghostty for tmux commands, and have those mappings send prefix-backed tmux commands.
 - Do not install `vim-tmux-navigator` or a local Neovim/tmux navigation bridge. Tmux owns `Ctrl-h/j/k/l`; Neovim splits use native `Ctrl-w h/j/k/l`.
 - Do not rewrite physical `Ctrl-h` / `Ctrl-l` in Karabiner. They must reach tmux as real control keys.
+- Karabiner input-source rules (`jk`, `Ctrl-[`, Shift taps) and their invariants live in `docs/cjk-input.md`.
 - EasyJump is allowed only on `prefix + J`; its copy-mode `Ctrl-J` binding is unbound so it cannot compete with pane navigation.
 
 Window selectors:

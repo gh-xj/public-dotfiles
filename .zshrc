@@ -16,8 +16,10 @@ fi
 # Aliases and the tmux wrapper are always available, including in ZSH_MINIMAL.
 alias ..='cd ..'
 alias -- -='cd -'
-alias ls='eza --group-directories-first --git --icons'
-alias tree='eza --tree --level=3 --icons'
+# eza 0.23 can block on a non-tty stdin even without --stdin. Agent background
+# shells may inherit an open socket, while these aliases never consume stdin.
+alias ls='eza --group-directories-first --git --icons </dev/null'
+alias tree='eza --tree --level=3 --icons </dev/null'
 alias lg='lazygit'
 alias k='kubectl'
 alias b='nvim .'

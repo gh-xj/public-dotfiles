@@ -11,4 +11,7 @@ local opt = vim.opt
 opt.relativenumber = false
 opt.scrolloff = 8
 opt.spell = false
+-- CJK prose: gq/auto-wrap may break between multibyte chars (m), and J joins
+-- them without inserting a space (B).
+opt.formatoptions:append("mB")
 vim.g.trouble_lualine = false -- symbols move to the winbar breadcrumbs (plugins/ui.lua)

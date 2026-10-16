@@ -28,15 +28,30 @@ with tempfile.TemporaryDirectory(prefix="retention-") as tmp:
     (scratch / "live-dir").mkdir()
     (scratch / "live-dir/active").write_text("z")  # A fresh file inside keeps an old directory alive.
     os.utime(scratch / "live-dir", (old, old))
+    clones = root / "chrome-clones"
+    for name in ("stale-free", "stale-open", "newest"):
+        (clones / name).mkdir(parents=True)
+        (clones / name / "Chrome").write_text(name)
+    os.utime(clones / "stale-free", (old - 100, old - 100))
+    os.utime(clones / "stale-open", (old, old))
+    fakebin = root / "bin"
+    fakebin.mkdir()
+    fake_lsof = fakebin / "lsof"
+    fake_lsof.write_text("#!/bin/sh\nprintf 'p123\\nn%s\\n' \"$OPEN_PATH\"\n")
+    fake_lsof.chmod(0o700)
     config = root / "config.json"
     config.write_text(json.dumps({
         "logs": {"globs": [str(root / "*.log")], "maxBytes": 2000}, "archiveDirectory": str(root / "archive"),
         "archives": [{"name": "agent", "root": str(transcripts), "glob": "**/*.jsonl", "keepDays": 14}],
-        "scratch": [{"root": str(scratch), "maxAgeDays": 14}]}))
-    run = lambda *flags: json.loads(subprocess.run([sys.executable, str(repo / "scripts/retention.py"), str(config), *flags], check=True, capture_output=True, text=True).stdout)
+        "scratch": [{"root": str(scratch), "maxAgeDays": 14}],
+        "chromeCodeSignClones": {"enable": True, "maxAgeDays": 1, "root": str(clones)}}))
+    environment = dict(os.environ, RETENTION_LSOF=str(fake_lsof), OPEN_PATH=str(clones / "stale-open/Chrome"))
+    run = lambda *flags: json.loads(subprocess.run([sys.executable, str(repo / "scripts/retention.py"), str(config), *flags],
+                                                    check=True, capture_output=True, text=True, env=environment).stdout)
     plan = run()
-    assert plan["mode"] == "dry-run" and len(plan["logs"]) == len(plan["archives"]) == len(plan["scratch"]) == 1
+    assert plan["mode"] == "dry-run" and len(plan["logs"]) == len(plan["archives"]) == len(plan["scratch"]) == len(plan["chrome_clones"]) == 1
     assert log.stat().st_size > 2000 and stale.exists() and (scratch / "stale-dir").exists(), "dry-run must change nothing"
+    assert (clones / "stale-free").exists(), "dry-run must preserve Chrome clones"
     jobs = Path(tmp) / "jobs"
     assert run("--apply", "--status-directory", str(jobs))["mode"] == "apply"
     outcome = json.loads((jobs / "workstation-retention.json").read_text())
@@ -48,5 +63,6 @@ with tempfile.TemporaryDirectory(prefix="retention-") as tmp:
     archived = list((root / "archive").glob("agent-*.tar.zst"))
     assert len(archived) == 1 and subprocess.run(["tar", "--zstd", "-tf", str(archived[0])], capture_output=True, text=True).stdout.split() == ["2026/old.jsonl"]
     assert not (scratch / "stale-dir").exists() and (scratch / "fresh").exists() and (scratch / "live-dir/active").exists()
-    assert run("--apply") == {"mode": "apply", "logs": [], "archives": [], "scratch": []}, "second run is a no-op"
+    assert not (clones / "stale-free").exists() and (clones / "stale-open").exists() and (clones / "newest").exists()
+    assert run("--apply") == {"mode": "apply", "logs": [], "archives": [], "scratch": [], "chrome_clones": []}, "second run is a no-op"
 print("retention dry-run, log cap, verified archive and scratch expiry fixtures passed")

@@ -76,6 +76,63 @@ def expire_scratch(spec, apply, now):
     return done
 
 
+def allocated_size(path):
+    """Allocated bytes with hardlinked inodes counted once; APFS clone savings still need a df delta."""
+    total, seen = 0, set()
+    candidates = [path]
+    if path.is_dir() and not path.is_symlink():
+        candidates.extend(Path(directory) / name for directory, names, files in os.walk(path) for name in names + files)
+    for candidate in candidates:
+        stat = candidate.lstat()
+        identity = (stat.st_dev, stat.st_ino)
+        if identity not in seen:
+            seen.add(identity)
+            total += stat.st_blocks * 512
+    return total
+
+
+def chrome_clone_root(spec):
+    if spec.get("root"):
+        return Path(os.path.expanduser(spec["root"]))
+    temporary = subprocess.run(["getconf", "DARWIN_USER_TEMP_DIR"], check=True, capture_output=True, text=True).stdout.strip()
+    return Path(temporary).parent / "X" / "com.google.Chrome.code_sign_clone"
+
+
+def open_paths(root):
+    lsof = os.environ.get("RETENTION_LSOF", "lsof")
+    result = subprocess.run([lsof, "-n", "-Fn", "+D", str(root)], capture_output=True, text=True)
+    if result.returncode not in (0, 1):
+        detail = result.stderr.strip() or f"exit {result.returncode}"
+        raise SystemExit(f"cannot inspect open Chrome clone files: {detail}")
+    return {Path(line[1:]) for line in result.stdout.splitlines() if line.startswith("n/")}
+
+
+def expire_chrome_clones(spec, apply, now):
+    """Remove only old, unopened clones and always preserve the newest clone."""
+    if not spec.get("enable", False):
+        return []
+    root = chrome_clone_root(spec)
+    if not root.is_dir() or root.is_symlink():
+        return []
+    clones = [entry for entry in root.iterdir() if entry.is_dir() and not entry.is_symlink()]
+    if len(clones) < 2:
+        return []
+    newest = max(clones, key=lambda entry: entry.stat().st_mtime)
+    opened = open_paths(root)
+    cutoff = now - spec["maxAgeDays"] * 86400
+    done = []
+    for clone in sorted(clones):
+        if clone == newest or clone.stat().st_mtime >= cutoff:
+            continue
+        if any(path == clone or clone in path.parents for path in opened):
+            continue
+        done.append({"chrome_clone": str(clone), "allocated_bytes": allocated_size(clone),
+                     "note": "APFS clones share blocks; only the post-delete df delta is authoritative"})
+        if apply:
+            shutil.rmtree(clone)
+    return done
+
+
 def record_job(directory, name, ok, ttl, now, detail):
     """Outcome file read by `task doctor`; `expires` is when silence becomes a finding."""
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -95,10 +152,12 @@ def main():
     report = {"mode": "apply" if args.apply else "dry-run",
               "logs": cap_logs(config["logs"], args.apply),
               "archives": [item for spec in config["archives"] for item in archive(spec, Path(os.path.expanduser(config["archiveDirectory"])), args.apply, now)],
-              "scratch": [item for spec in config["scratch"] for item in expire_scratch(spec, args.apply, now)]}
+              "scratch": [item for spec in config["scratch"] for item in expire_scratch(spec, args.apply, now)],
+              "chrome_clones": expire_chrome_clones(config.get("chromeCodeSignClones", {}), args.apply, now)}
     if args.apply and args.status_directory:
         record_job(args.status_directory, "workstation-retention", True, 2 * 86400, now,
-                   f'{len(report["logs"])} logs, {len(report["archives"])} archives, {len(report["scratch"])} scratch')
+                   f'{len(report["logs"])} logs, {len(report["archives"])} archives, '
+                   f'{len(report["scratch"])} scratch, {len(report["chrome_clones"])} Chrome clones')
     print(json.dumps(report))
 
 

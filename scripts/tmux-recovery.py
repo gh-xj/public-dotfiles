@@ -253,19 +253,39 @@ def subtree(table, root):
 
 
 def editors(table, pids):
-    """(document, unsaved_buffers) per nvim reachable in the process tree, via its own server."""
+    """(document, unsaved_buffers) per nvim; ("", None) when its server does not answer."""
     result = []
     base = os.environ.get("TMPDIR", "/tmp")
+    found_nvim = False
+    found_socket = False
     for pid in pids:
+        found_nvim = found_nvim or table.get(pid, (0, 0, "", ""))[2] == "nvim"
         for sock in glob.glob(os.path.join(base, "nvim.*", "*", f"nvim.{pid}.0")):
+            found_socket = True
             expr = "expand('%:p').\"\\t\".len(filter(getbufinfo(),'v:val.changed'))"
             try:
-                got = subprocess.run(["nvim", "--server", sock, "--remote-expr", expr], capture_output=True, text=True, timeout=2).stdout
+                query = subprocess.run(["nvim", "--server", sock, "--remote-expr", expr], capture_output=True, text=True, timeout=2, check=True)
+                got = query.stdout
                 document, _, unsaved = got.rpartition("\t")
                 result.append((document, int(unsaved)))
             except (OSError, ValueError, subprocess.SubprocessError):
-                continue
+                result.append(("", None))
+    if found_nvim and not found_socket:
+        result.append(("", None))
     return result
+
+
+def agent_states():
+    """pid -> Claude Code status from its own session-state files."""
+    root = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude")) / "sessions"
+    states = {}
+    for path in root.glob("*.json"):
+        try:
+            record = json.loads(path.read_text())
+            states[int(record["pid"])] = str(record.get("status", ""))
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    return states
 
 
 class Engine:
@@ -464,27 +484,32 @@ class Engine:
         return {"started": started, "skipped": skipped}
 
     def preflight(self, bundle=None):
-        """Before a planned reboot: agents mid-task, editors with unsaved buffers, optional lag evidence."""
+        """Before a reboot: fail closed on active agents and unsaved or blocked editors."""
         rows = self.panes("session_name", "window_index", "pane_id", "pane_pid", "pane_current_command", *[e["option"] for e in self.providers.values()])
-        table = process_table()
-        busy, unsaved = [], []
+        table, states = process_table(), agent_states()
+        busy, unsaved, unresponsive = [], [], []
         for row in rows:
             tree = subtree(table, int(row["pane_pid"])) if row["pane_pid"].isdigit() else []
             where = f"{row['session_name']}:{row['window_index']} {row['pane_id']}"
             if any(row[e["option"]] for e in self.providers.values()) and row["pane_current_command"].lstrip("-") not in SHELLS:
                 cpu = sum(table[p][1] for p in tree)
-                if cpu >= 5.0:  # [INFERRED] ps %cpu over the pane's whole process tree
-                    busy.append({"pane": where, "cpu": round(cpu, 1)})
+                known = [states[p] for p in tree if p in states]
+                status = next((value for value in known if value in ("busy", "waiting")), known[0] if known else "cpu")
+                if status in ("busy", "waiting") or (not known and cpu >= 5.0):
+                    busy.append({"pane": where, "cpu": round(cpu, 1), "status": status})
             for document, count in editors(table, tree):
-                if count:
+                if count is None:
+                    unresponsive.append({"pane": where})
+                elif count:
                     unsaved.append({"pane": where, "document": document, "unsaved_buffers": count})
-        report = {"agents_mid_task": busy, "editors_unsaved": unsaved}
+        report = {"agents_mid_task": busy, "editors_unsaved": unsaved, "editors_unresponsive": unresponsive}
         if bundle:
             Path(bundle).mkdir(parents=True, exist_ok=True, mode=0o700)
             target = Path(bundle) / time.strftime("lag-%Y%m%dT%H%M%S.txt")
             with open(target, "w") as out:
                 for title, argv in (("uptime", ["uptime"]), ("memory_pressure", ["memory_pressure", "-Q"]),
-                                    ("vm_stat", ["vm_stat"]), ("top by cpu", ["ps", "-Arcwwo", "pid,pcpu,pmem,rss,etime,comm"])):
+                                    ("vm_stat", ["vm_stat"]), ("swap", ["sysctl", "vm.swapusage"]),
+                                    ("top by cpu", ["ps", "-Arcwwo", "pid,pcpu,pmem,rss,etime,comm"])):
                     result = subprocess.run(argv, capture_output=True, text=True)
                     body = result.stdout.splitlines()[:26 if argv[0] == "ps" else 40]
                     out.write(f"## {title}\n" + "\n".join(body) + "\n\n")
@@ -532,7 +557,7 @@ def main():
     again = sub.add_parser("resume", help="start recorded agents/editors in idle panes: this pane, or --all staggered")
     again.add_argument("--all", action="store_true")
     again.add_argument("--delay", type=float, default=5.0)
-    ahead = sub.add_parser("preflight", help="before a planned reboot: busy agents, unsaved editors")
+    ahead = sub.add_parser("preflight", help="before a reboot: busy agents, unsaved or blocked editors; exit 1 if any")
     ahead.add_argument("--bundle", type=Path, help="also write a small lag-evidence file into this directory")
     sub.add_parser("status", help="verify stored checkpoints; exit 1 if any is corrupt")
     sub.add_parser("orphans", help="processes that outlived their tmux pane (report only)")
@@ -549,6 +574,7 @@ def main():
             result = engine.resume(args.all, args.delay, os.getenv("TMUX_PANE"))
         elif args.command == "preflight":
             result = engine.preflight(args.bundle)
+            failed = any(result[key] for key in ("agents_mid_task", "editors_unsaved", "editors_unresponsive"))
         elif args.command == "status":
             result = status(args.output_directory)
             failed = bool(result["invalid"])

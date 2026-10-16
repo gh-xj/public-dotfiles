@@ -18,8 +18,10 @@ check_python="$(nix_cmd eval --raw --impure --expr '(builtins.getFlake (toString
 python3 scripts/verify-generated-links.py "$generation" \
   --map "/Users/example/public-dotfiles=$repo_root"
 python3 scripts/test-agent-status.py
+python3 scripts/test-apfs-size.py
 python3 scripts/test-macos-settings.py
 python3 scripts/test-nvim-health.py
+python3 scripts/test-nvim-session-refresh.py
 python3 scripts/test-provenance.py
 python3 scripts/test-retention.py
 python3 scripts/test-public-control.py "$generation"

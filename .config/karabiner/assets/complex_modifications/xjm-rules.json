@@ -180,6 +180,9 @@
       "description": "[xj] jk simultaneous to esc",
       "manipulators": [
         {
+          "parameters": {
+            "basic.simultaneous_threshold_milliseconds": 30
+          },
           "from": {
             "simultaneous": [
               {
@@ -193,11 +196,19 @@
           "to": [
             {
               "key_code": "escape"
+            },
+            {
+              "select_input_source": {
+                "input_source_id": "^com\\.apple\\.keylayout\\.US$"
+              }
             }
           ],
           "type": "basic"
         },
         {
+          "parameters": {
+            "basic.simultaneous_threshold_milliseconds": 30
+          },
           "from": {
             "simultaneous": [
               {
@@ -215,6 +226,90 @@
             {
               "key_code": "escape",
               "modifiers": ["command"]
+            }
+          ],
+          "type": "basic"
+        }
+      ]
+    },
+    {
+      "description": "[xj] Ghostty: ctrl+[ also switches to U.S.",
+      "manipulators": [
+        {
+          "conditions": [
+            {
+              "type": "frontmost_application_if",
+              "bundle_identifiers": ["^com\\.mitchellh\\.ghostty$"]
+            }
+          ],
+          "from": {
+            "key_code": "open_bracket",
+            "modifiers": {
+              "mandatory": ["control"]
+            }
+          },
+          "to": [
+            {
+              "key_code": "open_bracket",
+              "modifiers": ["control"]
+            },
+            {
+              "select_input_source": {
+                "input_source_id": "^com\\.apple\\.keylayout\\.US$"
+              }
+            }
+          ],
+          "type": "basic"
+        }
+      ]
+    },
+    {
+      "description": "[xj] tap left_shift to U.S., tap right_shift to Shuangpin",
+      "manipulators": [
+        {
+          "from": {
+            "key_code": "left_shift",
+            "modifiers": {
+              "optional": ["any"]
+            }
+          },
+          "to": [
+            {
+              "key_code": "left_shift"
+            }
+          ],
+          "to_if_alone": [
+            {
+              "select_input_source": {
+                "input_source_id": "^com\\.apple\\.keylayout\\.US$"
+              }
+            },
+            {
+              "key_code": "vk_none"
+            }
+          ],
+          "type": "basic"
+        },
+        {
+          "from": {
+            "key_code": "right_shift",
+            "modifiers": {
+              "optional": ["any"]
+            }
+          },
+          "to": [
+            {
+              "key_code": "right_shift"
+            }
+          ],
+          "to_if_alone": [
+            {
+              "select_input_source": {
+                "input_source_id": "^com\\.apple\\.inputmethod\\.SCIM\\.Shuangpin$"
+              }
+            },
+            {
+              "key_code": "vk_none"
             }
           ],
           "type": "basic"

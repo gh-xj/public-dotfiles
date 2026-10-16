@@ -43,8 +43,12 @@ responsibility for its host selection and private data.
 
 `retention.enable` (off by default) schedules `workstation-retention`: it caps
 launchd logs in place, archives old Codex/Claude transcripts per day as verified
-`tar.zst` (resume of an archived session needs extraction first), and expires
-Claude scratch. Scheduled runs only report until `retention.apply = true`;
+`tar.zst` (resume of an archived session needs extraction first), expires
+Claude scratch, and reports stale Chrome code-sign clones. A Chrome clone is
+eligible only when it is older than the configured age, `lsof` finds no open
+path below it, and it is not the newest clone. APFS clones share blocks, so
+reported allocated size is an estimate and the post-delete `df` delta is the
+reclaim authority. Scheduled runs only report until `retention.apply = true`;
 downstream data adds `logs.globs`, `archives.<n>`, `scratch.<n>`. A downstream
 `scratchGc` package replaces the scratch pass.
 
@@ -55,9 +59,24 @@ key and never prompts (`--pinentry-mode=error`), otherwise it notifies. Restore
 drill: `encrypted-mirror-<name> drill` clones the mirror and compares every
 branch/tag SHA and the HEAD file count.
 
+Each mirror must use an existing named Git remote (`remoteName`, defaulting to
+the attribute name) whose push URL is `gcrypt::<remote>` and whose
+`remote.<name>.gcrypt-id` is already recorded. This is the adoption identity;
+the scheduled tool refuses to initialize a URL-form replacement. Before every
+explicit gcrypt force-push it fetches into `refs/encrypted-mirrors/<name>/`,
+rejects remote-only or diverged branches and mismatched tags, then fetches back
+and proves every local branch/tag was mirrored. `signingKey` defaults to
+`gpgKey`; participant publication stays disabled.
+
 `task doctor` shows `jobs` (last retention run, mirror push and drill: ok, failed
 or stale) and `recovery` (checkpoint verification). `recovery.nix` is the
 topology engine; `retention.nix` only bounds disk growth.
+
+Use `apfs-size PATH...` before deleting APFS-heavy trees. It prints ordinary
+allocated bytes beside `ATTR_CMNEXT_PRIVATESIZE` bytes and counts hardlinks
+once. A tree made entirely of clones of itself can report near-zero private
+bytes even though deleting every copy eventually frees one shared allocation;
+confirm the actual reclaim with `df`.
 
 ## Check what actually runs
 

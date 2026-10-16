@@ -17,6 +17,23 @@ tmux-recovery orphans                         # processes that outlived their pa
 tmux-recovery status                          # re-verify every stored checkpoint (exit 1 if corrupt)
 ```
 
+Neovim configuration changes do not affect already-running processes. Refresh
+them separately after `task apply` (or a live repo-tree source change):
+
+```sh
+nvim-session-refresh                         # plan only; no process changes
+nvim-session-refresh --pane %42              # inspect one pane
+nvim-session-refresh --apply                 # refresh every safe Neovim pane
+```
+
+The refresh tool preserves named single-window tabs, active tab, cursor
+positions, cwd, pane title, and `@recovery_document`. Dirty buffers, unnamed or
+missing files, split tabs, unreachable servers, and multiple editors in one
+pane are hard per-pane skips. It never writes a buffer or invents a recovery
+file. Clean editors exit normally when possible; root or wrapper-hosted editors
+use `respawn-pane` only after the clean-state recheck. Old TUI/embed PIDs are
+signaled only after their full argv identity is rechecked.
+
 Checkpoint-all is one consistent file of all sessions from a single
 `list-panes -a` plus one `ps`; a failed capture leaves the previous checkpoint
 intact. Odd data is dropped per pane with a warning (invalid ids, control
@@ -55,10 +72,11 @@ the overload. Only panes at a shell prompt (or still parked) are started; busy
 panes are reported. A recorded agent resumes via its adapter, otherwise a
 recorded document opens with `nvim -- <path>`.
 
-`preflight` lists agents that look mid-task (live agent pane whose process tree
-uses at least 5% CPU, an inference, not proof) and editors with unsaved buffers.
-`--bundle DIR` adds a small `lag-*.txt` (uptime, memory pressure, vm_stat, top
-processes). `orphans` reports processes with ppid 1 whose `TMUX` socket is this
+`preflight` reads Claude Code's own session state when available and falls back
+to the 5% process-tree CPU heuristic for other providers. It exits nonzero for
+busy/waiting agents and unsaved or unresponsive editors. `--bundle DIR` adds a
+small `lag-*.txt` (uptime, memory pressure, vm_stat, swap, top processes).
+`orphans` reports processes with ppid 1 whose `TMUX` socket is this
 server and whose `TMUX_PANE` no longer exists; it only reports (busy ones are
 also noted in `recovery.log`), and killing stays with the human.
 

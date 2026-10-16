@@ -1,4 +1,12 @@
 return {
+  {
+    "akinsho/bufferline.nvim",
+    keys = {
+      { "<S-h>", false },
+      { "<S-l>", false },
+    },
+  },
+
   -- Zed-style breadcrumbs: file path and the enclosing symbols in each window's winbar.
   {
     "nvim-lualine/lualine.nvim",

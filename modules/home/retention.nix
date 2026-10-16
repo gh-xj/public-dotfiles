@@ -9,10 +9,11 @@ let
     archives = lib.mapAttrsToList (name: spec: spec // { inherit name; }) rt.archives;
     # A downstream scratch collector (scratchGc) replaces the built-in scratch pass.
     scratch = lib.optionals (!cfg.scratchGc.enable) (lib.attrValues rt.scratch);
+    chromeCodeSignClones = rt.chromeCodeSignClones;
   });
   engine = pkgs.writeShellApplication {
     name = "workstation-retention";
-    runtimeInputs = [ pkgs.python3 pkgs.gnutar pkgs.zstd ];
+    runtimeInputs = [ pkgs.python3 pkgs.gnutar pkgs.zstd pkgs.lsof ];
     text = ''exec python3 ${../../scripts/retention.py} ${settings} --status-directory ${home}/.local/state/public-dotfiles/jobs ${lib.optionalString rt.apply "--apply"} "$@"'';
   };
 in {
@@ -39,6 +40,11 @@ in {
         root = lib.mkOption { type = lib.types.str; };
         maxAgeDays = lib.mkOption { type = lib.types.ints.positive; default = 14; };
       }; });
+    };
+    chromeCodeSignClones = {
+      enable = lib.mkOption { type = lib.types.bool; default = true; description = "Remove stale Chrome code-sign clones while preserving open and newest clones."; };
+      maxAgeDays = lib.mkOption { type = lib.types.ints.positive; default = 1; };
+      root = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; description = "Override the detected Chrome clone root, primarily for fixtures."; };
     };
   };
   config = lib.mkIf (cfg.enable && rt.enable) {

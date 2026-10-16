@@ -11,11 +11,23 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    home.packages = [ (pkgs.writeShellApplication {
-      name = "nvim-health";
-      runtimeInputs = [ pkgs.python3 ];
-      text = ''exec python3 ${../../scripts/nvim-health.py} "$@"'';
-    }) ];
+    home.packages = [
+      (pkgs.writeShellApplication {
+        name = "apfs-size";
+        runtimeInputs = [ pkgs.python3 ];
+        text = ''exec python3 ${../../scripts/apfs-size.py} "$@"'';
+      })
+      (pkgs.writeShellApplication {
+        name = "nvim-health";
+        runtimeInputs = [ pkgs.python3 ];
+        text = ''exec python3 ${../../scripts/nvim-health.py} "$@"'';
+      })
+      (pkgs.writeShellApplication {
+        name = "nvim-session-refresh";
+        runtimeInputs = [ pkgs.neovim pkgs.python3 pkgs.tmux ];
+        text = ''exec python3 ${../../scripts/nvim-session-refresh.py} "$@"'';
+      })
+    ];
     home.file = {
       ".amethyst.yml" = mkRepoFile ".config/amethyst/amethyst.yml";
       "Taskfile.yml" = mkGeneratedText ''

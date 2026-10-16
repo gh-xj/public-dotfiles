@@ -32,6 +32,7 @@ keys follow LazyVim. Zed Vim defaults already match `gd`, `gD`, `gy`, `gI`,
 | --- | --- |
 | `j` / `k`, `J` / `K` | Display-line movement; five display lines |
 | `t` | Cursor line to top |
+| `z1`–`z4`, `zM` / `zR` | Fold at level 1–4; fold / unfold all |
 | Left / Right, Alt-h / Alt-l | Previous / next buffer or tab |
 | F1–F9, F10 | Buffer/tab index; alternate file |
 | Ctrl-p, `<Space><Space>`, `<Space>ff` | Find files |
