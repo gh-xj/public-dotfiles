@@ -24,7 +24,8 @@ let
     ]) windowSelectors
   );
   # Pin tools to this generation, including bash for plugin env shebangs.
-  tmuxServerPath = lib.makeBinPath [ pkgs.bash pkgs.tmux config.home.path ]
+  tmuxPkg = import ../../packages/tmux.nix pkgs;
+  tmuxServerPath = lib.makeBinPath [ pkgs.bash tmuxPkg config.home.path ]
     + ":/opt/homebrew/bin:/opt/homebrew/sbin:${config.home.homeDirectory}/.orbstack/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
   fzfTmuxUrl = pkgs.tmuxPlugins.fzf-tmux-url.overrideAttrs (old: {
     postInstall = (old.postInstall or "") + ''
@@ -34,7 +35,7 @@ let
   });
   paneReopen = pkgs.writeShellApplication {
     name = "tmux-pane-reopen";
-    runtimeInputs = [ pkgs.python3 pkgs.tmux ];
+    runtimeInputs = [ pkgs.python3 tmuxPkg ];
     # Reopened agents resume through the recovery engine's adapter map
     # (built-ins plus tmuxRecovery.adaptersFile), even when recovery is disabled.
     text = ''

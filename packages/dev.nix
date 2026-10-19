@@ -17,7 +17,7 @@ pkgs: [
   pkgs.pyright
   pkgs.shfmt
   pkgs.statix
-  pkgs.tmux
+  (import ./tmux.nix pkgs)
   pkgs."tree-sitter"
   pkgs.typescript
   pkgs."typescript-language-server"

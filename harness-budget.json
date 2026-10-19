@@ -7,6 +7,6 @@
   "docs_loc": 1501,
   "hooks": 13,
   "skills": 2,
-  "script_file_loc_max": 620,
-  "why": "2026-10-16: add tested safe Neovim refresh, APFS sizing, fail-closed reboot checks, and bounded Chrome clone retention"
+  "script_file_loc_max": 611,
+  "why": "2026-10-19: build tmux 3.6b until nixpkgs moves past the 3.6a sixel heap corruption"
 }
