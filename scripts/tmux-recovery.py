@@ -450,6 +450,7 @@ class Engine:
                 if pane["active"]:
                     active_pane = pid
             self.tmux("select-layout", "-t", wid, window["layout"])
+            self.tmux("set-option", "-wu", "-t", wid, "window-size")  # resize-window pinned it to manual
             self.tmux("select-pane", "-t", active_pane)
             if window["active"]:
                 active_window = wid

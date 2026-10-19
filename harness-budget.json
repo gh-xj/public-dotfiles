@@ -2,11 +2,11 @@
   "docs_root": "docs",
   "tasks": 7,
   "script_files": 29,
-  "script_loc": 4376,
+  "script_loc": 4379,
   "docs_files": 15,
   "docs_loc": 1501,
   "hooks": 13,
   "skills": 2,
-  "script_file_loc_max": 623,
-  "why": "2026-10-19: tmux recovery resumes dead panes in their start directory, survives a pane closing mid-resume and a busy server while parked, with regression fixtures"
+  "script_file_loc_max": 624,
+  "why": "2026-10-19: restored tmux windows drop the manual size that resize-window pins"
 }
