@@ -192,6 +192,49 @@ with tempfile.TemporaryDirectory(prefix="recovery-fixture-") as tmp:
             time.sleep(0.02)
         assert marker.read_text() == "codex-test-2"
         tmux("set-option", "-pu", "-t", p1, r.RESUME)
+        # A dead parked pane (its park process crashed) resumes where it was recorded, not in the
+        # caller's cwd, and a pane that closes after listing fails alone instead of stopping the rest.
+        workdir, here = root / "work dir", root / "resumed-cwd"
+        workdir.mkdir()
+        adapter.write_text(json.dumps({"codex": {"option": "@codex_sid", "argv": [sys.executable, "-c", "import os,sys; open(sys.argv[1], 'w').write(os.getcwd())", str(here), "{session_id}"]}}))
+        flaky = r.Engine(r.adapters(adapter), socket)
+        moved = copy.deepcopy(only)
+        moved["sessions"][0]["windows"][0]["panes"][0]["cwd"] = str(workdir)
+        assert all(flaky.restore(moved, apply=True, prefix=p)["restored"] for p in ("dead-", "gone-"))
+        dead, gone = flaky.field("dead-project one:3", "pane_id"), flaky.field("gone-project one:3", "pane_id")
+        os.kill(int(flaky.field(dead, "pane_pid")), 9)
+        for _ in range(50):
+            if flaky.field(dead, "pane_dead") == "1": break
+            time.sleep(0.02)
+        assert flaky.field(dead, "pane_current_path") == ""
+        listed = flaky.panes
+        def vanishing(*names):
+            rows = [row for row in listed(*names) if row["pane_id"] in (dead, gone)]
+            tmux("kill-pane", "-t", gone)
+            return rows
+        flaky.panes = vanishing
+        report = flaky.resume(everything=True, delay=0)
+        assert report["started"] == [dead] and report["failed"] == [{"pane": gone, "reason": "tmux operation failed"}], report
+        for _ in range(50):
+            if here.exists() and flaky.field(dead, "pane_dead") == "1": break
+            time.sleep(0.02)
+        assert here.read_text() == str(workdir)
+        # The resumed command exited, so the pane is dead again: typed keys would be lost, so it is respawned.
+        here.unlink()
+        flaky.panes = listed
+        assert flaky.resume(current=dead)["started"] == [dead]
+        for _ in range(50):
+            if here.exists(): break
+            time.sleep(0.02)
+        assert here.read_text() == str(workdir)
+        assert [p["cwd"] for p in flaky.capture("dead-project one")["sessions"][0]["windows"][0]["panes"]] == [str(workdir)]
+        # A parked pane whose server is too busy to answer still gets a shell instead of a traceback.
+        login = root / "login-shell"
+        login.write_text(f"#!/bin/sh\necho \"$1\" > {shlex.quote(str(root / 'parked-shell'))}\n")
+        login.chmod(0o700)
+        subprocess.run([sys.executable, str(repo / "scripts/tmux-recovery.py"), "_park"], input="\n", text=True, capture_output=True,
+                       env=dict(os.environ, TMUX=str(root / "no-server") + ",1,0", SHELL=str(login)), check=True)
+        assert (root / "parked-shell").read_text() == "-l\n"
         # Editors are found anywhere in a pane's process tree and report unsaved buffers.
         draft = root / "draft.md"
         draft.write_text("saved\n")
@@ -260,6 +303,14 @@ with tempfile.TemporaryDirectory(prefix="recovery-fixture-") as tmp:
         assert (option("@gemini_sid"), option("@codex_sid"), option(r.RESUME)) == ("gemini-1", "", "gemini gemini-1")
         hook("gemini", "end", "gemini-1")
         assert option("@gemini_sid") == "" and option(r.RESUME) == ""
+        # Closing a dead pane records where it started, so reopening does not land in ~.
+        closing = tmux("new-window", "-d", "-t", "project one:12", "-c", workdir, "-P", "-F", "#{pane_id}", "sleep", "0.2")
+        tmux("set-option", "-w", "-t", closing, "remain-on-exit", "on")
+        for _ in range(50):
+            if engine.field(closing, "pane_dead") == "1": break
+            time.sleep(0.02)
+        subprocess.run(["bash", str(repo / "scripts/tmux-pane-reopen.sh"), "close", closing], env=env, check=True)
+        assert tmux("show-options", "-gqv", "@closed_panes").split("\x1f")[1] == str(workdir)
         toml = root / "adapters.toml"
         toml.write_text('[adapters.custom]\noption="@custom_sid"\nargv=["custom-cli","resume","{session_id}"]\n')
         assert "custom" in r.adapters(toml)

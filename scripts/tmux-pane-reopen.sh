@@ -12,7 +12,8 @@ close)
     pane=$2
     window=$(tmux display -p -t "$pane" "#{window_id}")
     [[ "$window" == @* ]] || exit 1 # a missing target formats as empty, not an error
-    entry=$(tmux display -p -t "$pane" "#{window_id}$US#{pane_current_path}$US#{?@resume_target,#{@resume_target},#{?@claude_sid,claude #{@claude_sid},#{?@codex_sid,codex #{@codex_sid},}}}")
+    # A dead pane has no current path; fall back to where it started.
+    entry=$(tmux display -p -t "$pane" "#{window_id}$US#{?pane_current_path,#{pane_current_path},#{pane_start_path}}$US#{?@resume_target,#{@resume_target},#{?@claude_sid,claude #{@claude_sid},#{?@codex_sid,codex #{@codex_sid},}}}")
     # Fields must not contain the separators or other control characters.
     if [[ "${entry//"$US"/}" != *[[:cntrl:]]* ]]; then
         IFS=$RS read -r -a old <<<"$(tmux show -gqv "$LIST")"

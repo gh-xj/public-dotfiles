@@ -68,9 +68,9 @@ prompt (Enter starts the default shell).
 
 `resume` is the only thing that starts programs: in the current pane, or with
 `--all` every pane staggered by `--delay` seconds so a reboot does not recreate
-the overload. Only panes at a shell prompt (or still parked) are started; busy
-panes are reported. A recorded agent resumes via its adapter, otherwise a
-recorded document opens with `nvim -- <path>`.
+the overload. Panes at a prompt start; parked or dead ones respawn in their
+start directory. Busy panes are skipped, failed ones listed (exit 1). Agents
+resume via their adapter, otherwise a document opens with `nvim -- <path>`.
 
 `preflight` reads Claude Code's own session state when available and falls back
 to the 5% process-tree CPU heuristic for other providers. It exits nonzero for

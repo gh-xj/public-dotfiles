@@ -327,7 +327,7 @@ class Engine:
         options = [entry["option"] for entry in self.providers.values()]
         rows = self.panes("session_id", "session_name", "window_id", "window_index", "window_name", "window_layout",
                           "window_active", "pane_id", "pane_index", "pane_active", "pane_pid", "pane_current_path",
-                          "pane_title", "@agent_label", RESUME, DOCUMENT, *options)
+                          "pane_start_path", "pane_title", "@agent_label", RESUME, DOCUMENT, *options)
         table = process_table()
         sessions = {}
         for row in rows:
@@ -349,7 +349,9 @@ class Engine:
                 providers.setdefault(target[0], {"option": self.providers[target[0]]["option"], "session_id": target[1]})
             elif row[RESUME]:
                 self.warnings.append(f"dropped unusable resume target in {row['pane_id']}")
-            pane = {"index": int(row["pane_index"]), "cwd": row["pane_current_path"], "title": clean(row["pane_title"]),
+            # A dead pane has no current path; it still ran where it started.
+            cwd = row["pane_current_path"] or row["pane_start_path"]
+            pane = {"index": int(row["pane_index"]), "cwd": cwd, "title": clean(row["pane_title"]),
                     "label": clean(row["@agent_label"]), "active": row["pane_active"] == "1", "providers": providers}
             if not pane["cwd"].startswith("/") or any(ord(c) < 32 for c in pane["cwd"]):
                 self.warnings.append(f"{row['pane_id']} has no usable cwd; recorded ~")
@@ -455,13 +457,15 @@ class Engine:
 
     def resume(self, everything=False, delay=5.0, current=None):
         """Start recorded agents/editors in panes that are idle: never anything already running."""
-        rows = self.panes("pane_id", "pane_current_command", "pane_start_command", "pane_current_path", RESUME, DOCUMENT)
-        started, skipped = [], []
+        rows = self.panes("pane_id", "pane_dead", "pane_current_command", "pane_start_command", "pane_current_path",
+                          "pane_start_path", RESUME, DOCUMENT)
+        started, skipped, failed = [], [], []
         for row in rows:
             if not (everything or row["pane_id"] == current) or not (row[RESUME] or row[DOCUMENT]):
                 continue
-            parked = row["pane_start_command"].rstrip('"').endswith("_park")
-            if not (parked or row["pane_current_command"].lstrip("-") in SHELLS):
+            # A dead pane ignores typed keys and has no current path, so it is respawned like a parked one.
+            respawn = row["pane_dead"] == "1" or row["pane_start_command"].rstrip('"').endswith("_park")
+            if not (respawn or row["pane_current_command"].lstrip("-") in SHELLS):
                 skipped.append({"pane": row["pane_id"], "reason": "not at a shell prompt"})
                 continue
             provider, _, sid = row[RESUME].partition(" ")
@@ -474,14 +478,19 @@ class Engine:
                 continue
             if started and everything:
                 time.sleep(delay)
-            if parked:
-                self.tmux("respawn-pane", "-k", "-t", row["pane_id"], "-c", row["pane_current_path"],
-                          self.tmux("show-options", "-gv", "default-shell"), "-ic", shlex.join(argv))
-            else:
-                self.tmux("send-keys", "-t", row["pane_id"], "-l", shlex.join(argv))
-                self.tmux("send-keys", "-t", row["pane_id"], "Enter")
+            try:
+                if respawn:
+                    cwd = row["pane_start_path"] or row["pane_current_path"] or str(Path.home())
+                    self.tmux("respawn-pane", "-k", "-t", row["pane_id"], "-c", cwd,
+                              self.tmux("show-options", "-gv", "default-shell"), "-ic", shlex.join(argv))
+                else:
+                    self.tmux("send-keys", "-t", row["pane_id"], "-l", shlex.join(argv))
+                    self.tmux("send-keys", "-t", row["pane_id"], "Enter")
+            except RecoveryError:  # e.g. the pane closed after listing; the rest still start
+                failed.append({"pane": row["pane_id"], "reason": "tmux operation failed"})
+                continue
             started.append(row["pane_id"])
-        return {"started": started, "skipped": skipped}
+        return {"started": started, "skipped": skipped, "failed": failed}
 
     def preflight(self, bundle=None):
         """Before a reboot: fail closed on active agents and unsaved or blocked editors."""
@@ -538,7 +547,9 @@ def main():
     if sys.argv[1:] == ["_park"]:
         print("Topology restored; no program replayed. Press Enter to start the default shell.", flush=True)
         input()
-        shell = subprocess.check_output(["tmux", "show-options", "-gv", "default-shell"], text=True).strip()
+        # tmux exports default-shell as SHELL; that covers a server too busy to answer.
+        shell = subprocess.run(["tmux", "show-options", "-gv", "default-shell"], capture_output=True, text=True).stdout.strip()
+        shell = shell or os.environ.get("SHELL") or "/bin/sh"
         os.execv(shell, [shell, "-l"])
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--socket", help="tmux -L socket; defaults to current/default server")
@@ -572,6 +583,7 @@ def main():
             failed = bool(result["failed"])
         elif args.command == "resume":
             result = engine.resume(args.all, args.delay, os.getenv("TMUX_PANE"))
+            failed = bool(result["failed"])
         elif args.command == "preflight":
             result = engine.preflight(args.bundle)
             failed = any(result[key] for key in ("agents_mid_task", "editors_unsaved", "editors_unresponsive"))
