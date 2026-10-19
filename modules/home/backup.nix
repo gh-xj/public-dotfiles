@@ -17,12 +17,13 @@ let
       signing_key=${lib.escapeShellArg m.signingKey}
       namespace=${lib.escapeShellArg "refs/encrypted-mirrors/${name}"}
       notify() { /usr/bin/osascript -e "display notification \"$1\" with title \"encrypted mirror ${name}\"" >/dev/null 2>&1 || true; }
-      # Ready when gpg-agent already holds the passphrase (or the key has none).
+      # Ready when gcrypt's own steps, signing and decrypting, work without a prompt. keyinfo
+      # flags are not enough: gpg-agent unlocks a subkey with the last passphrase entered
+      # without caching it under that subkey's keygrip, so a usable key reads as locked.
       ready() {
-        local grip
-        for grip in $(gpg --batch --with-colons --with-keygrip -K "$key" | awk -F: '$1=="grp"{print $10}'); do
-          gpg-connect-agent "keyinfo $grip" /bye | awk '$2=="KEYINFO"{ if ($7!="1" && $8!="C") bad=1 } END{exit bad}' || return 1
-        done
+        gpg --batch --quiet --pinentry-mode error --local-user "$signing_key" --sign </dev/null >/dev/null 2>&1 &&
+          gpg --batch --quiet --trust-model always --encrypt --recipient "$key" </dev/null 2>/dev/null |
+          gpg --batch --quiet --pinentry-mode error --decrypt >/dev/null 2>&1
       }
       # Outcome file read by `task doctor`; silence past `expires` is a finding.
       record() {
