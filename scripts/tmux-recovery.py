@@ -454,6 +454,7 @@ class Engine:
             self.tmux("select-pane", "-t", active_pane)
             if window["active"]:
                 active_window = wid
+        self.tmux("set-option", "-u", "-t", sid, "renumber-windows")  # only held off while windows are placed
         self.tmux("select-window", "-t", active_window)
 
     def resume(self, everything=False, delay=5.0, current=None):

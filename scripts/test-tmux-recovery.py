@@ -122,6 +122,8 @@ with tempfile.TemporaryDirectory(prefix="recovery-fixture-") as tmp:
         assert restored["windows"][0]["active"]
         # Restored windows follow their clients again; a pinned manual size outgrows a smaller terminal.
         assert not tmux("show-options", "-wqv", "-t", "restored-project one:3", "window-size")
+        # Holding renumber-windows off while placing windows must not outlive the restore, or gaps never close.
+        assert not tmux("show-options", "-qv", "-t", "restored-project one", "renumber-windows")
         panes = restored["windows"][0]["panes"]
         assert [p["label"] for p in panes] == ["Claude/reviewer", "Codex/test"]
         assert panes[1]["active"] and panes[1]["title"] == "title $(touch SHOULD_NOT_EXIST)"
