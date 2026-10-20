@@ -2,11 +2,11 @@
   "docs_root": "docs",
   "tasks": 7,
   "script_files": 29,
-  "script_loc": 4382,
+  "script_loc": 4442,
   "docs_files": 15,
-  "docs_loc": 1501,
+  "docs_loc": 1506,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 625,
-  "why": "2026-10-20: restored tmux sessions get renumber-windows back after placement"
+  "why": "2026-10-20: workstation-retention caps regenerable build caches (go-build 20 GiB) with a busy-writer guard and free-space delta, judges Chrome clone liveness by executable inode, and schedules by calendar so reboots do not reset its timer"
 }

@@ -10,6 +10,7 @@ let
     # A downstream scratch collector (scratchGc) replaces the built-in scratch pass.
     scratch = lib.optionals (!cfg.scratchGc.enable) (lib.attrValues rt.scratch);
     chromeCodeSignClones = rt.chromeCodeSignClones;
+    caches = lib.mapAttrsToList (name: spec: { inherit name; inherit (spec) root maxGiB busyProcesses; }) (lib.filterAttrs (_: spec: spec.enable) rt.caches);
   });
   engine = pkgs.writeShellApplication {
     name = "workstation-retention";
@@ -20,7 +21,12 @@ in {
   options.xj.publicDotfiles.retention = {
     enable = lib.mkEnableOption "bounded growth for agent transcripts, launchd logs and scratch space";
     apply = lib.mkOption { type = lib.types.bool; default = false; description = "Scheduled runs only report until this is true; `workstation-retention --apply` always applies."; };
-    interval = lib.mkOption { type = lib.types.ints.positive; default = 86400; description = "Seconds between scheduled runs."; };
+    interval = lib.mkOption { type = lib.types.ints.positive; default = 86400; description = "Seconds between scheduled runs when `calendar` is null."; };
+    calendar = lib.mkOption {
+      type = lib.types.nullOr (lib.types.attrsOf lib.types.ints.unsigned);
+      default = { Hour = 12; Minute = 30; };
+      description = "launchd StartCalendarInterval. A StartInterval timer restarts at every load, so a Mac rebooted more often than `interval` never runs it.";
+    };
     logs.globs = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ "${home}/Library/Logs/*.log" "${home}/.local/state/*.log" "${home}/.local/state/*/*.log" ]; description = "Log files truncated in place, keeping their newest lines."; };
     logs.maxMegabytes = lib.mkOption { type = lib.types.ints.positive; default = 100; };
     archiveDirectory = lib.mkOption { type = lib.types.str; default = "${home}/.local/state/public-dotfiles/archive"; };
@@ -46,12 +52,28 @@ in {
       maxAgeDays = lib.mkOption { type = lib.types.ints.positive; default = 1; };
       root = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; description = "Override the detected Chrome clone root, primarily for fixtures."; };
     };
+    caches = lib.mkOption {
+      default = { };
+      description = "Regenerable caches emptied (root kept) once above maxGiB and none of busyProcesses runs.";
+      type = lib.types.attrsOf (lib.types.submodule { options = {
+        enable = lib.mkOption { type = lib.types.bool; default = true; };
+        root = lib.mkOption { type = lib.types.str; };
+        maxGiB = lib.mkOption { type = lib.types.ints.positive; };
+        busyProcesses = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ ]; description = "Process basenames that defer clearing."; };
+      }; });
+    };
   };
   config = lib.mkIf (cfg.enable && rt.enable) {
     xj.publicDotfiles.retention = {
       archives.codex = { root = lib.mkDefault "${home}/.codex/sessions"; glob = lib.mkDefault "**/*.jsonl"; };
       archives.claude = { root = lib.mkDefault "${home}/.claude/projects"; glob = lib.mkDefault "*/*.jsonl"; };
       scratch.claude = { root = lib.mkDefault "/private/tmp/claude-{uid}"; };
+      # Not `go env GOCACHE`: launchd's PATH has no toolchain shims. gopls stays out of busyProcesses, a shared daemon never exits.
+      caches.goBuild = {
+        root = lib.mkDefault "${home}/Library/Caches/go-build";
+        maxGiB = lib.mkDefault 20;
+        busyProcesses = lib.mkDefault [ "go" "compile" "link" "asm" "cgo" "vet" "golangci-lint" ];
+      };
     };
     home.packages = [ engine ];
     home.file.".local/bin/workstation-retention".source = "${engine}/bin/workstation-retention";
@@ -59,7 +81,7 @@ in {
       enable = true;
       config = {
         ProgramArguments = [ "${home}/.local/bin/workstation-retention" ];
-        StartInterval = rt.interval;
+      } // (if rt.calendar == null then { StartInterval = rt.interval; } else { StartCalendarInterval = rt.calendar; }) // {
         ProcessType = "Background";
         LowPriorityIO = true;
         Nice = 10;

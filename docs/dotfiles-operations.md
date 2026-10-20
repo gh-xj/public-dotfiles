@@ -41,15 +41,20 @@ responsibility for its host selection and private data.
 
 ## Workstation state
 
-`retention.enable` (off by default) schedules `workstation-retention`: it caps
-launchd logs in place, archives old Codex/Claude transcripts per day as verified
-`tar.zst` (resume of an archived session needs extraction first), expires
-Claude scratch, and reports stale Chrome code-sign clones. A Chrome clone is
-eligible only when it is older than the configured age, `lsof` finds no open
-path below it, and it is not the newest clone. APFS clones share blocks, so
-reported allocated size is an estimate and the post-delete `df` delta is the
-reclaim authority. Scheduled runs only report until `retention.apply = true`;
-downstream data adds `logs.globs`, `archives.<n>`, `scratch.<n>`. A downstream
+`retention.enable` (off by default) schedules `workstation-retention` daily at
+`retention.calendar` (a `StartInterval` timer restarts at every load, so a Mac
+rebooted daily would never run it): it caps launchd logs in place, archives old
+Codex/Claude transcripts per day as verified `tar.zst` (resume of an archived
+session needs extraction first), expires Claude scratch, and reports stale
+Chrome code-sign clones. A Chrome clone is eligible only when it is older than
+the configured age, no running Chrome maps its executable inode, and it is not
+the newest clone. `caches.<n>` empties a regenerable cache above `maxGiB` unless
+one of `busyProcesses` runs; `goBuild` (20 GiB) is built in, the next build is
+cold, and each worktree misses the Go cache separately because absolute paths
+enter action IDs. APFS clones share blocks, so reported allocated size is an
+estimate and the run's `free_delta_bytes` is the reclaim authority. Scheduled
+runs only report until `retention.apply = true`; downstream data adds
+`logs.globs`, `archives.<n>`, `scratch.<n>`, `caches.<n>`. A downstream
 `scratchGc` package replaces the scratch pass.
 
 `encryptedMirrors.<name>` (`repository`, `remote`, `gpgKey` from downstream)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bound state that only grows: cap logs, archive old agent transcripts, expire scratch.
+"""Bound state that only grows: cap logs, archive old agent transcripts, expire scratch, cap build caches.
 
 Dry-run unless --apply. The JSON config comes from the Home Manager module.
 """
@@ -98,17 +98,17 @@ def chrome_clone_root(spec):
     return Path(temporary).parent / "X" / "com.google.Chrome.code_sign_clone"
 
 
-def open_paths(root):
+def live_inodes():
+    """Executable inodes mapped by running Chrome processes; a clone hard-links the binary it was made for."""
     lsof = os.environ.get("RETENTION_LSOF", "lsof")
-    result = subprocess.run([lsof, "-n", "-Fn", "+D", str(root)], capture_output=True, text=True)
+    result = subprocess.run([lsof, "-n", "-a", "-d", "txt", "-c", "Google Chrome", "-Fpi"], capture_output=True, text=True)
     if result.returncode not in (0, 1):
-        detail = result.stderr.strip() or f"exit {result.returncode}"
-        raise SystemExit(f"cannot inspect open Chrome clone files: {detail}")
-    return {Path(line[1:]) for line in result.stdout.splitlines() if line.startswith("n/")}
+        return None
+    return {int(line[1:]) for line in result.stdout.splitlines() if line.startswith("i") and line[1:].isdigit()}
 
 
 def expire_chrome_clones(spec, apply, now):
-    """Remove only old, unopened clones and always preserve the newest clone."""
+    """Remove only old clones whose executable no running Chrome maps, and always preserve the newest clone."""
     if not spec.get("enable", False):
         return []
     root = chrome_clone_root(spec)
@@ -118,19 +118,56 @@ def expire_chrome_clones(spec, apply, now):
     if len(clones) < 2:
         return []
     newest = max(clones, key=lambda entry: entry.stat().st_mtime)
-    opened = open_paths(root)
+    running = live_inodes()
+    if running is None:
+        return [{"chrome_clone": str(root), "action": "skipped", "note": "lsof txt query failed; nothing removed"}]
     cutoff = now - spec["maxAgeDays"] * 86400
     done = []
     for clone in sorted(clones):
         if clone == newest or clone.stat().st_mtime >= cutoff:
             continue
-        if any(path == clone or clone in path.parents for path in opened):
+        if any(binary.stat().st_ino in running for binary in clone.glob("*/Contents/MacOS/*")):
             continue
         done.append({"chrome_clone": str(clone), "allocated_bytes": allocated_size(clone),
                      "note": "APFS clones share blocks; only the post-delete df delta is authoritative"})
         if apply:
             shutil.rmtree(clone)
     return done
+
+
+def running_commands():
+    ps = os.environ.get("RETENTION_PS", "ps")
+    lines = subprocess.run([ps, "-axo", "comm="], check=True, capture_output=True, text=True).stdout.splitlines()
+    return {os.path.basename(line.strip()) for line in lines if line.strip()}
+
+
+def cap_caches(specs, apply):
+    """Empty a regenerable cache above its cap unless one of its writers runs; the root itself stays."""
+    done, running = [], running_commands() if specs else set()
+    for spec in specs:
+        root = Path(os.path.expanduser(spec["root"]))
+        if not root.is_dir() or root.is_symlink():
+            continue
+        size = allocated_size(root)
+        item = {"cache": spec["name"], "allocated_gib": round(size / 2**30, 2), "cap_gib": spec["maxGiB"], "action": "under-cap"}
+        done.append(item)
+        if size <= spec["maxGiB"] * 2**30 or not any(root.iterdir()):
+            continue
+        item["action"] = "busy" if running & set(spec["busyProcesses"]) else "over-cap"
+        if apply and item["action"] == "over-cap":
+            failed = 0
+            for entry in root.iterdir():
+                try:
+                    shutil.rmtree(entry) if entry.is_dir() and not entry.is_symlink() else entry.unlink()
+                except OSError:  # A concurrent build recreated or holds entries.
+                    failed += 1
+            item["action"] = "partial" if failed else "cleared"
+    return done
+
+
+def free_bytes(path):
+    stat = os.statvfs(path)
+    return stat.f_bavail * stat.f_frsize
 
 
 def record_job(directory, name, ok, ttl, now, detail):
@@ -149,15 +186,20 @@ def main():
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     now = time.time()
+    free_before = free_bytes(Path.home())
     report = {"mode": "apply" if args.apply else "dry-run",
               "logs": cap_logs(config["logs"], args.apply),
               "archives": [item for spec in config["archives"] for item in archive(spec, Path(os.path.expanduser(config["archiveDirectory"])), args.apply, now)],
               "scratch": [item for spec in config["scratch"] for item in expire_scratch(spec, args.apply, now)],
-              "chrome_clones": expire_chrome_clones(config.get("chromeCodeSignClones", {}), args.apply, now)}
+              "chrome_clones": expire_chrome_clones(config.get("chromeCodeSignClones", {}), args.apply, now),
+              "caches": cap_caches(config.get("caches", []), args.apply)}
+    if args.apply:  # The cleanup protocol accepts reclaim by free-space delta, not by summed sizes.
+        report["free_delta_bytes"] = free_bytes(Path.home()) - free_before
     if args.apply and args.status_directory:
         record_job(args.status_directory, "workstation-retention", True, 2 * 86400, now,
                    f'{len(report["logs"])} logs, {len(report["archives"])} archives, '
-                   f'{len(report["scratch"])} scratch, {len(report["chrome_clones"])} Chrome clones')
+                   f'{len(report["scratch"])} scratch, {len(report["chrome_clones"])} Chrome clones, '
+                   f'{sum(item["action"] in ("cleared", "partial") for item in report["caches"])} caches cleared')
     print(json.dumps(report))
 
 
