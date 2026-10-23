@@ -55,7 +55,7 @@ with tempfile.TemporaryDirectory(prefix="recovery-fixture-") as tmp:
         payload = engine.capture()
         assert engine.capture("project one")["sessions"][0]["name"] == "project one"
         assert len(payload["sessions"]) == 2
-        assert [w["index"] for w in payload["sessions"][0]["windows"]] == [3, 7]
+        assert [w["index"] for w in payload["sessions"][0]["windows"]] == [3, 7], (payload, engine.warnings, engine.field(p1, "window_layout"))
         state = root / "state"
         saved = r.save(state, "all", payload, 3, 7)
         path = Path(saved["file"])
@@ -172,7 +172,7 @@ with tempfile.TemporaryDirectory(prefix="recovery-fixture-") as tmp:
         only = {"sessions": [copy.deepcopy(payload["sessions"][0])]}
         only["sessions"][0]["windows"] = [only["sessions"][0]["windows"][0]]
         only["sessions"][0]["windows"][0]["panes"] = [only["sessions"][0]["windows"][0]["panes"][1]]
-        only["sessions"][0]["windows"][0]["layout"] = engine.field("second/session:0", "window_layout")
+        only["sessions"][0]["windows"][0]["layout"] = r.legacy_layout(engine.field("second/session:0", "window_layout"))
         assert custom.restore(only, apply=True, prefix="adapter-")["restored"] == ["adapter-project one"]
         parked_pane = custom.field("adapter-project one:3", "pane_id")
         assert not marker.exists(), "restore must start nothing"

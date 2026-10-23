@@ -47,6 +47,59 @@ def clean(value, maximum=4096):
     return "".join(c for c in value if c >= " " and c != "\x7f")[:maximum]
 
 
+def legacy_layout(value):
+    """将 tmux 3.8 的 V2 layout 转为仍被 tmux 接受的 V1 格式。"""
+    if not value.startswith("{"):
+        return value
+    def fields(entries):
+        result = dict(entries)
+        if len(result) != len(entries):
+            raise RecoveryError("duplicate layout field")
+        return result
+    try:
+        layout = json.loads(text(value, 131072), object_pairs_hook=fields)
+    except (ValueError, RecursionError) as exc:
+        raise RecoveryError("invalid JSON layout") from exc
+    if not isinstance(layout, dict) or set(layout) != {"V", "L"} or type(layout["V"]) is not int or layout["V"] != 2:
+        raise RecoveryError("unsupported layout version")
+    seen, count = set(), 0
+    def cell(node, depth=0):
+        nonlocal count
+        count += 1
+        if depth > 32 or count > 511 or not isinstance(node, dict):
+            raise RecoveryError("invalid or oversized layout tree")
+        required = {"t", "w", "h", "x", "y"}
+        if not required <= set(node):
+            raise RecoveryError("missing layout geometry")
+        if any(type(node[k]) is not int or not 0 <= node[k] <= 10000 for k in ("w", "h", "x", "y")) or not node["w"] or not node["h"]:
+            raise RecoveryError("invalid layout geometry")
+        geometry = f'{node["w"]}x{node["h"]},{node["x"]},{node["y"]}'
+        if node["t"] == "p":
+            if set(node) - required - {"i", "I", "a", "l"} or not {"i", "I"} <= set(node):
+                raise RecoveryError("invalid pane layout fields")
+            identity = node["I"]
+            if not isinstance(identity, str) or not re.fullmatch(r"%[0-9]{1,20}", identity) or identity in seen:
+                raise RecoveryError("invalid or duplicate layout pane ID")
+            if type(node["i"]) is not int or node["i"] < 0 or ("a" in node and type(node["a"]) is not bool) or ("l" in node and (type(node["l"]) is not int or node["l"] < 0)):
+                raise RecoveryError("invalid layout pane index/active flag")
+            seen.add(identity)
+            if len(seen) > 256:
+                raise RecoveryError("too many layout panes")
+            return geometry + "," + identity[1:]
+        if node["t"] not in ("h", "v") or set(node) != required | {"c"}:
+            raise RecoveryError("invalid layout split")
+        children = node["c"]
+        if not isinstance(children, list) or not 2 <= len(children) <= 256:
+            raise RecoveryError("invalid layout children")
+        brackets = ("{", "}") if node["t"] == "h" else ("[", "]")
+        return geometry + brackets[0] + ",".join(cell(child, depth + 1) for child in children) + brackets[1]
+    body = cell(layout["L"])
+    checksum = 0
+    for byte in body.encode("ascii"):
+        checksum = (((checksum >> 1) | ((checksum & 1) << 15)) + byte) & 0xffff
+    return f"{checksum:04x}," + body
+
+
 def session_id(value):
     if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}", value):
         raise RecoveryError("invalid provider session ID")
@@ -333,9 +386,14 @@ class Engine:
         for row in rows:
             if name is not None and row["session_name"] != name:
                 continue
+            try:
+                layout = legacy_layout(row["window_layout"])
+            except RecoveryError as error:
+                self.warnings.append(f"dropped pane {row['pane_id']} with an unreadable layout: {error}")
+                continue
             session = sessions.setdefault(row["session_id"], {"name": row["session_name"], "windows": {}})
             window = session["windows"].setdefault(row["window_id"], {
-                "name": clean(row["window_name"]), "index": int(row["window_index"]), "layout": row["window_layout"],
+                "name": clean(row["window_name"]), "index": int(row["window_index"]), "layout": layout,
                 "active": row["window_active"] == "1", "panes": []})
             providers = {}
             for provider, entry in self.providers.items():

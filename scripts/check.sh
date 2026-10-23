@@ -26,6 +26,7 @@ python3 scripts/test-provenance.py
 python3 scripts/test-retention.py
 python3 scripts/test-public-control.py "$generation"
 "$check_python" scripts/test-activation-guards.py "$generation"
+"$check_python" scripts/test-tmux-layout.py
 PATH="$generation/home-path/bin:$PATH" "$check_python" scripts/test-tmux-recovery.py
 task --taskfile global/Taskfile.yml --list-all >/dev/null
 
