@@ -8,6 +8,23 @@ import subprocess
 import sys
 
 
+def belongs_to_pane(pane, parent):
+    """Detached hooks from a replaced process must not clear its successor."""
+    try:
+        root = int(subprocess.check_output(["tmux", "display-message", "-p", "-t", pane, "#{pane_pid}"], text=True))
+        rows = subprocess.check_output(["ps", "-axo", "pid=,ppid="], text=True)
+        parents = {int(pid): int(ppid) for pid, ppid in (row.split() for row in rows.splitlines())}
+    except (OSError, ValueError, subprocess.CalledProcessError):
+        return False  # Unknown ancestry is not permission to clear identity.
+    seen = set()
+    while parent > 1 and parent not in seen:
+        if parent == root:
+            return True
+        seen.add(parent)
+        parent = parents.get(parent, 0)
+    return False
+
+
 def main():
     provider, event = sys.argv[1:]
     if not re.fullmatch(r"[a-z][a-z0-9_]{0,31}", provider) or event not in ("start", "end"):
@@ -20,6 +37,8 @@ def main():
         current = subprocess.check_output(["tmux", "show-option", "-pqv", "-t", pane, "@" + provider + "_sid"], text=True).strip()
         if not data.get("session_id") or current != data["session_id"]:
             return  # A late hook must not clear a newer session in this pane.
+        if not belongs_to_pane(pane, os.getppid()):
+            return  # The same UUID can have a newer process generation, too.
         subprocess.run(["agent-pane-title", "clear"], check=True)
         subprocess.run(["tmux", "set-option", "-pu", "-t", pane, "@" + provider + "_sid"], check=True)
         target = subprocess.check_output(["tmux", "show-option", "-pqv", "-t", pane, "@resume_target"], text=True).strip()

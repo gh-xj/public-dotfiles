@@ -2,11 +2,11 @@
   "docs_root": "docs",
   "tasks": 7,
   "script_files": 30,
-  "script_loc": 4568,
+  "script_loc": 4606,
   "docs_files": 15,
   "docs_loc": 1506,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-10-23: tmux 3.8 V2 layouts convert to V1 with a bounded pure regression fixture; no new task, hook or runtime dependency"
+  "why": "2026-10-29: reopen consumes its record only after the pane exists, and a late End hook is ignored unless its ancestry reaches the pane, with fixtures for both directions"
 }

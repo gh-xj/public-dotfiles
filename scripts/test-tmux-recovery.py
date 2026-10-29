@@ -306,7 +306,21 @@ with tempfile.TemporaryDirectory(prefix="recovery-fixture-") as tmp:
         hook("gemini", "start", "gemini-1")
         assert (option("@gemini_sid"), option("@codex_sid"), option(r.RESUME)) == ("gemini-1", "", "gemini gemini-1")
         hook("gemini", "end", "gemini-1")
-        assert option("@gemini_sid") == "" and option(r.RESUME) == ""
+        # This hook's parent is the test runner, outside the pane process tree.
+        assert (option("@gemini_sid"), option(r.RESUME)) == ("gemini-1", "gemini gemini-1")
+        # Inside the pane's own process tree, the same hook does clear its identity.
+        go = root / "end-hook-go"
+        ending_hook = f"""while [ ! -e {shlex.quote(str(go))} ]; do sleep 0.02; done; echo '{{"session_id":"gemini-2"}}' | {shlex.quote(sys.executable)} {shlex.quote(str(repo / "scripts/agent-session.py"))} gemini end; true"""
+        ending = tmux("new-window", "-d", "-t", "project one:13", "-e", f"PATH={fakebin}:{os.environ['PATH']}", "-P", "-F", "#{pane_id}", "sh", "-c", ending_hook)
+        tmux("set-option", "-w", "-t", ending, "remain-on-exit", "on")
+        for name, value in (("@gemini_sid", "gemini-2"), (r.RESUME, "gemini gemini-2")):
+            tmux("set-option", "-p", "-t", ending, name, value)
+        go.touch()
+        for _ in range(200):
+            if engine.field(ending, "pane_dead") == "1": break
+            time.sleep(0.02)
+        assert [tmux("show-option", "-pqv", "-t", ending, name) for name in ("@gemini_sid", r.RESUME)] == ["", ""]
+        tmux("kill-pane", "-t", ending)
         # Closing a dead pane records where it started, so reopening does not land in ~.
         closing = tmux("new-window", "-d", "-t", "project one:12", "-c", workdir, "-P", "-F", "#{pane_id}", "sleep", "0.2")
         tmux("set-option", "-w", "-t", closing, "remain-on-exit", "on")

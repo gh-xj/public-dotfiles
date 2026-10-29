@@ -33,15 +33,20 @@ reopen)
     fi
     entry=${list%%"$RS"*}
     rest=${list#"$entry"}
-    tmux set -g "$LIST" "${rest#"$RS"}"
     IFS=$US read -r window cwd target <<<"$entry"
     [[ -d "$cwd" ]] || cwd=$HOME
     if alive "$window"; then
-        pane=$(tmux split-window -P -F "#{pane_id}" -t "$window" -h -c "$cwd")
-        tmux select-layout -t "$pane" -E
+        create=(split-window -t "$window" -h)
     else
-        pane=$(tmux new-window -P -F "#{pane_id}" -t "$session:" -c "$cwd")
+        create=(new-window -t "$session:")
     fi
+    if ! pane=$(tmux "${create[@]}" -P -F "#{pane_id}" -c "$cwd"); then
+        tmux display -c "$client" "could not create pane; closed pane record kept"
+        exit 1
+    fi
+    # Only consume the record after creation succeeds, so failures are retryable.
+    tmux set -g "$LIST" "${rest#"$RS"}"
+    if [[ ${create[0]} == split-window ]]; then tmux select-layout -t "$pane" -E; fi
     if [[ -n "$target" ]]; then # RESUME_ENGINE (Nix-prepended) validates and applies the shared adapters
         tmux set -p -t "$pane" @resume_target "$target"
         TMUX_PANE=$pane "${RESUME_ENGINE[@]}" resume >/dev/null || tmux display -c "$client" "agent resume failed: $target"
