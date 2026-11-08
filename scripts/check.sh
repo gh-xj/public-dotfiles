@@ -23,7 +23,10 @@ python3 scripts/test-macos-settings.py
 python3 scripts/test-nvim-health.py
 PATH="$generation/home-path/bin:$PATH" "$check_python" scripts/test-nvim-session-refresh.py
 python3 scripts/test-provenance.py
-python3 scripts/test-retention.py
+# The runtime inputs retention.nix declares, so the fixture runs the tar path as delivered
+# instead of depending on a zstd that some unrelated Homebrew formula happened to pull in.
+retention_inputs="$(nix_cmd build --no-link --print-out-paths --inputs-from . 'nixpkgs#gnutar' 'nixpkgs#zstd^bin' | sed 's|$|/bin|' | paste -sd: -)"
+PATH="$retention_inputs:$PATH" python3 scripts/test-retention.py
 python3 scripts/test-public-control.py "$generation"
 "$check_python" scripts/test-activation-guards.py "$generation"
 "$check_python" scripts/test-tmux-layout.py
