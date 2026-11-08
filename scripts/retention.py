@@ -83,7 +83,10 @@ def allocated_size(path):
     if path.is_dir() and not path.is_symlink():
         candidates.extend(Path(directory) / name for directory, names, files in os.walk(path) for name in names + files)
     for candidate in candidates:
-        stat = candidate.lstat()
+        try:
+            stat = candidate.lstat()
+        except FileNotFoundError:  # A concurrent writer trimmed it; the busy guard runs after sizing.
+            continue
         identity = (stat.st_dev, stat.st_ino)
         if identity not in seen:
             seen.add(identity)
@@ -102,7 +105,8 @@ def live_inodes():
     """Executable inodes mapped by running Chrome processes; a clone hard-links the binary it was made for."""
     lsof = os.environ.get("RETENTION_LSOF", "lsof")
     result = subprocess.run([lsof, "-n", "-a", "-d", "txt", "-c", "Google Chrome", "-Fpi"], capture_output=True, text=True)
-    if result.returncode not in (0, 1):
+    # lsof exits 1 for both "no match" and a real error; only the error writes to stderr.
+    if result.returncode not in (0, 1) or (result.returncode == 1 and result.stderr.strip()):
         return None
     return {int(line[1:]) for line in result.stdout.splitlines() if line.startswith("i") and line[1:].isdigit()}
 

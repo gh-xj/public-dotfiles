@@ -72,6 +72,10 @@ with tempfile.TemporaryDirectory(prefix="retention-") as tmp:
     config.write_text(config.read_text().replace('"maxGiB": 1', '"maxGiB": 0'))  # Every non-empty cache is over a zero cap.
     assert run(RUNNING="/usr/local/go/pkg/tool/darwin_arm64/compile")["caches"][0]["action"] == "busy"
     assert (cache / "0a/entry-d").exists(), "a running writer defers clearing"
+    broken_lsof = fakebin / "broken-lsof"
+    broken_lsof.write_text("#!/bin/sh\necho 'lsof: unusable' >&2\nexit 1\n")
+    broken_lsof.chmod(0o700)
+    assert run(RETENTION_LSOF=str(broken_lsof))["chrome_clones"][0]["action"] == "skipped", "a failed liveness query must remove nothing"
     plan = run()
     assert plan["caches"][0]["action"] == "over-cap" and (cache / "README").exists() and "free_delta_bytes" not in plan
     assert plan["mode"] == "dry-run" and len(plan["logs"]) == len(plan["archives"]) == len(plan["scratch"]) == len(plan["chrome_clones"]) == 1

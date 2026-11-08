@@ -2,11 +2,11 @@
   "docs_root": "docs",
   "tasks": 7,
   "script_files": 30,
-  "script_loc": 4655,
+  "script_loc": 4663,
   "docs_files": 16,
   "docs_loc": 1625,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: every module takes tmux from the version-guarded package, with a guard against reintroducing pkgs.tmux"
+  "why": "2026-11-08: Chrome clone liveness fails closed on an lsof error, and cache sizing survives a concurrent trim"
 }
