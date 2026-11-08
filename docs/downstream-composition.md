@@ -69,7 +69,8 @@ a correctness or ergonomics gap that has a workaround.
 `task doctor` lists `upstream_proposals.pending`. The owner pastes them into
 the lead session, which re-implements on current `main`. After pulling the
 change, delete the proposal and the overlay copy together; doctor reports any
-overlay marker left without its proposal as `stale_overlay_markers`. Overlays
+overlay marker left without its proposal as `stale_overlay_markers`, and one
+that is not a dated slug as `malformed_overlay_markers`. Overlays
 pass `OVERLAY_DIR=<overlay repo>` to the public doctor to enable that check.
 
 An overlay that implements the change itself instead of waiting - a machine that

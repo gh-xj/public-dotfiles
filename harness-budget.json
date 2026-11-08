@@ -4,9 +4,9 @@
   "script_files": 30,
   "script_loc": 4674,
   "docs_files": 16,
-  "docs_loc": 1625,
+  "docs_loc": 1631,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: the mirror drill names a checked-out commit that no mirrored ref carries"
+  "why": "2026-11-08: mirror, retention and overlay docs state the limits their code has"
 }

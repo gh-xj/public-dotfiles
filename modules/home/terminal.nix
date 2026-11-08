@@ -91,8 +91,8 @@ in
       prefix = "C-s";
       # Declared rather than inherited. Unset, tmux takes $SHELL, which comes
       # from the account's UserShell - machine state this repo cannot set and
-      # does not document. A Mac whose login shell is still the system default
-      # therefore runs bash in every pane while this repo's .zshenv, .zshrc and
+      # does not document. An account whose UserShell is bash therefore runs
+      # bash in every pane while this repo's .zshenv, .zshrc and
       # .zprofile sit correctly linked and never sourced, so the prompt, vi-mode,
       # atuin, fzf-tab, autosuggestions and starship are all simply absent with
       # nothing reporting a fault. Naming the shell here makes panes correct

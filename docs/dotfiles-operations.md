@@ -43,7 +43,8 @@ responsibility for its host selection and private data.
 
 `retention.enable` (off by default) schedules `workstation-retention` daily at
 `retention.calendar` (a `StartInterval` timer restarts at every load, so a Mac
-rebooted daily would never run it): it caps launchd logs in place, archives old
+rebooted daily would never run it; `retention.interval` applies only with
+`calendar = null`): it caps launchd logs in place, archives old
 Codex/Claude transcripts per day as verified `tar.zst` (resume of an archived
 session needs extraction first), expires Claude scratch, and reports stale
 Chrome code-sign clones. A Chrome clone is eligible only when it is older than
@@ -73,7 +74,11 @@ then `gpg-connect-agent 'keyinfo --list' /bye` (agent cold, sign anything once).
 A passphrase saved through the dialog's "Save in Keychain" sits under service
 `GnuPG` (`security find-generic-password -s GnuPG`); no module can create it, and
 the readiness check does not consult it, because `--pinentry-mode=error` never
-launches pinentry.
+launches pinentry. An unlock lasts only as long as the agent's cache (gpg-agent's
+defaults: 10 minutes idle, 2 hours at most; a restart clears it), far shorter than
+the daily schedule. A key with a passphrase therefore reads as not ready on most
+scheduled runs, and each one fails and notifies, unless the machine sets longer
+`default-cache-ttl` and `max-cache-ttl` or the key has no passphrase.
 
 Each mirror must use an existing named Git remote (`remoteName`, defaulting to
 the attribute name) whose push URL is `gcrypt::<remote>` and whose
