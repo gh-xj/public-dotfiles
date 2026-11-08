@@ -78,6 +78,10 @@ Expected: `Home Manager and macOS settings apply complete`. The script creates
 the machine-local flake below `~/.local/state/public-dotfiles/bootstrap/` and
 switches only the user profile.
 
+tmux panes run the declared `/bin/zsh`, but the account's login shell stays
+machine state outside tmux: check `dscl . -read "/Users/$USER" UserShell`, and run
+`chsh -s /bin/zsh` if it is anything else.
+
 Already-open shells and agents still carry the old `PATH` and possibly the old
 nix-darwin `NIX_SSL_CERT_FILE`. Open a new shell. For an agent, use an empty
 environment:

@@ -4,9 +4,9 @@
   "script_files": 30,
   "script_loc": 4628,
   "docs_files": 15,
-  "docs_loc": 1507,
+  "docs_loc": 1511,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: the nvim session-refresh fixture runs from the built generation, redirects all four XDG roots while lending itself the real profile through one state/nix symlink, starts its tmux server with -f /dev/null and reports candidates, skip reasons and pane contents on timeout"
+  "why": "2026-11-08: tmux declares its shell, and bootstrap names the login shell it cannot set"
 }

@@ -86,6 +86,15 @@ in
       mouse = true;
       # Ghostty Cmd shortcuts send this prefix byte (\x13); keep them in sync.
       prefix = "C-s";
+      # Declared rather than inherited. Unset, tmux takes $SHELL, which comes
+      # from the account's UserShell - machine state this repo cannot set and
+      # does not document. A Mac whose login shell is still the system default
+      # therefore runs bash in every pane while this repo's .zshenv, .zshrc and
+      # .zprofile sit correctly linked and never sourced, so the prompt, vi-mode,
+      # atuin, fzf-tab, autosuggestions and starship are all simply absent with
+      # nothing reporting a fault. Naming the shell here makes panes correct
+      # before anyone runs chsh, and keeps them correct regardless of it.
+      shell = "/bin/zsh";
       terminal = "tmux-256color";
       plugins = [
         fzfTmuxUrl
