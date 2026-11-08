@@ -25,6 +25,9 @@ let
           gpg --batch --quiet --trust-model always --encrypt --recipient "$key" </dev/null 2>/dev/null |
           gpg --batch --quiet --pinentry-mode error --decrypt >/dev/null 2>&1
       }
+      # Was the last recorded run a failure? An operator who learned to ignore this job
+      # needs the first recovery to announce itself.
+      was_failing() { grep -q '"ok":false' "$HOME/.local/state/public-dotfiles/jobs/encrypted-mirror-${name}.json" 2>/dev/null; }
       # Outcome file read by `task doctor`; silence past `expires` is a finding.
       record() {
         local dir="$HOME/.local/state/public-dotfiles/jobs" now; now="$(date +%s)"
@@ -95,14 +98,16 @@ let
       }
       case "''${1:-push}" in
         push)
-          ready || { record "" false ${toString (2 * 86400)} "gpg-agent does not hold the key"; notify "gpg-agent does not hold the key; unlock it once (e.g. sign anything)"; exit 0; }
+          recovering=false; if was_failing; then recovering=true; fi
+          ready || fail "gpg-agent does not hold the key; unlock it once (e.g. sign anything)"
           verify_remote || fail "named remote is missing, has the wrong URL, or lacks its recorded gcrypt-id"
           fetch_remote || fail "mirror fetch failed"
           guard_divergence || fail "mirror diverged; refusing destructive gcrypt force-push"
           if ! { mirror push --force "$remote_name" --all && mirror push --force "$remote_name" --tags; }; then fail "push failed"; fi
           fetch_remote || fail "post-push mirror fetch failed"
           verify_pushed || fail "post-push refs do not match"
-          record "" true ${toString (2 * 86400)} "pushed" ;;
+          record "" true ${toString (2 * 86400)} "pushed"
+          if [ "$recovering" = true ]; then notify "push recovered; the mirror is current again"; fi ;;
         drill)
           verify_remote || { echo "named remote is missing, has the wrong URL, or lacks its recorded gcrypt-id" >&2; exit 1; }
           scratch="$(mktemp -d)"; trap 'rm -rf "$scratch"' EXIT

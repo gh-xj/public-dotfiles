@@ -60,7 +60,8 @@ runs only report until `retention.apply = true`; downstream data adds
 `encryptedMirrors.<name>` (`repository`, `remote`, `gpgKey` from downstream)
 installs `encrypted-mirror-<name>` and a daily launchd push of commits only,
 encrypted by git-remote-gcrypt. It pushes only when gpg-agent already holds the
-key and never prompts (`--pinentry-mode=error`), otherwise it notifies. Restore
+key and never prompts (`--pinentry-mode=error`); otherwise it records the failure,
+notifies and exits non-zero, and the first push after a failure notifies too. Restore
 drill: `encrypted-mirror-<name> drill` clones the mirror and compares every
 branch/tag SHA and the HEAD file count.
 
