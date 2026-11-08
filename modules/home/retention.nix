@@ -66,7 +66,7 @@ in {
   config = lib.mkIf (cfg.enable && rt.enable) {
     xj.publicDotfiles.retention = {
       archives.codex = { root = lib.mkDefault "${home}/.codex/sessions"; glob = lib.mkDefault "**/*.jsonl"; };
-      archives.claude = { root = lib.mkDefault "${home}/.claude/projects"; glob = lib.mkDefault "*/*.jsonl"; };
+      archives.claude = { root = lib.mkDefault "${home}/.claude/projects"; glob = lib.mkDefault "**/*.jsonl"; };
       scratch.claude = { root = lib.mkDefault "/private/tmp/claude-{uid}"; };
       # Not `go env GOCACHE`: launchd's PATH has no toolchain shims. gopls stays out of busyProcesses, a shared daemon never exits.
       caches.goBuild = {

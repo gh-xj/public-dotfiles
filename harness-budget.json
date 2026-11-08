@@ -2,11 +2,11 @@
   "docs_root": "docs",
   "tasks": 7,
   "script_files": 30,
-  "script_loc": 4640,
+  "script_loc": 4651,
   "docs_files": 16,
   "docs_loc": 1625,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: encrypted mirrors declare pinentry-mac and seed gpg-agent.conf, so the tool's own unlock instruction can be carried out on a Mac bootstrapped from this repo"
+  "why": "2026-11-08: the claude archive glob reaches subagent transcripts, with a fixture at the depth real data uses"
 }

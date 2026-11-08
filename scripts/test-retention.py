@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -8,6 +9,16 @@ import tempfile
 import time
 
 repo = Path(__file__).resolve().parent.parent
+declared = (repo / "modules/home/retention.nix").read_text()
+claude_glob = re.search(r'archives\.claude = .*?glob = lib\.mkDefault "([^"]+)"', declared).group(1)
+with tempfile.TemporaryDirectory(prefix="retention-layout-") as tmp:
+    layout = Path(tmp)
+    expected = {"project/session.jsonl", "project/session/subagents/agent-1.jsonl"}
+    for name in expected:
+        (layout / name).parent.mkdir(parents=True, exist_ok=True)
+        (layout / name).write_text("{}\n")
+    assert {path.relative_to(layout).as_posix() for path in layout.glob(claude_glob)} == expected, "subagent transcripts must be archived too"
+
 with tempfile.TemporaryDirectory(prefix="retention-") as tmp:
     root = Path(tmp)
     old = time.time() - 30 * 86400
