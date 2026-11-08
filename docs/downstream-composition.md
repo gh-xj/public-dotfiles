@@ -55,17 +55,36 @@ and write `~/public-dotfiles/.upstream/<slug>.md` (git-ignored; `<slug>` is
 
 ```markdown
 # <one-line change>
+Priority: P0 | P1 | P2
 Why: <problem seen and why every Mac benefits>
 Evidence: <commands run here and what they showed>
 Suggested change: <public files/options and the shape of the edit>
-Overlay copy: <overlay file to delete once this lands>
+Overlay copy: <overlay file to delete once this lands, or `none`>
 ```
+
+`Priority` is what the lead triages by: P0 blocks a documented path on any Mac,
+P1 silently skips declared work or strands a feature's own recovery path, P2 is
+a correctness or ergonomics gap that has a workaround.
 
 `task doctor` lists `upstream_proposals.pending`. The owner pastes them into
 the lead session, which re-implements on current `main`. After pulling the
 change, delete the proposal and the overlay copy together; doctor reports any
 overlay marker left without its proposal as `stale_overlay_markers`. Overlays
 pass `OVERLAY_DIR=<overlay repo>` to the public doctor to enable that check.
+
+An overlay that implements the change itself instead of waiting - a machine that
+cannot reach `origin`, or one that needs the fix now - records each slug as an
+`Upstream-Migration: <slug>` trailer on the overlay commit and deletes the
+proposal. The trailer is then what upstream is still owed, so it has to be
+readable as a list:
+
+```sh
+git log --format='%h %s %(trailers:key=Upstream-Migration,valueonly,separator=%x2C)' main..HEAD
+```
+
+Those commits are offered to the lead as patches, not re-described as prompts:
+they already carry the evidence, the regression assertions and the budget entry
+that a prompt would ask the lead to reconstruct.
 
 ## Migration checklist
 
