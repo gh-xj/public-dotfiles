@@ -3,10 +3,10 @@
   "tasks": 7,
   "script_files": 30,
   "script_loc": 4628,
-  "docs_files": 15,
-  "docs_loc": 1511,
+  "docs_files": 16,
+  "docs_loc": 1596,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: tmux declares its shell, and bootstrap names the login shell it cannot set"
+  "why": "2026-11-08: docs/spacefn-hyper-layer.md records a layer that is healthy and mostly inert on a fresh Mac, because fourteen of its fifteen receivers are launcher GUI state"
 }

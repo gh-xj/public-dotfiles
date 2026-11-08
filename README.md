@@ -55,6 +55,8 @@ opening preferences.
 See [docs/zed.md](docs/zed.md) for the graphical review workflow and Neovim-aligned keys.
 See [docs/cjk-input.md](docs/cjk-input.md) for Chinese input with Vim-mode editors
 and the Karabiner input-source rules.
+See [docs/spacefn-hyper-layer.md](docs/spacefn-hyper-layer.md) for the space-held
+hyper chords, and why most of them need a receiver this repo cannot declare.
 
 ## Ownership
 
