@@ -74,11 +74,15 @@ then `gpg-connect-agent 'keyinfo --list' /bye` (agent cold, sign anything once).
 A passphrase saved through the dialog's "Save in Keychain" sits under service
 `GnuPG` (`security find-generic-password -s GnuPG`); no module can create it, and
 the readiness check does not consult it, because `--pinentry-mode=error` never
-launches pinentry. An unlock lasts only as long as the agent's cache (gpg-agent's
+launches pinentry. `unattendedPinentry = true` on that mirror lets it, and a
+readiness probe still gives up after 20 seconds; any mirror operation stops after
+an hour. A dialog already drawn stays until dismissed, because gpg-agent owns it,
+so set `pinentry-timeout` in `gpg-agent.conf` as well. An unlock lasts only as long as the agent's cache (gpg-agent's
 defaults: 10 minutes idle, 2 hours at most; a restart clears it), far shorter than
 the daily schedule. A key with a passphrase therefore reads as not ready on most
 scheduled runs, and each one fails and notifies, unless the machine sets longer
-`default-cache-ttl` and `max-cache-ttl` or the key has no passphrase.
+`default-cache-ttl` and `max-cache-ttl`, the key has no passphrase, or a Keychain
+entry answers through `unattendedPinentry`.
 
 Each mirror must use an existing named Git remote (`remoteName`, defaulting to
 the attribute name) whose push URL is `gcrypt::<remote>` and whose

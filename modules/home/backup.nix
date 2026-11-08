@@ -2,10 +2,14 @@
 let
   cfg = config.xj.publicDotfiles;
   home = config.home.homeDirectory;
-  # One tool per mirror: `push` (guarded, never prompts) and `drill` (restore proof).
+  # One tool per mirror: `push` (guarded, never prompts unless unattendedPinentry) and `drill` (restore proof).
   tool = name: m:
   let
     remoteName = if m.remoteName == null then name else m.remoteName;
+    pinentryMode = lib.optionalString (!m.unattendedPinentry) "--pinentry-mode error";
+    gcryptGpgArgs = lib.optionalString (!m.unattendedPinentry) "-c gcrypt.gpg-args=--pinentry-mode=error";
+    # launchd never starts a second run while one hangs, so nothing else ends a stuck one.
+    workLimit = "timeout 3600";
   in pkgs.writeShellApplication {
     name = "encrypted-mirror-${name}";
     runtimeInputs = [ pkgs.git pkgs."git-remote-gcrypt" pkgs.gnupg pkgs.gawk pkgs.coreutils ];
@@ -21,9 +25,9 @@ let
       # flags are not enough: gpg-agent unlocks a subkey with the last passphrase entered
       # without caching it under that subkey's keygrip, so a usable key reads as locked.
       ready() {
-        gpg --batch --quiet --pinentry-mode error --local-user "$signing_key" --sign </dev/null >/dev/null 2>&1 &&
+        timeout 20 gpg --batch --quiet ${pinentryMode} --local-user "$signing_key" --sign </dev/null >/dev/null 2>&1 &&
           gpg --batch --quiet --trust-model always --encrypt --recipient "$key" </dev/null 2>/dev/null |
-          gpg --batch --quiet --pinentry-mode error --decrypt >/dev/null 2>&1
+          timeout 20 gpg --batch --quiet ${pinentryMode} --decrypt >/dev/null 2>&1
       }
       # Was the last recorded run a failure? An operator who learned to ignore this job
       # needs the first recovery to announce itself.
@@ -35,12 +39,12 @@ let
         printf '{"ok":%s,"at":%s,"expires":%s,"detail":"%s"}\n' "$2" "$now" "$((now + $3))" "$4" > "$dir/encrypted-mirror-${name}$1.json"
       }
       mirror() {
-        git -C "$repo" \
+        ${workLimit} git -C "$repo" \
           -c gcrypt.participants="$key" \
           -c gcrypt.signingkey="$signing_key" \
           -c gcrypt.publish-participants=false \
           -c gcrypt.require-explicit-force-push=true \
-          -c gcrypt.gpg-args=--pinentry-mode=error "$@"
+          ${gcryptGpgArgs} "$@"
       }
       fail() { record "" false ${toString (2 * 86400)} "$1"; notify "$1"; echo "$1" >&2; exit 1; }
       verify_remote() {
@@ -115,11 +119,11 @@ let
           git init --quiet --bare "$scratch/mirror"
           git -C "$scratch/mirror" remote add origin "$remote_url"
           git -C "$scratch/mirror" config remote.origin.gcrypt-id "$recorded_id"
-          git -C "$scratch/mirror" \
+          ${workLimit} git -C "$scratch/mirror" \
             -c gcrypt.participants="$key" \
             -c gcrypt.signingkey="$signing_key" \
             -c gcrypt.publish-participants=false \
-            -c gcrypt.gpg-args=--pinentry-mode=error \
+            ${gcryptGpgArgs} \
             fetch --quiet --no-tags origin "+refs/heads/*:refs/heads/*" "+refs/tags/*:refs/tags/*"
           want="$(git -C "$repo" for-each-ref --format='%(refname) %(objectname)' refs/heads refs/tags)"
           got="$(git -C "$scratch/mirror" for-each-ref --format='%(refname) %(objectname)' refs/heads refs/tags)"
@@ -146,6 +150,7 @@ in {
       gpgKey = lib.mkOption { type = lib.types.str; description = "GPG key id the whole repository is encrypted to."; };
       signingKey = lib.mkOption { type = lib.types.str; default = config.gpgKey; description = "GPG key used to sign the encrypted manifest; defaults to gpgKey."; };
       interval = lib.mkOption { type = lib.types.ints.positive; default = 86400; };
+      unattendedPinentry = lib.mkOption { type = lib.types.bool; default = false; description = "Let the scheduled job consult pinentry, for a key a Keychain-backed pinentry-mac answers for without a dialog. If it needs a human, the job gives up after 20 seconds but the dialog stays until dismissed; set pinentry-timeout in gpg-agent.conf too."; };
     }; }));
   };
   config = lib.mkIf (cfg.enable && cfg.encryptedMirrors != { }) {
