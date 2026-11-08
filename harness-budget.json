@@ -4,9 +4,9 @@
   "script_files": 30,
   "script_loc": 4640,
   "docs_files": 16,
-  "docs_loc": 1615,
+  "docs_loc": 1625,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: task apps continues past a failed ledger to later ledgers and locked runtimes, and exits non-zero naming what is unsatisfied, with a fixture"
+  "why": "2026-11-08: encrypted mirrors declare pinentry-mac and seed gpg-agent.conf, so the tool's own unlock instruction can be carried out on a Mac bootstrapped from this repo"
 }

@@ -148,7 +148,18 @@ in {
     }; }));
   };
   config = lib.mkIf (cfg.enable && cfg.encryptedMirrors != { }) {
-    home.packages = lib.mapAttrsToList (name: m: tool name m) cfg.encryptedMirrors;
+    home.packages = lib.mapAttrsToList (name: m: tool name m) cfg.encryptedMirrors
+      ++ lib.optional pkgs.stdenv.isDarwin pkgs.pinentry_mac;
+    # The mirror's "unlock it once" needs a pinentry, and gpg-agent has no default. Seed the conf
+    # rather than own it: a hand-written one must neither be replaced nor fail activation. The
+    # profile path outlives a store path, and gpg-agent wants ~/.gnupg private.
+    home.activation.encryptedMirrorPinentry = lib.mkIf pkgs.stdenv.isDarwin (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if [ ! -e "$HOME/.gnupg/gpg-agent.conf" ]; then
+        run mkdir -p -m 700 "$HOME/.gnupg"
+        run ${pkgs.bash}/bin/bash -c 'echo "pinentry-program $1" > "$2"' _ ${lib.escapeShellArg "${home}/.local/state/nix/profiles/home-manager/home-path/bin/pinentry-mac"} "$HOME/.gnupg/gpg-agent.conf"
+        run ${pkgs.gnupg}/bin/gpgconf --kill gpg-agent
+      fi
+    '');
     launchd.agents = lib.mkIf pkgs.stdenv.isDarwin (lib.mapAttrs' (name: m: lib.nameValuePair "encrypted-mirror-${name}" {
       enable = true;
       config = {

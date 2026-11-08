@@ -65,6 +65,16 @@ notifies and exits non-zero, and the first push after a failure notifies too. Re
 drill: `encrypted-mirror-<name> drill` clones the mirror and compares every
 branch/tag SHA and the HEAD file count.
 
+The first unlock is interactive. Configuring a mirror installs `pinentry-mac` and
+seeds `~/.gnupg/gpg-agent.conf` when none exists; an existing file is left alone
+and must name a pinentry itself. When a mirror reads as not ready, separate the
+causes: `grep pinentry-program ~/.gnupg/gpg-agent.conf` (nothing to prompt with),
+then `gpg-connect-agent 'keyinfo --list' /bye` (agent cold, sign anything once).
+A passphrase saved through the dialog's "Save in Keychain" sits under service
+`GnuPG` (`security find-generic-password -s GnuPG`); no module can create it, and
+the readiness check does not consult it, because `--pinentry-mode=error` never
+launches pinentry.
+
 Each mirror must use an existing named Git remote (`remoteName`, defaulting to
 the attribute name) whose push URL is `gcrypt::<remote>` and whose
 `remote.<name>.gcrypt-id` is already recorded. This is the adoption identity;
