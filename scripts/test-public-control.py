@@ -101,10 +101,14 @@ with tempfile.TemporaryDirectory(prefix="doctor-upstream-") as tmp:
     overlay.mkdir()
     (overlay / "host.nix").write_text("# upstream-pending: 2026-10-08-kept\n# upstream-pending: 2026-09-01-landed\n")
     (overlay / "ignored.nix").write_text("# upstream-pending: untracked-only\n")
+    (overlay / "legacy.nix").write_text("# upstream-pending: topic-without-a-date\n")
+    (overlay / "scripts").mkdir()
+    (overlay / "scripts/test-fixtures.py").write_text('"# upstream-pending: 2026-01-01-a-test-fixture"\n')
     subprocess.run(["git", "init", "-q", str(overlay)], check=True)
-    subprocess.run(["git", "-C", str(overlay), "add", "host.nix"], check=True)
-    assert control.upstream_proposals(repo, overlay) == {"pending": ["2026-10-08-kept"], "stale_overlay_markers": ["2026-09-01-landed"]}
-    assert control.upstream_proposals(repo) == {"pending": ["2026-10-08-kept"], "stale_overlay_markers": []}
+    subprocess.run(["git", "-C", str(overlay), "add", "host.nix", "legacy.nix", "scripts/test-fixtures.py"], check=True)
+    assert control.upstream_proposals(repo, overlay) == {"pending": ["2026-10-08-kept"], "stale_overlay_markers": ["2026-09-01-landed"],
+                                                        "malformed_overlay_markers": ["topic-without-a-date"]}
+    assert control.upstream_proposals(repo) == {"pending": ["2026-10-08-kept"], "stale_overlay_markers": [], "malformed_overlay_markers": []}
 print("doctor counts upstream proposals and flags overlay markers whose proposal is gone")
 
 with tempfile.TemporaryDirectory(prefix="doctor-jobs-") as tmp:

@@ -147,11 +147,17 @@ def settings_merge(home, repo, targets=MUTABLE):
 
 
 def upstream_proposals(repo, overlay=None):
-    """Pending .upstream/ proposals, and overlay `upstream-pending:` markers whose proposal is gone."""
+    """Pending .upstream/ proposals, overlay `upstream-pending:` markers whose proposal is gone,
+    and markers that are not the documented `YYYY-MM-DD-topic` slug. This repo's own tests are
+    excluded: their fixtures are marker text, and an overlay kept as a branch of this repo
+    would otherwise report them as findings forever."""
     pending = sorted(path.stem for path in (repo / ".upstream").glob("*.md"))
-    found = run(["git", "-C", overlay, "grep", "-ohE", "upstream-pending: [A-Za-z0-9._-]+"]).stdout if overlay else ""
-    stale = sorted({line.split(": ", 1)[1] for line in found.splitlines()} - set(pending))
-    return {"pending": pending, "stale_overlay_markers": stale}
+    found = run(["git", "-C", overlay, "grep", "-ohE", "upstream-pending: [A-Za-z0-9._-]+",
+                 "--", ":(exclude)scripts/test-*"]).stdout if overlay else ""
+    slugs = {line.split(": ", 1)[1] for line in found.splitlines()}
+    dated = {slug for slug in slugs if re.fullmatch(r"\d{4}-\d{2}-\d{2}-[A-Za-z0-9._-]+", slug)}
+    return {"pending": pending, "stale_overlay_markers": sorted(dated - set(pending)),
+            "malformed_overlay_markers": sorted(slugs - dated)}
 
 
 def job_outcomes(home, now=None):
