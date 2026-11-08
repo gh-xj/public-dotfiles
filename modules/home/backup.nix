@@ -126,6 +126,7 @@ let
           [ "$want" = "$got" ] || { echo "ref mismatch" >&2; diff <(echo "$want") <(echo "$got") >&2 || true; exit 1; }
           # The bare mirror's HEAD is the default branch, so name the commit the repo has checked out.
           head="$(git -C "$repo" rev-parse HEAD)"
+          git -C "$scratch/mirror" cat-file -e "$head^{commit}" 2>/dev/null || { echo "checked-out commit $head is on no mirrored ref" >&2; exit 1; }
           head_files() { git -C "$1" ls-tree -r --name-only "$head" | wc -l; }
           [ "$(head_files "$repo")" = "$(head_files "$scratch/mirror")" ] || { echo "file count mismatch" >&2; exit 1; }
           record -drill true 2592000 "$(echo "$want" | wc -l) refs matched"

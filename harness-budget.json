@@ -8,5 +8,5 @@
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: subagent transcripts stay with their session while it is in use"
+  "why": "2026-11-08: the mirror drill names a checked-out commit that no mirrored ref carries"
 }
