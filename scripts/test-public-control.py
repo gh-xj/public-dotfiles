@@ -111,6 +111,18 @@ with tempfile.TemporaryDirectory(prefix="doctor-upstream-") as tmp:
     assert control.upstream_proposals(repo) == {"pending": ["2026-10-08-kept"], "stale_overlay_markers": [], "malformed_overlay_markers": []}
 print("doctor counts upstream proposals and flags overlay markers whose proposal is gone")
 
+with tempfile.TemporaryDirectory(prefix="apps-task-") as tmp:
+    fake, calls = Path(tmp), Path(tmp) / "calls"
+    for name, body in (("brew", 'case "$*" in "bundle --file Brewfile --no-upgrade") exit 1;; *check*) echo "cask x needs to be installed"; exit 1;; esac\n'), ("mise", "")):
+        (fake / name).write_text(f'#!/bin/sh\necho "{name} $*" >> "{calls}"\n{body}')
+        (fake / name).chmod(0o700)
+    result = subprocess.run(["task", "--dir", str(root), "apps", "EXTRA_BREWFILE=overlay"], capture_output=True, text=True,
+                            env=dict(os.environ, PATH=f"{fake}:{os.environ['PATH']}", MISE_BIN=str(fake / "mise")))
+    seen = calls.read_text()
+    assert "--file overlay" in seen and "mise install --locked" in seen, "one failed ledger must not skip the rest"
+    assert result.returncode != 0 and "cask x needs to be installed" in result.stderr, result.stderr
+print("apps continues past a failed ledger, runs the runtimes and exits non-zero naming what is unsatisfied")
+
 with tempfile.TemporaryDirectory(prefix="doctor-jobs-") as tmp:
     jobs = Path(tmp) / ".local/state/public-dotfiles/jobs"
     jobs.mkdir(parents=True)

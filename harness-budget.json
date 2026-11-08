@@ -2,11 +2,11 @@
   "docs_root": "docs",
   "tasks": 7,
   "script_files": 30,
-  "script_loc": 4628,
+  "script_loc": 4640,
   "docs_files": 16,
   "docs_loc": 1615,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: docs/downstream-composition.md gains the proposal Priority field and the Upstream-Migration trailer, both load-bearing and previously unwritten"
+  "why": "2026-11-08: task apps continues past a failed ledger to later ledgers and locked runtimes, and exits non-zero naming what is unsatisfied, with a fixture"
 }

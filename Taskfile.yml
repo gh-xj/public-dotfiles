@@ -62,5 +62,15 @@ tasks:
         brew_cmd="$(command -v brew || true)"
         [ -n "$brew_cmd" ] || brew_cmd="$(for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do [ ! -x "$candidate" ] || { printf '%s\n' "$candidate"; break; }; done)"
         [ -n "$brew_cmd" ] || { echo "Homebrew is required" >&2; exit 1; }
-        for brewfile in {{.BREWFILES}}; do "$brew_cmd" bundle --file "$brewfile" --no-upgrade; done
-      - MISE_TRUSTED_CONFIG_PATHS="{{.TASKFILE_DIR}}/config/mise/config.toml:$HOME/.config/mise/config.toml" MISE_CONFIG_FILE="{{.TASKFILE_DIR}}/config/mise/config.toml" "${MISE_BIN:-$HOME/.local/state/nix/profiles/home-manager/home-path/bin/mise}" install --locked
+        status=0
+        for brewfile in {{.BREWFILES}}; do
+          echo "==> brew bundle --file $brewfile"
+          if ! "$brew_cmd" bundle --file "$brewfile" --no-upgrade; then
+            status=1
+            echo "UNSATISFIED in $brewfile:" >&2
+            "$brew_cmd" bundle check --file "$brewfile" --no-upgrade --verbose >&2 || true
+          fi
+        done
+        echo "==> mise install --locked"
+        MISE_TRUSTED_CONFIG_PATHS="{{.TASKFILE_DIR}}/config/mise/config.toml:$HOME/.config/mise/config.toml" MISE_CONFIG_FILE="{{.TASKFILE_DIR}}/config/mise/config.toml" "${MISE_BIN:-$HOME/.local/state/nix/profiles/home-manager/home-path/bin/mise}" install --locked || { status=1; echo "UNSATISFIED: mise install --locked" >&2; }
+        exit "$status"
