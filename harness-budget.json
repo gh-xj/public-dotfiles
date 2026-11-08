@@ -2,11 +2,11 @@
   "docs_root": "docs",
   "tasks": 7,
   "script_files": 30,
-  "script_loc": 4616,
+  "script_loc": 4625,
   "docs_files": 15,
   "docs_loc": 1506,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: the overlay marker scan excludes scripts/test-*, requires the documented dated slug and reports non-slug markers under malformed_overlay_markers, with fixtures"
+  "why": "2026-11-08: the nvim session-refresh fixture runs from the built generation, redirects all four XDG roots while lending itself the real profile through one state/nix symlink, starts its tmux server with -f /dev/null and reports candidates, skip reasons and pane contents on timeout"
 }
