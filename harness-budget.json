@@ -8,5 +8,5 @@
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: the claude archive glob reaches subagent transcripts, with a fixture at the depth real data uses"
+  "why": "2026-11-08: the tmux history limit says it is an interactive default that fleet hosts lower downstream"
 }

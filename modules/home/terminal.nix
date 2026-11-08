@@ -81,6 +81,9 @@ in
       escapeTime = 0;
       # Neovim FocusGained/FocusLost drive autoread.
       focusEvents = true;
+      # Interactive default, and a ceiling rather than a reservation: tmux grows scrollback
+      # lazily. All panes share one server process, so a host running tens of agent panes
+      # should lower it downstream with lib.mkForce.
       historyLimit = 50000;
       keyMode = "vi";
       mouse = true;
