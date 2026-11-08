@@ -10,12 +10,12 @@ let
   };
   paneTitle = pkgs.writeShellApplication {
     name = "agent-pane-title";
-    runtimeInputs = [ pkgs.python3 pkgs.tmux ];
+    runtimeInputs = [ pkgs.python3 (import ../../../packages/tmux.nix pkgs) ];
     text = ''exec python3 ${../../../scripts/agent-pane-title.py} "$@"'';
   };
   session = pkgs.writeShellApplication {
     name = "agent-session";
-    runtimeInputs = [ pkgs.python3 pkgs.tmux pkgs.git paneTitle ];
+    runtimeInputs = [ pkgs.python3 (import ../../../packages/tmux.nix pkgs) pkgs.git paneTitle ];
     text = ''exec python3 ${../../../scripts/agent-session.py} "$@"'';
   };
 in

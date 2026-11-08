@@ -3,7 +3,7 @@ let
   cfg = config.xj.publicDotfiles.tmuxRecovery;
   engine = pkgs.writeShellApplication {
     name = "tmux-recovery";
-    runtimeInputs = [ pkgs.python3 pkgs.tmux pkgs.neovim ];
+    runtimeInputs = [ pkgs.python3 (import ../../packages/tmux.nix pkgs) pkgs.neovim ];
     text = ''
       exec python3 ${../../scripts/tmux-recovery.py} \
         --output-directory ${lib.escapeShellArg cfg.outputDirectory} \

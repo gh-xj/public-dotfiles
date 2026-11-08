@@ -111,6 +111,10 @@ with tempfile.TemporaryDirectory(prefix="doctor-upstream-") as tmp:
     assert control.upstream_proposals(repo) == {"pending": ["2026-10-08-kept"], "stale_overlay_markers": [], "malformed_overlay_markers": []}
 print("doctor counts upstream proposals and flags overlay markers whose proposal is gone")
 
+unpatched = subprocess.run(["git", "-C", str(root), "grep", "-nE", r"pkgs\.tmux\b", "--", "modules"], capture_output=True, text=True).stdout
+assert not unpatched, f"tmux must come from packages/tmux.nix: a client starts the server from its own binary\n{unpatched}"
+print("every module takes tmux from the version-guarded package")
+
 with tempfile.TemporaryDirectory(prefix="apps-task-") as tmp:
     fake, calls = Path(tmp), Path(tmp) / "calls"
     for name, body in (("brew", 'case "$*" in "bundle --file Brewfile --no-upgrade") exit 1;; *check*) echo "cask x needs to be installed"; exit 1;; esac\n'), ("mise", "")):

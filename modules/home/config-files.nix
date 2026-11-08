@@ -24,7 +24,7 @@ in
       })
       (pkgs.writeShellApplication {
         name = "nvim-session-refresh";
-        runtimeInputs = [ pkgs.neovim pkgs.python3 pkgs.tmux ];
+        runtimeInputs = [ pkgs.neovim pkgs.python3 (import ../../packages/tmux.nix pkgs) ];
         text = ''exec python3 ${../../scripts/nvim-session-refresh.py} "$@"'';
       })
     ];

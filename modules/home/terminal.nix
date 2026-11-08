@@ -117,7 +117,7 @@ in
       enable = true;
       package = null;
       settings = {
-        command = "${pkgs.tmux}/bin/tmux new-session -A -s main";
+        command = "${tmuxPkg}/bin/tmux new-session -A -s main";
         "config-file" = [
           "${config.xdg.configHome}/ghostty/user.conf"
           "${config.xdg.configHome}/ghostty/window-selectors.generated.conf"
