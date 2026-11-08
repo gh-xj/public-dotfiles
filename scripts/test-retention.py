@@ -30,6 +30,12 @@ with tempfile.TemporaryDirectory(prefix="retention-") as tmp:
     stale, fresh = transcripts / "2026/old.jsonl", transcripts / "2026/new.jsonl"
     stale.write_text("old\n"); fresh.write_text("new\n")
     os.utime(stale, (old, old))
+    (transcripts / "live").mkdir()
+    (transcripts / "live.jsonl").write_text("resumed\n")
+    held = transcripts / "live/subagents/agent-1.jsonl"
+    held.parent.mkdir(parents=True)
+    held.write_text("subagent\n")
+    os.utime(held, (old, old))
     scratch = root / "scratch"
     (scratch / "stale-dir").mkdir(parents=True)
     (scratch / "stale-dir/file").write_text("x")
@@ -92,6 +98,7 @@ with tempfile.TemporaryDirectory(prefix="retention-") as tmp:
     assert not stale.exists() and fresh.exists()
     archived = list((root / "archive").glob("agent-*.tar.zst"))
     assert len(archived) == 1 and subprocess.run(["tar", "--zstd", "-tf", str(archived[0])], capture_output=True, text=True).stdout.split() == ["2026/old.jsonl"]
+    assert held.exists(), "a subagent of a session still in use is kept"
     assert not (scratch / "stale-dir").exists() and (scratch / "fresh").exists() and (scratch / "live-dir/active").exists()
     assert not (clones / "stale-free").exists() and (clones / "stale-open").exists() and (clones / "newest").exists()
     again = run("--apply")

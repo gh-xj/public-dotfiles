@@ -2,11 +2,11 @@
   "docs_root": "docs",
   "tasks": 7,
   "script_files": 30,
-  "script_loc": 4663,
+  "script_loc": 4674,
   "docs_files": 16,
   "docs_loc": 1625,
   "hooks": 13,
   "skills": 2,
   "script_file_loc_max": 683,
-  "why": "2026-11-08: Chrome clone liveness fails closed on an lsof error, and cache sizing survives a concurrent trim"
+  "why": "2026-11-08: subagent transcripts stay with their session while it is in use"
 }

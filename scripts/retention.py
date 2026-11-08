@@ -41,6 +41,10 @@ def archive(spec, destination, apply, now):
     days = {}
     for path in root.glob(spec["glob"]):
         if path.is_file() and not path.is_symlink() and path.stat().st_mtime < cutoff:
+            # A subagent belongs to its session: keep it while that session is still in use.
+            session = path.parent.parent.with_suffix(".jsonl")
+            if path.parent.name == "subagents" and session.exists() and session.stat().st_mtime >= cutoff:
+                continue
             days.setdefault(time.strftime("%Y-%m-%d", time.localtime(path.stat().st_mtime)), []).append(path.relative_to(root).as_posix())
     done = []
     for day, names in sorted(days.items()):
